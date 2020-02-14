@@ -19,5 +19,5 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Run checks
-        run: ./gradlew check
+      - name: Run checks and build
+        run: ./gradlew check assembleDebug
