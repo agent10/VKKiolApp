@@ -2,7 +2,9 @@ package kiol.vkapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
+import coil.api.load
 import com.vk.api.sdk.VK
 import com.vk.api.sdk.auth.VKAccessToken
 import com.vk.api.sdk.auth.VKAuthCallback
@@ -44,6 +46,9 @@ class MainActivity : AppCompatActivity() {
         }, {
             Timber.e("Error: $it")
         })
+
+
+        findViewById<ImageView>(R.id.image).load("https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png")
 
         //        Timber.d("Test log")
         //VK.login(this, arrayListOf(VKScope.WALL))
