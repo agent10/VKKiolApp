@@ -51,6 +51,10 @@ dependencies {
 
     implementation 'io.coil-kt:coil:0.9.5'
 
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+
+    implementation 'com.hannesdorfmann:adapterdelegates4-kotlin-dsl:4.2.0'
+
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
