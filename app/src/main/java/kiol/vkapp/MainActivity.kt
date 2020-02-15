@@ -1,15 +1,17 @@
 package kiol.vkapp
 
+import android.app.Activity
+import android.app.DownloadManager
+import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
@@ -24,28 +26,26 @@ import com.vk.api.sdk.auth.VKAccessToken
 import com.vk.api.sdk.auth.VKAuthCallback
 import com.vk.api.sdk.auth.VKScope
 import io.reactivex.android.schedulers.AndroidSchedulers
-import kiol.vkapp.commondata.data.VKDocItem
 import kiol.vkapp.commondata.data.VKDocItem.VKDocType.*
-import kiol.vkapp.commondata.domain.DocsUseCase
-import kiol.vkapp.commondata.data.VKSizesPreview
 import kiol.vkapp.commondata.domain.DocItem
+import kiol.vkapp.commondata.domain.DocsUseCase
 import timber.log.Timber
 
 
 fun ImageView.setVKPreview(docItem: DocItem) {
     val bgdColor = when (docItem.type) {
-        Text, Audio, Unknown, Image, Gif -> R.color.doc_type_color_1
-        Zip -> R.color.doc_type_color_2
-        Video -> R.color.doc_type_color_3
-        Ebook -> R.color.doc_type_color_4
+        is Text, is Audio, is Unknown, is Image, is Gif -> R.color.doc_type_color_1
+        is Zip -> R.color.doc_type_color_2
+        is Video -> R.color.doc_type_color_3
+        is Ebook -> R.color.doc_type_color_4
     }
 
     val icon = when (docItem.type) {
-        Text -> R.drawable.ic_doc_type_text
-        Audio -> R.drawable.ic_doc_type_audio
-        Ebook -> R.drawable.ic_doc_type_ebook
-        Video -> R.drawable.ic_doc_type_video
-        Zip -> R.drawable.ic_doc_type_zip
+        is Text -> R.drawable.ic_doc_type_text
+        is Audio -> R.drawable.ic_doc_type_audio
+        is Ebook -> R.drawable.ic_doc_type_ebook
+        is Video -> R.drawable.ic_doc_type_video
+        is Zip -> R.drawable.ic_doc_type_zip
         else -> R.drawable.ic_doc_type_other
     }
 
@@ -92,9 +92,13 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var adapter: ListDelegationAdapter<List<DocItem>>
 
+    lateinit var contentViewer: FrameLayout
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        contentViewer = findViewById(R.id.contentViewer)
 
         if (VK.isLoggedIn()) {
             getDocs()
@@ -115,9 +119,11 @@ class MainActivity : AppCompatActivity() {
             val menuBtn = findViewById<ImageButton>(R.id.docMenuBtn)
             bind {
                 imageTv.setVKPreview(item)
-
-
                 imageTv.clipToOutline = true
+
+                imageTv.setOnClickListener {
+                    openContent(item)
+                }
 
                 menuBtn.setOnClickListener {
                     showPopup(it, item, adapter)
@@ -133,6 +139,37 @@ class MainActivity : AppCompatActivity() {
             }
         })
         docs.adapter = adapter
+    }
+
+    private fun openContent(docItem: DocItem) {
+        val contentViewerFactory = ContentViewerFactory()
+        try {
+            contentViewerFactory.create(docItem)
+            supportFragmentManager.beginTransaction().replace(
+                R.id.contentViewer, contentViewerFactory.create(docItem)
+            ).commitAllowingStateLoss()
+        } catch (e: Exception) {
+            Timber.w("Can't create content viewer, $e")
+            val request =
+                DownloadManager.Request(Uri.parse(docItem.contentUrl))
+                    .setTitle(docItem.docTitle)
+                    .setDescription("Downloading")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, docItem.docTitle)
+                    .setAllowedOverMetered(true)
+                    .setAllowedOverRoaming(false)
+            val downloadID = (getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
+            Toast.makeText(this, "Start downloading", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onBackPressed() {
+        if (supportFragmentManager.fragments.isNotEmpty()) {
+            supportFragmentManager.beginTransaction().remove(supportFragmentManager.fragments.first())
+                .commitAllowingStateLoss()
+        } else {
+            super.onBackPressed()
+        }
     }
 
     private fun showPopup(v: View, docItem: DocItem, adapter: ListDelegationAdapter<List<DocItem>>) {

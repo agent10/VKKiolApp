@@ -5,12 +5,12 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 28
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "kiol.vkapp"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -52,9 +52,13 @@ dependencies {
     implementation project(":commondata")
 
     implementation 'io.coil-kt:coil:0.9.5'
+    implementation 'io.coil-kt:coil-gif:0.9.5'
+
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:1.1.0'
 
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
 
+    implementation 'com.github.chrisbanes:PhotoView:2.0.0'
     implementation 'com.hannesdorfmann:adapterdelegates4-kotlin-dsl:4.2.0'
 
     testImplementation 'junit:junit:4.12'

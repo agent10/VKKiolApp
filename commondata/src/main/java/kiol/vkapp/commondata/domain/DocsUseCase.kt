@@ -36,8 +36,7 @@ class DocsUseCase {
                     it.tags
                         ?.joinToString(", ") ?: "",
                     it.getType(),
-                    it.preview?.photo
-
+                    it.preview?.photo, it.url
                 )
             }
         }.subscribeOn(Schedulers.io())

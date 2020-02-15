@@ -5,21 +5,29 @@ data class VKDocItem(
     val id: Int,
     val owner_id: Int,
     val title: String, val size: Long, val ext: String, val date: Long, val tags: List<String>?, val type: Int,
-    val preview: VKPhotoPreview?
+    val preview: VKPhotoPreview?, val url: String
 ) {
-    enum class VKDocType {
-        Text, Zip, Gif, Image, Audio, Video, Ebook, Unknown
+
+    sealed class VKDocType(open val ext: String) {
+        data class Text(override val ext: String) : VKDocType(ext)
+        data class Zip(override val ext: String) : VKDocType(ext)
+        data class Gif(override val ext: String) : VKDocType(ext)
+        data class Image(override val ext: String) : VKDocType(ext)
+        data class Audio(override val ext: String) : VKDocType(ext)
+        data class Video(override val ext: String) : VKDocType(ext)
+        data class Ebook(override val ext: String) : VKDocType(ext)
+        data class Unknown(override val ext: String) : VKDocType(ext)
     }
 
     fun getType() = when (type) {
-        1 -> VKDocType.Text
-        2 -> VKDocType.Zip
-        3 -> VKDocType.Gif
-        4 -> VKDocType.Image
-        5 -> VKDocType.Audio
-        6 -> VKDocType.Video
-        7 -> VKDocType.Ebook
-        else -> VKDocType.Unknown
+        1 -> VKDocType.Text(ext)
+        2 -> VKDocType.Zip(ext)
+        3 -> VKDocType.Gif(ext)
+        4 -> VKDocType.Image(ext)
+        5 -> VKDocType.Audio(ext)
+        6 -> VKDocType.Video(ext)
+        7 -> VKDocType.Ebook(ext)
+        else -> VKDocType.Unknown(ext)
     }
 }
 
