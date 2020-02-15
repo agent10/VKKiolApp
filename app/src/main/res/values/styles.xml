@@ -27,7 +27,7 @@
 
     <style name="ToolBarStyle" parent="Widget.AppCompat.ActionBar">
         <item name="elevation">0dp</item>
-        <item name="height">64dp</item>
+        <item name="height">56dp</item>
         <item name="titleTextStyle">@style/ToolBarTextAppearence</item>
     </style>
 

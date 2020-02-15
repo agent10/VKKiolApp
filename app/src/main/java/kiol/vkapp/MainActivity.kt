@@ -40,32 +40,48 @@ fun ImageView.setVKPreview(docItem: DocItem) {
         Ebook -> R.color.doc_type_color_4
     }
 
+    val icon = when (docItem.type) {
+        Text -> R.drawable.ic_doc_type_text
+        Audio -> R.drawable.ic_doc_type_audio
+        Ebook -> R.drawable.ic_doc_type_ebook
+        Video -> R.drawable.ic_doc_type_video
+        Zip -> R.drawable.ic_doc_type_zip
+        else -> R.drawable.ic_doc_type_other
+    }
+
     val shapeDrawable = ContextCompat.getDrawable(context, R.drawable.doc_image_bgd) as GradientDrawable
     shapeDrawable.color = ColorStateList.valueOf(ContextCompat.getColor(context, bgdColor))
     background = shapeDrawable
 
     val vkPreviews = docItem.images
-    doOnLayout {
-        val tw = measuredWidth
-        val th = measuredHeight
+    vkPreviews?.let {
+        doOnLayout {
+            val tw = measuredWidth
+            val th = measuredHeight
 
-        var best = vkPreviews?.sizes?.firstOrNull()
-        vkPreviews?.sizes?.forEach {
-            val ib = best
-            if (ib == null) {
-                best = it
-            } else {
-                if (it.width >= it.height) {
-                    if (it.width <= tw && it.width > ib.width) best = it
+            scaleType = ImageView.ScaleType.CENTER_CROP
+
+            var best = vkPreviews.sizes.firstOrNull()
+            vkPreviews.sizes.forEach {
+                val ib = best
+                if (ib == null) {
+                    best = it
                 } else {
-                    if (it.height <= th && it.height > ib.height) best = it
+                    if (it.width >= it.height) {
+                        if (it.width <= tw && it.width > ib.width) best = it
+                    } else {
+                        if (it.height <= th && it.height > ib.height) best = it
+                    }
                 }
             }
-        }
 
-        best?.let {
-            load(it.src)
+            best?.let {
+                load(it.src)
+            }
         }
+    } ?: run {
+        scaleType = ImageView.ScaleType.CENTER_INSIDE
+        setImageResource(icon)
     }
 }
 
