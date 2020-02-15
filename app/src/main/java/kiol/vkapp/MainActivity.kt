@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
@@ -141,14 +142,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showRenameDialog(docItem: DocItem, adapter: ListDelegationAdapter<List<DocItem>>) {
-        val taskEditText = EditText(this)
-        taskEditText.setText(docItem.docTitle)
+        val view = LayoutInflater.from(this).inflate(R.layout.rename_dialog_layout, null)
+        val editText = view.findViewById<EditText>(R.id.renameET)
+        editText.setText(docItem.docTitle)
         val dialog: AlertDialog = AlertDialog.Builder(this)
             .setTitle("Название документа")
-            .setView(taskEditText)
+            .setView(view)
             .setPositiveButton("Save") { _, _ ->
                 val index = adapter.items.indexOf(docItem)
-                val newDocItem = docItem.copy(docTitle = taskEditText.text.toString())
+                val newDocItem = docItem.copy(docTitle = editText.text.toString())
                 (adapter.items as MutableList)[index] = newDocItem
                 adapter.notifyItemChanged(index)
                 docsUseCase.updateDocName(newDocItem)
