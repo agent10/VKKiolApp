@@ -1,11 +1,9 @@
 package kiol.vkapp
 
-import android.content.ContentValues
-import android.content.DialogInterface
 import android.content.Intent
-import android.database.sqlite.SQLiteDatabase
+import android.content.res.ColorStateList
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import android.text.format.DateFormat
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
@@ -14,50 +12,38 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
+import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.RecyclerView
 import coil.api.load
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.hannesdorfmann.adapterdelegates4.ListDelegationAdapter
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegate
 import com.vk.api.sdk.VK
-import com.vk.api.sdk.VKApiCallback
 import com.vk.api.sdk.auth.VKAccessToken
 import com.vk.api.sdk.auth.VKAuthCallback
 import com.vk.api.sdk.auth.VKScope
-import com.vk.api.sdk.exceptions.VKApiExecutionException
-import com.vk.api.sdk.requests.VKRequest
-import org.json.JSONObject
+import io.reactivex.android.schedulers.AndroidSchedulers
+import kiol.vkapp.commondata.data.VKDocItem
+import kiol.vkapp.commondata.data.VKDocItem.VKDocType.*
+import kiol.vkapp.commondata.domain.DocsUseCase
+import kiol.vkapp.commondata.data.VKSizesPreview
+import kiol.vkapp.commondata.domain.DocItem
 import timber.log.Timber
-import java.util.*
-import kotlin.math.abs
 
 
-data class DocItem(
-    val id: Int,
-    val owner_id: Int, val docTitle: String, val docInfo: String, val tags: String, val type: Int, val images:
-    VKSizesPreview?
-)
+fun ImageView.setVKPreview(docItem: DocItem) {
+    val bgdColor = when (docItem.type) {
+        Text, Audio, Unknown, Image, Gif -> R.color.doc_type_color_1
+        Zip -> R.color.doc_type_color_2
+        Video -> R.color.doc_type_color_3
+        Ebook -> R.color.doc_type_color_4
+    }
 
-data class VKDocItem(
-    val id: Int,
-    val owner_id: Int,
-    val title: String, val size: Long, val ext: String, val date: Long, val tags: List<String>?, val type: Int,
-    val preview: VKPhotoPreview?
-)
+    val shapeDrawable = ContextCompat.getDrawable(context, R.drawable.doc_image_bgd) as GradientDrawable
+    shapeDrawable.color = ColorStateList.valueOf(ContextCompat.getColor(context, bgdColor))
+    background = shapeDrawable
 
-data class VKResponse<T>(val response: T)
-
-data class VKListContainerResponse<T>(val count: Int, val items: List<T>)
-
-data class VKImagePreview(val src: String, val width: Int, val height: Int)
-
-data class VKPhotoPreview(val photo: VKSizesPreview?)
-
-data class VKSizesPreview(val sizes: List<VKImagePreview>)
-
-fun ImageView.loadVKImages(vkPreviews: VKSizesPreview?) {
+    val vkPreviews = docItem.images
     doOnLayout {
         val tw = measuredWidth
         val th = measuredHeight
@@ -85,6 +71,8 @@ fun ImageView.loadVKImages(vkPreviews: VKSizesPreview?) {
 
 class MainActivity : AppCompatActivity() {
 
+    lateinit var docsUseCase: DocsUseCase
+
     lateinit var adapter: ListDelegationAdapter<List<DocItem>>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -94,8 +82,10 @@ class MainActivity : AppCompatActivity() {
         if (VK.isLoggedIn()) {
             getDocs()
         } else {
-            VK.login(this, arrayListOf(VKScope.DOCS))
+            VK.login(this, arrayListOf(VKScope.DOCS, VKScope.OFFLINE))
         }
+
+        docsUseCase = DocsUseCase()
 
         val docs = findViewById<RecyclerView>(R.id.docs)
 
@@ -107,7 +97,10 @@ class MainActivity : AppCompatActivity() {
             val tagsTv = findViewById<TextView>(R.id.docTagsTv)
             val menuBtn = findViewById<ImageButton>(R.id.docMenuBtn)
             bind {
-                imageTv.loadVKImages(item.images)
+                imageTv.setVKPreview(item)
+
+
+                imageTv.clipToOutline = true
 
                 menuBtn.setOnClickListener {
                     showPopup(it, item, adapter)
@@ -134,7 +127,7 @@ class MainActivity : AppCompatActivity() {
                         showRenameDialog(docItem, adapter)
                     }
                     R.id.removeMenu -> {
-                        removeDoc(docItem)
+                        docsUseCase.removeDoc(docItem)
                         val index = adapter.items.indexOf(docItem)
                         (adapter.items as MutableList).removeAt(index)
                         adapter.notifyItemRemoved(index)
@@ -158,7 +151,7 @@ class MainActivity : AppCompatActivity() {
                 val newDocItem = docItem.copy(docTitle = taskEditText.text.toString())
                 (adapter.items as MutableList)[index] = newDocItem
                 adapter.notifyItemChanged(index)
-                updateDocName(newDocItem)
+                docsUseCase.updateDocName(newDocItem)
 
             }
             .setNegativeButton("Cancel", null)
@@ -182,116 +175,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getDocs() {
-        val request = VKRequest<JSONObject>("docs.get").addParam("return_tags", 1)
-
-        VK.execute(request, object : VKApiCallback<JSONObject> {
-            override fun fail(error: VKApiExecutionException) {
-                Timber.e("getDocs failed $error")
-            }
-
-            override fun success(result: JSONObject) {
-                Timber.d("getDocs success $result")
-
-                val docsResponse: VKResponse<VKListContainerResponse<VKDocItem>> = Gson().fromJson(result.toString())
-                adapter.items = docsResponse.response.items.map {
-                    DocItem(
-                        it.id, it.owner_id,
-                        it.title,
-                        "${it.ext
-                            .toUpperCase()} · ${humanReadableByteCountSI(it.size)} · ${humanReadableTimestamp(it.date * 1000)}",
-                        it.tags
-                            ?.joinToString(", ") ?: "",
-                        0,
-                        it.preview?.photo
-
-                    )
-                }
-                adapter.notifyDataSetChanged()
-            }
+        val d = DocsUseCase().getDocs().observeOn(AndroidSchedulers.mainThread()).subscribe({
+            Timber.d("getDocs success $it")
+            adapter.items = it
+            adapter.notifyDataSetChanged()
+        }, {
+            Timber.e("getDocs failed $it")
         })
-    }
-
-    private fun removeDoc(docItem: DocItem) {
-        val request = VKRequest<JSONObject>("docs.delete")
-            .addParam("owner_id", docItem.owner_id)
-            .addParam("doc_id", docItem.id)
-
-        VK.execute(request, object : VKApiCallback<JSONObject> {
-            override fun fail(error: VKApiExecutionException) {
-                Timber.e("removeDoc failed $error")
-            }
-
-            override fun success(result: JSONObject) {
-                Timber.d("removeDoc success $result")
-            }
-        })
-    }
-
-    private fun updateDocName(docItem: DocItem) {
-        val request = VKRequest<JSONObject>("docs.edit")
-            .addParam("owner_id", docItem.owner_id)
-            .addParam("doc_id", docItem.id)
-            .addParam("title", docItem.docTitle)
-
-        VK.execute(request, object : VKApiCallback<JSONObject> {
-            override fun fail(error: VKApiExecutionException) {
-                Timber.e("updateDocName failed $error")
-            }
-
-            override fun success(result: JSONObject) {
-                Timber.d("updateDocName success $result")
-            }
-        })
-    }
-
-    inline fun <reified T> Gson.fromJson(json: String) = fromJson<T>(json, object : TypeToken<T>() {}.type)
-
-    fun humanReadableTimestamp(timestamp: Long): String {
-        val nowTime: Calendar = Calendar.getInstance()
-        val neededTime: Calendar = Calendar.getInstance()
-        neededTime.timeInMillis = timestamp
-
-        return if (neededTime.get(Calendar.YEAR) == nowTime.get(Calendar.YEAR)) {
-            when {
-                nowTime.get(Calendar.DATE) == neededTime.get(Calendar.DATE) -> {
-                    "Сегодня"
-                }
-                nowTime.get(Calendar.DATE) - neededTime.get(Calendar.DATE) == 1 -> {
-                    "Вчера"
-                }
-                else -> {
-                    DateFormat.format("dd MMMM", neededTime).toString()
-                }
-            }
-        } else {
-            DateFormat.format("yyyy dd MMMM", neededTime).toString()
-        }
-    }
-
-    fun humanReadableByteCountSI(bytes: Long): String? {
-        val s = if (bytes < 0) "-" else ""
-        var b =
-            if (bytes == Long.MIN_VALUE) Long.MAX_VALUE else abs(bytes)
-        return if (b < 1000L) "$bytes Б" else if (b < 999950L) String.format(
-            "%s%.1f КБ",
-            s,
-            b / 1e3
-        ) else if (1000.let { b /= it; b } < 999950L) String.format(
-            "%s%.1f МБ",
-            s,
-            b / 1e3
-        ) else if (1000.let { b /= it; b } < 999950L) String.format(
-            "%s%.1f ГБ",
-            s,
-            b / 1e3
-        ) else if (1000.let { b /= it; b } < 999950L) String.format(
-            "%s%.1f ТБ",
-            s,
-            b / 1e3
-        ) else if (1000.let { b /= it; b } < 999950L) String.format(
-            "%s%.1f ПБ",
-            s,
-            b / 1e3
-        ) else String.format("%s%.1f ЭБ", s, b / 1e6)
     }
 }

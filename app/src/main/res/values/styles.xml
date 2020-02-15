@@ -1,11 +1,35 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/colorPrimary</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="actionBarStyle">@style/ToolBarStyle</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+    </style>
+
+    <style name="DocListItemTitleTextAppearence" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">17sp</item>
+        <item name="android:textColor">#000000</item>
+    </style>
+
+    <style name="DocListItemSubtitleTextAppearence" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">#818C99</item>
+    </style>
+
+    <style name="ToolBarStyle" parent="Widget.AppCompat.ActionBar">
+        <item name="elevation">0dp</item>
+        <item name="height">64dp</item>
+        <item name="titleTextStyle">@style/ToolBarTextAppearence</item>
+    </style>
+
+    <style name="ToolBarTextAppearence" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textSize">24sp</item>
     </style>
 
 </resources>

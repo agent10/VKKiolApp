@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">VKKiolApp</string>
+    <string name="app_name">Документы</string>
 
     <integer name="com_vk_sdk_AppId">7320681</integer>
 </resources>
