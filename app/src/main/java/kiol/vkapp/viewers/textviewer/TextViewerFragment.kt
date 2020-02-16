@@ -21,18 +21,20 @@ import kiol.vkapp.R
 import kiol.vkapp.ViewerNotAvailable
 import kiol.vkapp.commondata.domain.DocItem
 import kiol.vkapp.utils.SimpleTxtFileLoader
+import timber.log.Timber
 import java.util.*
+import kotlin.system.measureTimeMillis
 
 
 class TextViewerViewModel(app: Application) : AndroidViewModel(app) {
 
     private val fileLoader = SimpleTxtFileLoader(app)
 
-    fun load(url: String, docId: Int): Flowable<String> {
+    fun load(url: String, docId: Int): Flowable<List<String>> {
         return fileLoader.loadDocTxtFile(url, docId).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
     }
 
-    private fun SimpleTxtFileLoader.loadDocTxtFile(url: String, docId: Int): Flowable<String> {
+    private fun SimpleTxtFileLoader.loadDocTxtFile(url: String, docId: Int): Flowable<List<String>> {
         return loadTxtFile(url, UUID.nameUUIDFromBytes(docId.toString().toByteArray()).toString() + "vkkiol")
     }
 }
@@ -71,7 +73,8 @@ class TextViewerFragment : Fragment(R.layout.text_viewer_fragment_layout) {
             disposable.add(viewModel.load(url, id).doOnEach {
                 progressBar.visibility = View.INVISIBLE
             }.subscribe({
-                textList.adapter = StringsAdapter(it.lines())
+                val adapter = StringsAdapter(it)
+                textList.adapter = adapter
             }, {
                 showError(view)
             }))

@@ -15,8 +15,6 @@ class DragToDismissFrameLayout @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
-    var enableDismiss = true
-
     var dissmissHandler: () -> Unit = {}
 
     private var lastDownY = 0f
@@ -24,7 +22,6 @@ class DragToDismissFrameLayout @JvmOverloads constructor(
     private var lastAnim: ViewPropertyAnimator? = null
 
     private var blockTouhes = false
-
 
     override fun onInterceptTouchEvent(event: MotionEvent?): Boolean {
         Timber.d("kiol onInterceptTouchEvent, $event")
