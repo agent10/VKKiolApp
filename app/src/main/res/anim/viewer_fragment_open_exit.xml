@@ -11,8 +11,7 @@
         android:startOffset="35"
         android:toAlpha="0.0" />
     <translate
-        android:duration="300"
-        android:fromYDelta="0%p"
+        android:duration="250"
         android:interpolator="@anim/fragment_fast_out_extra_slow_in"
-        android:toYDelta="100%p" />
+        android:toYDelta="-100%p" />
 </set>

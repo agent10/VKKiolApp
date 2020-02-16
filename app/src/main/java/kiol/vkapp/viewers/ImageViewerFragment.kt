@@ -5,6 +5,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.bumptech.glide.Glide
+import kiol.vkapp.DragToDismissFrameLayout
 import kiol.vkapp.R
 import kiol.vkapp.ViewerNotAvailable
 import kiol.vkapp.commondata.domain.DocItem
@@ -26,6 +27,12 @@ class ImageViewerFragment : Fragment(R.layout.image_viewer_fragment_layout) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        val dismissFrameLayout = view.findViewById<DragToDismissFrameLayout>(R.id.dismissLayout)
+
+        dismissFrameLayout.dissmissHandler = {
+            parentFragmentManager.popBackStack()
+        }
 
         arguments?.getString(URL)?.let {
             val circularProgressDrawable = CircularProgressDrawable(requireContext()).apply {
