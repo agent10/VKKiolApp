@@ -110,15 +110,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    //    override fun onBackPressed() {
-    //        if (supportFragmentManager.fragments.isNotEmpty()) {
-    //            supportFragmentManager.beginTransaction().remove(supportFragmentManager.fragments.first())
-    //                .commitAllowingStateLoss()
-    //        } else {
-    //            super.onBackPressed()
-    //        }
-    //    }
-
     private fun showPopup(v: View, docItem: DocItem, adapter: DocsAdapter) {
         PopupMenu(this, v).apply {
             setOnMenuItemClickListener {

@@ -63,7 +63,7 @@ fun ImageView.setVKPreview2(docItem: DocItem) {
 
             best?.let {
                 Glide.with(this).load(it.src).into(this)
-//                load(it.src)
+                //                load(it.src)
             }
         }
     } ?: run {
@@ -90,6 +90,7 @@ class DocsAdapter(val onBind: (DocViewHolder, DocItem) -> Unit) : ListAdapter<Do
         val imageTv = v.findViewById<ImageView>(R.id.docImageIv)
         val infoTv = v.findViewById<TextView>(R.id.docInfoTv)
         val tagsTv = v.findViewById<TextView>(R.id.docTagsTv)
+        val tagsBadgeImg = v.findViewById<ImageView>(R.id.docTagsImg)
         val menuBtn = v.findViewById<ImageButton>(R.id.docMenuBtn)
     }
 
@@ -114,10 +115,12 @@ class DocsAdapter(val onBind: (DocViewHolder, DocItem) -> Unit) : ListAdapter<Do
         holder.titleTv.text = item.docTitle
         holder.infoTv.text = item.docInfo
         if (item.tags.isEmpty()) {
+            holder.tagsBadgeImg.visibility = View.GONE
             holder.tagsTv.visibility = View.GONE
         } else {
             holder.tagsTv.text = item.tags
             holder.tagsTv.visibility = View.VISIBLE
+            holder.tagsBadgeImg.visibility = View.VISIBLE
         }
 
         onBind(holder, item)

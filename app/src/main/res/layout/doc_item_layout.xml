@@ -52,21 +52,32 @@
         android:id="@+id/docTagsTv"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
         android:ellipsize="end"
         android:maxLines="1"
+        android:layout_marginStart="4dp"
         android:textAppearance="@style/DocListItemSubtitleTextAppearence"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/docMenuBtn"
-        app:layout_constraintStart_toEndOf="@id/docImageIv"
+        app:layout_constraintStart_toEndOf="@id/docTagsImg"
         app:layout_constraintTop_toBottomOf="@id/docInfoTv" />
+
+    <ImageView
+        android:id="@+id/docTagsImg"
+        android:layout_width="11dp"
+        android:layout_height="11dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginStart="12dp"
+        android:src="@drawable/ic_tag_badge"
+        app:layout_constraintBottom_toBottomOf="@id/docTagsTv"
+        app:layout_constraintStart_toEndOf="@id/docImageIv"
+        app:layout_constraintTop_toTopOf="@id/docTagsTv" />
 
     <ImageButton
         android:id="@+id/docMenuBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="8dp"
         android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
         android:src="@drawable/ic_doc_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
