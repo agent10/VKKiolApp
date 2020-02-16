@@ -1,15 +1,10 @@
 package kiol.vkapp.viewers
 
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.P
 import android.os.Bundle
 import android.view.View
-import android.widget.ImageView
 import androidx.fragment.app.Fragment
-import coil.ImageLoader
-import coil.api.load
-import coil.decode.GifDecoder
-import coil.decode.ImageDecoderDecoder
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable
+import com.bumptech.glide.Glide
 import kiol.vkapp.R
 import kiol.vkapp.ViewerNotAvailable
 import kiol.vkapp.commondata.domain.DocItem
@@ -31,17 +26,15 @@ class ImageViewerFragment : Fragment(R.layout.image_viewer_fragment_layout) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val imageLoader = ImageLoader(requireContext()) {
-            componentRegistry {
-                if (SDK_INT >= P) {
-                    add(ImageDecoderDecoder())
-                } else {
-                    add(GifDecoder())
-                }
-            }
-        }
+
         arguments?.getString(URL)?.let {
-            view.findViewById<ImageView>(R.id.photo_view).load(it, imageLoader)
+            val circularProgressDrawable = CircularProgressDrawable(requireContext()).apply {
+                setStyle(CircularProgressDrawable.DEFAULT)
+                start()
+            }
+
+            Glide.with(this).load(it).placeholder(circularProgressDrawable).error(R.drawable.ic_error_image)
+                .into(view.findViewById(R.id.photo_view))
         }
     }
 }

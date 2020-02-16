@@ -13,7 +13,6 @@ import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import coil.api.load
 import com.bumptech.glide.Glide
 import kiol.vkapp.commondata.data.VKDocItem
 import kiol.vkapp.commondata.domain.DocItem

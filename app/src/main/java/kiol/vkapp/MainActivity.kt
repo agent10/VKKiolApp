@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
+import androidx.fragment.app.FragmentTransaction
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -89,9 +90,11 @@ class MainActivity : AppCompatActivity() {
         val contentViewerFactory = ContentViewerFactory()
         try {
             contentViewerFactory.create(docItem)
-            supportFragmentManager.beginTransaction().replace(
+            supportFragmentManager.beginTransaction()
+                .setCustomAnimations(R.anim.viewer_fragment_open_enter, R.anim.viewer_fragment_open_enter, R.anim.viewer_fragment_open_exit, R.anim.viewer_fragment_open_exit).replace(
                 R.id.contentViewer, contentViewerFactory.create(docItem)
-            ).commitAllowingStateLoss()
+            ).addToBackStack(null)
+                .commitAllowingStateLoss()
         } catch (e: Exception) {
             Timber.w("Can't create content viewer, $e")
             val request =
@@ -107,14 +110,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        if (supportFragmentManager.fragments.isNotEmpty()) {
-            supportFragmentManager.beginTransaction().remove(supportFragmentManager.fragments.first())
-                .commitAllowingStateLoss()
-        } else {
-            super.onBackPressed()
-        }
-    }
+    //    override fun onBackPressed() {
+    //        if (supportFragmentManager.fragments.isNotEmpty()) {
+    //            supportFragmentManager.beginTransaction().remove(supportFragmentManager.fragments.first())
+    //                .commitAllowingStateLoss()
+    //        } else {
+    //            super.onBackPressed()
+    //        }
+    //    }
 
     private fun showPopup(v: View, docItem: DocItem, adapter: DocsAdapter) {
         PopupMenu(this, v).apply {
