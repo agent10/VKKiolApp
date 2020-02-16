@@ -118,7 +118,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun showPopup(v: View, docItem: DocItem, adapter: DocsAdapter) {
         PopupMenu(this, v).apply {
-            // MainActivity implements OnMenuItemClickListener
             setOnMenuItemClickListener {
                 when (it.itemId) {
                     R.id.renameMenu -> {
@@ -179,7 +178,9 @@ class MainActivity : AppCompatActivity() {
             swiper.isRefreshing = false
         }.subscribe({
             Timber.d("getDocs success $it")
-            adapter.submitList(it)
+            adapter.submitList(it) {
+                docs.scrollToPosition(0)
+            }
         }, {
             Timber.e("getDocs failed $it")
         })

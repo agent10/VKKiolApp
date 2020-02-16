@@ -4,7 +4,7 @@ import androidx.fragment.app.Fragment
 import kiol.vkapp.commondata.data.VKDocItem.VKDocType.*
 import kiol.vkapp.commondata.domain.DocItem
 import kiol.vkapp.viewers.ImageViewerFragment
-import kiol.vkapp.viewers.TextViewerFragment
+import kiol.vkapp.viewers.textviewer.TextViewerFragment
 
 class ViewerNotAvailable(docItem: DocItem) : Exception("Viewer not available for type: ${docItem.type}")
 

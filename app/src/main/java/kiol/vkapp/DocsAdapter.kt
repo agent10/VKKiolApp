@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.api.load
+import com.bumptech.glide.Glide
 import kiol.vkapp.commondata.data.VKDocItem
 import kiol.vkapp.commondata.domain.DocItem
 
@@ -62,7 +63,8 @@ fun ImageView.setVKPreview2(docItem: DocItem) {
             }
 
             best?.let {
-                load(it.src)
+                Glide.with(this).load(it.src).into(this)
+//                load(it.src)
             }
         }
     } ?: run {
@@ -77,7 +79,10 @@ class DocsAdapter(val onBind: (DocViewHolder, DocItem) -> Unit) : ListAdapter<Do
         private val diffUtil = object : DiffUtil.ItemCallback<DocItem>() {
             override fun areItemsTheSame(oldItem: DocItem, newItem: DocItem) = oldItem.id == newItem.id
 
-            override fun areContentsTheSame(oldItem: DocItem, newItem: DocItem) = oldItem == newItem
+            override fun areContentsTheSame(oldItem: DocItem, newItem: DocItem): Boolean {
+                val a = oldItem.equals(newItem)
+                return a
+            }
         }
     }
 
