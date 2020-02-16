@@ -1,98 +1,56 @@
 package kiol.vkapp
 
-import android.app.Activity
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
-import android.content.res.ColorStateList
-import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.*
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
-import androidx.core.content.ContextCompat
-import androidx.core.view.doOnLayout
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import coil.api.load
-import com.hannesdorfmann.adapterdelegates4.ListDelegationAdapter
-import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegate
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.vk.api.sdk.VK
 import com.vk.api.sdk.auth.VKAccessToken
 import com.vk.api.sdk.auth.VKAuthCallback
 import com.vk.api.sdk.auth.VKScope
 import io.reactivex.android.schedulers.AndroidSchedulers
-import kiol.vkapp.commondata.data.VKDocItem.VKDocType.*
 import kiol.vkapp.commondata.domain.DocItem
-import kiol.vkapp.commondata.domain.DocsUseCase
+import kiol.vkapp.commondata.domain.docs.DocsUseCase
 import timber.log.Timber
-
-
-fun ImageView.setVKPreview(docItem: DocItem) {
-    val bgdColor = when (docItem.type) {
-        is Text, is Audio, is Unknown, is Image, is Gif -> R.color.doc_type_color_1
-        is Zip -> R.color.doc_type_color_2
-        is Video -> R.color.doc_type_color_3
-        is Ebook -> R.color.doc_type_color_4
-    }
-
-    val icon = when (docItem.type) {
-        is Text -> R.drawable.ic_doc_type_text
-        is Audio -> R.drawable.ic_doc_type_audio
-        is Ebook -> R.drawable.ic_doc_type_ebook
-        is Video -> R.drawable.ic_doc_type_video
-        is Zip -> R.drawable.ic_doc_type_zip
-        else -> R.drawable.ic_doc_type_other
-    }
-
-    val shapeDrawable = ContextCompat.getDrawable(context, R.drawable.doc_image_bgd) as GradientDrawable
-    shapeDrawable.color = ColorStateList.valueOf(ContextCompat.getColor(context, bgdColor))
-    background = shapeDrawable
-
-    val vkPreviews = docItem.images
-    vkPreviews?.let {
-        doOnLayout {
-            val tw = measuredWidth
-            val th = measuredHeight
-
-            scaleType = ImageView.ScaleType.CENTER_CROP
-
-            var best = vkPreviews.sizes.firstOrNull()
-            vkPreviews.sizes.forEach {
-                val ib = best
-                if (ib == null) {
-                    best = it
-                } else {
-                    if (it.width >= it.height) {
-                        if (it.width <= tw && it.width > ib.width) best = it
-                    } else {
-                        if (it.height <= th && it.height > ib.height) best = it
-                    }
-                }
-            }
-
-            best?.let {
-                load(it.src)
-            }
-        }
-    } ?: run {
-        scaleType = ImageView.ScaleType.CENTER_INSIDE
-        setImageResource(icon)
-    }
-}
-
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var docsUseCase: DocsUseCase
+    private val docsUseCase = DocsUseCase()
 
-    lateinit var adapter: ListDelegationAdapter<List<DocItem>>
+    lateinit var docs: RecyclerView
+    lateinit var adapter: DocsAdapter
 
     lateinit var contentViewer: FrameLayout
+
+    private lateinit var swiper: SwipeRefreshLayout
+
+    private val scrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+
+            if (dy > 0) {
+                val lastPos = (docs.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                val count = (docs.layoutManager as LinearLayoutManager).itemCount
+
+                if (count - lastPos <= 10) {
+                    getMoreDocs()
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,44 +58,30 @@ class MainActivity : AppCompatActivity() {
 
         contentViewer = findViewById(R.id.contentViewer)
 
+        swiper = findViewById(R.id.swipetorefresh)
+        swiper.setOnRefreshListener {
+            getDocs()
+        }
+
         if (VK.isLoggedIn()) {
             getDocs()
         } else {
             VK.login(this, arrayListOf(VKScope.DOCS, VKScope.OFFLINE))
         }
 
-        docsUseCase = DocsUseCase()
+        docs = findViewById(R.id.docs)
+        docs.addOnScrollListener(scrollListener)
 
-        val docs = findViewById<RecyclerView>(R.id.docs)
-
-        adapter = ListDelegationAdapter<List<DocItem>>(adapterDelegate(R.layout.doc_item_layout) {
-
-            val titleTv = findViewById<TextView>(R.id.docTitleTv)
-            val imageTv = findViewById<ImageView>(R.id.docImageIv)
-            val infoTv = findViewById<TextView>(R.id.docInfoTv)
-            val tagsTv = findViewById<TextView>(R.id.docTagsTv)
-            val menuBtn = findViewById<ImageButton>(R.id.docMenuBtn)
-            bind {
-                imageTv.setVKPreview(item)
-                imageTv.clipToOutline = true
-
-                imageTv.setOnClickListener {
-                    openContent(item)
-                }
-
-                menuBtn.setOnClickListener {
-                    showPopup(it, item, adapter)
-                }
-                titleTv.text = item.docTitle
-                infoTv.text = item.docInfo
-                if (item.tags.isEmpty()) {
-                    tagsTv.visibility = View.GONE
-                } else {
-                    tagsTv.text = item.tags
-                    tagsTv.visibility = View.VISIBLE
-                }
+        adapter = DocsAdapter { vh, item ->
+            vh.imageTv.setOnClickListener {
+                openContent(item)
             }
-        })
+
+            vh.menuBtn.setOnClickListener {
+                showPopup(it, item, adapter)
+            }
+        }
+
         docs.adapter = adapter
     }
 
@@ -172,7 +116,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showPopup(v: View, docItem: DocItem, adapter: ListDelegationAdapter<List<DocItem>>) {
+    private fun showPopup(v: View, docItem: DocItem, adapter: DocsAdapter) {
         PopupMenu(this, v).apply {
             // MainActivity implements OnMenuItemClickListener
             setOnMenuItemClickListener {
@@ -182,9 +126,11 @@ class MainActivity : AppCompatActivity() {
                     }
                     R.id.removeMenu -> {
                         docsUseCase.removeDoc(docItem)
-                        val index = adapter.items.indexOf(docItem)
-                        (adapter.items as MutableList).removeAt(index)
-                        adapter.notifyItemRemoved(index)
+
+                        val nl = adapter.currentList.toMutableList().apply {
+                            remove(docItem)
+                        }
+                        adapter.submitList(nl)
                     }
                 }
                 true
@@ -194,7 +140,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showRenameDialog(docItem: DocItem, adapter: ListDelegationAdapter<List<DocItem>>) {
+    private fun showRenameDialog(docItem: DocItem, adapter: DocsAdapter) {
         val view = LayoutInflater.from(this).inflate(R.layout.rename_dialog_layout, null)
         val editText = view.findViewById<EditText>(R.id.renameET)
         editText.setText(docItem.docTitle)
@@ -202,12 +148,11 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Название документа")
             .setView(view)
             .setPositiveButton("Save") { _, _ ->
-                val index = adapter.items.indexOf(docItem)
-                val newDocItem = docItem.copy(docTitle = editText.text.toString())
-                (adapter.items as MutableList)[index] = newDocItem
-                adapter.notifyItemChanged(index)
-                docsUseCase.updateDocName(newDocItem)
-
+                val ndi = docItem.copy(docTitle = editText.text.toString())
+                docsUseCase.updateDocName(ndi)
+                adapter.submitList(adapter.currentList.toMutableList().apply {
+                    set(indexOf(docItem), ndi)
+                })
             }
             .setNegativeButton("Cancel", null)
             .create()
@@ -230,12 +175,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getDocs() {
-        val d = DocsUseCase().getDocs().observeOn(AndroidSchedulers.mainThread()).subscribe({
+        val d = docsUseCase.getDocs().observeOn(AndroidSchedulers.mainThread()).doOnComplete {
+            swiper.isRefreshing = false
+        }.subscribe({
             Timber.d("getDocs success $it")
-            adapter.items = it
-            adapter.notifyDataSetChanged()
+            adapter.submitList(it)
         }, {
             Timber.e("getDocs failed $it")
         })
+    }
+
+    private fun getMoreDocs() {
+        if (docsUseCase.canLoadMore()) {
+            val d = docsUseCase.loadMore().observeOn(AndroidSchedulers.mainThread()).doOnComplete {
+                swiper.isRefreshing = false
+            }.subscribe({
+                Timber.d("loadMoreDocs success $it")
+                adapter.submitList(it)
+            }, {
+                Timber.e("loadMoreDocs failed $it")
+            })
+        }
     }
 }

@@ -59,7 +59,11 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
 
     implementation 'com.github.chrisbanes:PhotoView:2.0.0'
+
     implementation 'com.hannesdorfmann:adapterdelegates4-kotlin-dsl:4.2.0'
+    implementation 'com.hannesdorfmann:adapterdelegates4-pagination:4.2.0'
+
+    implementation "androidx.paging:paging-runtime-ktx:2.1.1"
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
