@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -71,7 +72,11 @@ fun ImageView.setVKPreview(docItem: DocItem) {
     }
 }
 
-class DocsAdapter(val onBind: (DocViewHolder, DocItem) -> Unit) : ListAdapter<DocItem, RecyclerView.ViewHolder>(diffUtil) {
+class DocsAdapter(
+    recyclerView: RecyclerView,
+    val onBind: (DocViewHolder, DocItem) -> Unit,
+    val loadMore: () -> Unit
+) : ListAdapter<DocItem, RecyclerView.ViewHolder>(diffUtil) {
 
     companion object {
         private val diffUtil = object : DiffUtil.ItemCallback<DocItem>() {
@@ -82,8 +87,26 @@ class DocsAdapter(val onBind: (DocViewHolder, DocItem) -> Unit) : ListAdapter<Do
             }
         }
 
-        private val VIEW_TYPE_ITEM = 0
-        private val VIEW_TYPE_LOADING = 1
+        private const val VIEW_TYPE_ITEM = 0
+        private const val VIEW_TYPE_LOADING = 1
+
+        private const val LOAD_MORE_THRESHOLD = 10
+    }
+
+    private val scrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+
+            if (dy > 0) {
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val lastPos = layoutManager.findLastVisibleItemPosition()
+                val count = layoutManager.itemCount
+
+                if (count - lastPos <= LOAD_MORE_THRESHOLD) {
+                    loadMore.invoke()
+                }
+            }
+        }
     }
 
     class DocViewHolder(v: View) : RecyclerView.ViewHolder(v) {
@@ -100,7 +123,7 @@ class DocsAdapter(val onBind: (DocViewHolder, DocItem) -> Unit) : ListAdapter<Do
     var refreshing = false
         set(value) {
             field = value
-            if(value) {
+            if (value) {
                 notifyItemChanged(itemCount)
             } else {
                 notifyItemRemoved(itemCount)
@@ -109,6 +132,16 @@ class DocsAdapter(val onBind: (DocViewHolder, DocItem) -> Unit) : ListAdapter<Do
 
     init {
         setHasStableIds(true)
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        recyclerView.addOnScrollListener(scrollListener)
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        recyclerView.removeOnScrollListener(scrollListener)
     }
 
     override fun getItemViewType(position: Int): Int {

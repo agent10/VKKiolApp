@@ -1,24 +1,14 @@
 package kiol.vkapp
 
-import android.app.DownloadManager
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.graphics.Rect
-import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
-import android.widget.ProgressBar
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.vk.api.sdk.VK
@@ -43,43 +33,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var swiper: SwipeRefreshLayout
 
-
-    private val scrollListener = object : RecyclerView.OnScrollListener() {
-        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-            super.onScrolled(recyclerView, dx, dy)
-
-            if (dy > 0) {
-                val lastPos = (docs.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
-                val count = (docs.layoutManager as LinearLayoutManager).itemCount
-
-                if (count - lastPos <= 10) {
-                    getMoreDocs()
-                }
-            }
-        }
-    }
-
-    private val onDownloadComplete: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(
-            context: Context,
-            intent: Intent
-        ) {
-            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-            val item = downloadIdsList.firstOrNull { it.first == id }
-            if (item != null) {
-                Toast.makeText(this@MainActivity, "Download Completed:\n${item.second}", Toast.LENGTH_SHORT).show()
-                downloadIdsList.removeAll {
-                    it.first == item.first
-                }
-            }
-        }
-    }
-
-    private val downloadIdsList = arrayListOf<Pair<Long, String>>()
+    private lateinit var docsDownloadManager: DocsDownloadManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        docsDownloadManager = DocsDownloadManager(application)
 
         contentViewer = findViewById(R.id.contentViewer)
 
@@ -97,9 +57,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         docs = findViewById(R.id.docs)
-        docs.addOnScrollListener(scrollListener)
 
-        adapter = DocsAdapter { vh, item ->
+        adapter = DocsAdapter(docs, { vh, item ->
             vh.imageTv.setOnClickListener {
                 openContent(item)
             }
@@ -107,19 +66,21 @@ class MainActivity : AppCompatActivity() {
             vh.menuBtn.setOnClickListener {
                 showPopup(it, item, adapter)
             }
-        }
+        }, {
+            getMoreDocs()
+        })
 
         docs.adapter = adapter
     }
 
     override fun onStart() {
         super.onStart()
-        registerReceiver(onDownloadComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+        docsDownloadManager.register()
     }
 
     override fun onStop() {
         super.onStop()
-        unregisterReceiver(onDownloadComplete)
+        docsDownloadManager.unregister()
     }
 
     private fun openContent(docItem: DocItem) {
@@ -143,17 +104,7 @@ class MainActivity : AppCompatActivity() {
                 .setTitle("Скачивание")
                 .setMessage("Хотите скачать файл?")
                 .setPositiveButton("Скачать") { _, _ ->
-                    val request =
-                        DownloadManager.Request(Uri.parse(docItem.contentUrl))
-                            .setTitle(docItem.docTitle)
-                            .setDescription("Downloading")
-                            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, docItem.docTitle)
-                            .setAllowedOverMetered(true)
-                            .setAllowedOverRoaming(false)
-
-                    val id = (getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
-                    downloadIdsList += Pair(id, docItem.docTitle)
+                    docsDownloadManager.download(docItem)
                 }
                 .setNegativeButton("Отмена", null)
             builder.show()
