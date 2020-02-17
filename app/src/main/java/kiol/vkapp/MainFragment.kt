@@ -1,10 +1,12 @@
 package kiol.vkapp
 
+import android.opengl.Visibility
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
@@ -37,6 +39,7 @@ class MainFragment : Fragment(R.layout.main_fragment_layout) {
         contentViewer = view.findViewById(R.id.contentViewer)
         docs = view.findViewById(R.id.docs)
         swiper = view.findViewById(R.id.swipetorefresh)
+        val notFoundHint = view.findViewById<TextView>(R.id.notFoundHint)
 
 
         swiper.setOnRefreshListener {
@@ -69,6 +72,8 @@ class MainFragment : Fragment(R.layout.main_fragment_layout) {
                     adapter.submitList(it.items) {
                         if (it.initial) {
                             docs.scrollToPosition(0)
+                            adapter.refreshing = it.items.isNotEmpty() && it.hasMore
+                            notFoundHint.visibility = if (it.items.isEmpty()) View.VISIBLE else View.INVISIBLE
                         }
                     }
 

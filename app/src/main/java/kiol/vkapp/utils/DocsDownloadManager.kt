@@ -1,4 +1,4 @@
-package kiol.vkapp
+package kiol.vkapp.utils
 
 import android.app.Application
 import android.app.DownloadManager
