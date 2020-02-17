@@ -18,6 +18,7 @@ class ContentViewerFactory {
             is Text -> TextViewerFragment.create(docItem)
             is Image, is Gif -> ImageViewerFragment.create(docItem)
             is Video -> VideoViewerFragment.create(docItem)
+            is Audio -> VideoViewerFragment.create(docItem)
             else -> throw ViewerNotAvailable(docItem)
         }
     }

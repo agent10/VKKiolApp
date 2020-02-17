@@ -14,6 +14,7 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Log
 import com.google.android.exoplayer2.util.Util
+import kiol.vkapp.DragToDismissFrameLayout
 import kiol.vkapp.R
 import kiol.vkapp.ViewerNotAvailable
 import kiol.vkapp.commondata.domain.DocItem
@@ -21,7 +22,7 @@ import timber.log.Timber
 
 class VideoViewerFragment : Fragment(R.layout.video_viewer_fragment_layout) {
     companion object {
-        private val supportedFormats = listOf("mkv", "mp4", "ogg", "mov", "wav", "mp3", "m4a", "m4v","ts")
+        private val supportedFormats = listOf("mkv", "mp4", "ogg", "mov", "wav", "mp3", "m4a", "m4v", "ts")
         const val URL = "doc_url"
         fun create(docItem: DocItem): VideoViewerFragment {
             if (!supportedFormats.contains(docItem.type.ext.toLowerCase())) {
@@ -40,6 +41,11 @@ class VideoViewerFragment : Fragment(R.layout.video_viewer_fragment_layout) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val dismissFrameLayout = view.findViewById<DragToDismissFrameLayout>(R.id.dismissLayout)
+        dismissFrameLayout.dissmissHandler = {
+            parentFragmentManager.popBackStack()
+        }
+
         val playerView = view.findViewById<PlayerView>(R.id.playerView)
 
         val context = requireContext()
@@ -51,9 +57,6 @@ class VideoViewerFragment : Fragment(R.layout.video_viewer_fragment_layout) {
 
     private fun setupPlayer() {
         exoPlayer?.playWhenReady = true
-
-        //        exoPlayer?.addListener(LoggerExoplayerEvents())
-        //        exoPlayer?.addAnalyticsListener(LoggerAnalytics(defaultTrackSelector))
 
         val uri = Uri.parse(arguments!!.getString(URL))
 
@@ -69,9 +72,7 @@ class VideoViewerFragment : Fragment(R.layout.video_viewer_fragment_layout) {
 
         val type = Util.inferContentType(uri)
         return when (@ContentType type) {
-            C.TYPE_OTHER -> ProgressiveMediaSource.Factory(defaultHttpDataSourceFactory).createMediaSource(
-                uri
-            )
+            C.TYPE_OTHER -> ProgressiveMediaSource.Factory(defaultHttpDataSourceFactory).createMediaSource(uri)
             else -> {
                 Timber.e("Unknown URI format, can't create MediaSource")
                 null
