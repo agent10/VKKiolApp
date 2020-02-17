@@ -4,7 +4,9 @@ import androidx.fragment.app.Fragment
 import kiol.vkapp.commondata.data.VKDocItem.VKDocType.*
 import kiol.vkapp.commondata.domain.DocItem
 import kiol.vkapp.viewers.ImageViewerFragment
+import kiol.vkapp.viewers.VideoViewerFragment
 import kiol.vkapp.viewers.textviewer.TextViewerFragment
+import timber.log.Timber
 
 class ViewerNotAvailable(docItem: DocItem) : Exception("Viewer not available for type: ${docItem.type}")
 
@@ -15,6 +17,7 @@ class ContentViewerFactory {
         return when (docItem.type) {
             is Text -> TextViewerFragment.create(docItem)
             is Image, is Gif -> ImageViewerFragment.create(docItem)
+            is Video -> VideoViewerFragment.create(docItem)
             else -> throw ViewerNotAvailable(docItem)
         }
     }
