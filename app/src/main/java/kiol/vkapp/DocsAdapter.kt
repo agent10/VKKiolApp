@@ -17,7 +17,7 @@ import com.bumptech.glide.Glide
 import kiol.vkapp.commondata.data.VKDocItem
 import kiol.vkapp.commondata.domain.DocItem
 
-fun ImageView.setVKPreview2(docItem: DocItem) {
+fun ImageView.setVKPreview(docItem: DocItem) {
     val bgdColor = when (docItem.type) {
         is VKDocItem.VKDocType.Text, is VKDocItem.VKDocType.Audio, is VKDocItem.VKDocType.Unknown, is VKDocItem.VKDocType.Image, is VKDocItem.VKDocType.Gif -> R.color.doc_type_color_1
         is VKDocItem.VKDocType.Zip -> R.color.doc_type_color_2
@@ -63,7 +63,6 @@ fun ImageView.setVKPreview2(docItem: DocItem) {
 
             best?.let {
                 Glide.with(this).load(it.src).into(this)
-                //                load(it.src)
             }
         }
     } ?: run {
@@ -72,17 +71,19 @@ fun ImageView.setVKPreview2(docItem: DocItem) {
     }
 }
 
-class DocsAdapter(val onBind: (DocViewHolder, DocItem) -> Unit) : ListAdapter<DocItem, DocsAdapter.DocViewHolder>(diffUtil) {
+class DocsAdapter(val onBind: (DocViewHolder, DocItem) -> Unit) : ListAdapter<DocItem, RecyclerView.ViewHolder>(diffUtil) {
 
     companion object {
         private val diffUtil = object : DiffUtil.ItemCallback<DocItem>() {
             override fun areItemsTheSame(oldItem: DocItem, newItem: DocItem) = oldItem.id == newItem.id
 
             override fun areContentsTheSame(oldItem: DocItem, newItem: DocItem): Boolean {
-                val a = oldItem.equals(newItem)
-                return a
+                return oldItem == newItem
             }
         }
+
+        private val VIEW_TYPE_ITEM = 0
+        private val VIEW_TYPE_LOADING = 1
     }
 
     class DocViewHolder(v: View) : RecyclerView.ViewHolder(v) {
@@ -94,35 +95,64 @@ class DocsAdapter(val onBind: (DocViewHolder, DocItem) -> Unit) : ListAdapter<Do
         val menuBtn = v.findViewById<ImageButton>(R.id.docMenuBtn)
     }
 
+    class ProgressViewHolder(v: View) : RecyclerView.ViewHolder(v)
+
+    var refreshing = false
+        set(value) {
+            field = value
+            if(value) {
+                notifyItemChanged(itemCount)
+            } else {
+                notifyItemRemoved(itemCount)
+            }
+        }
+
     init {
         setHasStableIds(true)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DocViewHolder {
-        return DocViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.doc_item_layout, parent, false))
+    override fun getItemViewType(position: Int): Int {
+        return if (refreshing && position == itemCount - 1) VIEW_TYPE_LOADING else VIEW_TYPE_ITEM
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return when (viewType) {
+            VIEW_TYPE_ITEM -> DocViewHolder(inflater.inflate(R.layout.doc_item_layout, parent, false))
+            VIEW_TYPE_LOADING -> ProgressViewHolder(inflater.inflate(R.layout.doc_item_loading_layout, parent, false))
+            else -> throw IllegalArgumentException("View type not found")
+        }
+    }
+
+    override fun getItemCount(): Int {
+        return if (refreshing) super.getItemCount() + 1 else super.getItemCount()
     }
 
     override fun getItemId(position: Int): Long {
-        return getItem(position).id.toLong()
+        return if (refreshing && position == itemCount - 1) -1 else getItem(position).id.toLong()
     }
 
-    override fun onBindViewHolder(holder: DocViewHolder, position: Int) {
-        val item = getItem(position)
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (holder is DocViewHolder) {
+            val item = getItem(position)
 
-        holder.imageTv.setVKPreview2(item)
-        holder.imageTv.clipToOutline = true
+            holder.imageTv.setVKPreview(item)
+            holder.imageTv.clipToOutline = true
 
-        holder.titleTv.text = item.docTitle
-        holder.infoTv.text = item.docInfo
-        if (item.tags.isEmpty()) {
-            holder.tagsBadgeImg.visibility = View.GONE
-            holder.tagsTv.visibility = View.GONE
-        } else {
-            holder.tagsTv.text = item.tags
-            holder.tagsTv.visibility = View.VISIBLE
-            holder.tagsBadgeImg.visibility = View.VISIBLE
+            holder.titleTv.text = item.docTitle
+            holder.infoTv.text = item.docInfo
+            if (item.tags.isEmpty()) {
+                holder.tagsBadgeImg.visibility = View.GONE
+                holder.tagsTv.visibility = View.GONE
+            } else {
+                holder.tagsTv.text = item.tags
+                holder.tagsTv.visibility = View.VISIBLE
+                holder.tagsBadgeImg.visibility = View.VISIBLE
+            }
+
+            onBind(holder, item)
+        } else if (holder is ProgressViewHolder) {
+
         }
-
-        onBind(holder, item)
     }
 }

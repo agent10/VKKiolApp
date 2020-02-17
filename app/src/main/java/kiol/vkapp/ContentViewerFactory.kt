@@ -14,7 +14,7 @@ class ContentViewerFactory {
 
     @Throws(ViewerNotAvailable::class)
     fun create(docItem: DocItem): Fragment {
-        return when (docItem.type) {
+        return when (val type = docItem.type) {
             is Text -> TextViewerFragment.create(docItem)
             is Image, is Gif -> ImageViewerFragment.create(docItem)
             is Video -> VideoViewerFragment.create(docItem)
