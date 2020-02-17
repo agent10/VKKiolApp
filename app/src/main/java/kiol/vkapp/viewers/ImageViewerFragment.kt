@@ -6,11 +6,10 @@ import androidx.fragment.app.Fragment
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.bumptech.glide.Glide
 import com.github.chrisbanes.photoview.PhotoView
-import kiol.vkapp.DragToDismissFrameLayout
 import kiol.vkapp.R
 import kiol.vkapp.ViewerNotAvailable
 import kiol.vkapp.commondata.domain.DocItem
-import timber.log.Timber
+import kiol.vkapp.widgets.DragToDismissFrameLayout
 
 class ImageViewerFragment : Fragment(R.layout.image_viewer_fragment_layout) {
     companion object {

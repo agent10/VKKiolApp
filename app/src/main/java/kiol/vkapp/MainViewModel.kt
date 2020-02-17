@@ -5,18 +5,13 @@ import androidx.lifecycle.AndroidViewModel
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
 import io.reactivex.processors.PublishProcessor
 import kiol.vkapp.commondata.domain.DocItem
 import kiol.vkapp.commondata.domain.docs.DocsUseCase
+import kiol.vkapp.utils.plusAssign
 import timber.log.Timber
 
-private operator fun CompositeDisposable.plusAssign(d: Disposable) {
-    this.add(d)
-}
-
 class MainViewModel(app: Application) : AndroidViewModel(app) {
-
 
     private val docsUseCase = DocsUseCase()
     private val docsDownloadManager = DocsDownloadManager(app)
@@ -28,7 +23,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     sealed class UIEvent {
         data class DocsLoaded(val items: List<DocItem>, val initial: Boolean, val hasMore: Boolean) : UIEvent()
-        data class DocsError(val e: Throwable) : UIEvent()
+        data class DocsError(val initial: Boolean, val e: Throwable) : UIEvent()
     }
 
     init {
@@ -46,7 +41,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             _uiEvents.onNext(UIEvent.DocsLoaded(it, true, docsUseCase.canLoadMore()))
             Timber.d("getDocs success $it")
         }, {
-            _uiEvents.onNext(UIEvent.DocsError(it))
+            _uiEvents.onNext(UIEvent.DocsError(true, it))
             Timber.e("getDocs failed $it")
         }))
     }
@@ -57,7 +52,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 _uiEvents.onNext(UIEvent.DocsLoaded(it, false, docsUseCase.canLoadMore()))
                 Timber.d("getDocs success $it")
             }, {
-                _uiEvents.onNext(UIEvent.DocsError(it))
+                _uiEvents.onNext(UIEvent.DocsError(false, it))
                 Timber.e("getDocs failed $it")
             }))
             return true

@@ -6,7 +6,6 @@ import kiol.vkapp.commondata.domain.DocItem
 import kiol.vkapp.viewers.ImageViewerFragment
 import kiol.vkapp.viewers.VideoViewerFragment
 import kiol.vkapp.viewers.textviewer.TextViewerFragment
-import timber.log.Timber
 
 class ViewerNotAvailable(docItem: DocItem) : Exception("Viewer not available for type: ${docItem.type}")
 
@@ -14,7 +13,7 @@ class ContentViewerFactory {
 
     @Throws(ViewerNotAvailable::class)
     fun create(docItem: DocItem): Fragment {
-        return when (val type = docItem.type) {
+        return when (docItem.type) {
             is Text -> TextViewerFragment.create(docItem)
             is Image, is Gif -> ImageViewerFragment.create(docItem)
             is Video -> VideoViewerFragment.create(docItem)

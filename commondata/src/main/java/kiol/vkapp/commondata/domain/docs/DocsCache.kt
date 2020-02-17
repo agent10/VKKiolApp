@@ -17,12 +17,12 @@ import timber.log.Timber
 class DocsCache : RxListResponseCache<Nothing, VKDocItem, MutableCollection<VKDocItem>>() {
 
     override fun fetch(param: Nothing?, offset: Long, count: Long): Flowable<MutableCollection<VKDocItem>> {
-        val request = VKRequest<JSONObject>("docs.get")
-            .addParam("return_tags", 1)
-            .addParam("count", count)
-            .addParam("offset", offset)
-
         return Flowable.fromCallable {
+            val request = VKRequest<JSONObject>("docs.get")
+                .addParam("return_tags", 1)
+                .addParam("count", count)
+                .addParam("offset", offset)
+
             VK.executeSync(request)
         }.map {
             val docsResponse: VKResponse<VKListContainerResponse<VKDocItem>> = Gson().fromJson(it.toString())

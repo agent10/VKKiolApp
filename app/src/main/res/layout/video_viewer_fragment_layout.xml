@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<kiol.vkapp.DragToDismissFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/dismissLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF">
@@ -11,6 +10,6 @@
         android:id="@+id/playerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:shutter_background_color="#FFFFFF" />
+        app:shutter_background_color="#FFFFFF"/>
 
-</kiol.vkapp.DragToDismissFrameLayout>
+</FrameLayout>

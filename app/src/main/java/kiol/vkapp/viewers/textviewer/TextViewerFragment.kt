@@ -2,13 +2,9 @@ package kiol.vkapp.viewers.textviewer
 
 import android.app.Application
 import android.os.Bundle
-import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.AndroidViewModel
@@ -21,9 +17,7 @@ import kiol.vkapp.R
 import kiol.vkapp.ViewerNotAvailable
 import kiol.vkapp.commondata.domain.DocItem
 import kiol.vkapp.utils.SimpleTxtFileLoader
-import timber.log.Timber
 import java.util.*
-import kotlin.system.measureTimeMillis
 
 
 class TextViewerViewModel(app: Application) : AndroidViewModel(app) {

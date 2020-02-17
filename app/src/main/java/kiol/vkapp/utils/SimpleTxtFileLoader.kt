@@ -4,21 +4,23 @@ import android.content.Context
 import io.reactivex.Flowable
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import timber.log.Timber
 import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
 import java.util.*
 
 
 class SimpleTxtFileLoader(private val context: Context) {
+
+    companion object {
+        private const val fileSuffix = ".vkkiol"
+    }
 
     private val httpClient = OkHttpClient()
 
     class NoTxtBodyException : Exception("Can't load txt file")
 
     fun loadTxtFile(urlFile: String, customFileUUID: String? = null): Flowable<List<String>> {
-        val uuidFileName = customFileUUID ?: UUID.nameUUIDFromBytes(urlFile.toByteArray()).toString() + ".vkkiol"
+        val uuidFileName = customFileUUID ?: UUID.nameUUIDFromBytes(urlFile.toByteArray()).toString() + fileSuffix
         val cachedFile = File(context.filesDir, uuidFileName)
         return if (cachedFile.exists() && cachedFile.length() != 0L) {
             Flowable.fromCallable { cachedFile.readLines() }
@@ -44,13 +46,5 @@ class SimpleTxtFileLoader(private val context: Context) {
                 } ?: throw NoTxtBodyException()
             }
         }
-    }
-
-    private fun <T> measureBlock(tag: String = "", block: () -> T): T {
-        val t = System.currentTimeMillis()
-        Timber.d("$tag time measuring started")
-        val ret = block()
-        Timber.d("$tag time measured: ${System.currentTimeMillis() - t}")
-        return ret
     }
 }

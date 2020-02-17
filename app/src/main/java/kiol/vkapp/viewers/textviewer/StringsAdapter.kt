@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import kiol.vkapp.R
 
-class StringsAdapter(val text: List<String>) : RecyclerView.Adapter<StringsAdapter.ViewHolder>() {
+class StringsAdapter(private val text: List<String>) : RecyclerView.Adapter<StringsAdapter.ViewHolder>() {
 
     data class ViewHolder(val textView: View) : RecyclerView.ViewHolder(textView)
 

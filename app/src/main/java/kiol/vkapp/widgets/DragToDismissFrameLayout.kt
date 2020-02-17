@@ -1,4 +1,4 @@
-package kiol.vkapp
+package kiol.vkapp.widgets
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -15,6 +15,12 @@ class DragToDismissFrameLayout @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
+    companion object {
+        private const val ANIM_DURATION = 250L
+        private const val ANIM_THRESHOLD_VISIBILITY = 0.1f
+        private const val ANIM_THRESHOLD_DISMISS = 0.2f
+    }
+
     var dissmissHandler: () -> Unit = {}
 
     private var lastDownY = 0f
@@ -22,6 +28,8 @@ class DragToDismissFrameLayout @JvmOverloads constructor(
     private var lastAnim: ViewPropertyAnimator? = null
 
     private var blockTouhes = false
+
+    private val interpolator = OvershootInterpolator()
 
     override fun onInterceptTouchEvent(event: MotionEvent?): Boolean {
         Timber.d("kiol onInterceptTouchEvent, $event")
@@ -42,6 +50,7 @@ class DragToDismissFrameLayout @JvmOverloads constructor(
         return super.onInterceptTouchEvent(event)
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         Timber.d("kiol onTouchEvent, $event")
         event?.let {
@@ -71,7 +80,7 @@ class DragToDismissFrameLayout @JvmOverloads constructor(
                     cancelAnim()
                     blockTouhes = false
 
-                    if (alpha > 0.2f) {
+                    if (alpha > ANIM_THRESHOLD_DISMISS) {
                         restart()
                     } else {
                         dissmissHandler.invoke()
@@ -94,13 +103,13 @@ class DragToDismissFrameLayout @JvmOverloads constructor(
     }
 
     private fun restart() {
-        lastAnim = animate().alpha(1.0f).y(0f).setInterpolator(OvershootInterpolator()).apply {
-            duration = 250
+        lastAnim = animate().alpha(1.0f).y(0f).setInterpolator(interpolator).apply {
+            duration = ANIM_DURATION
         }
     }
 
     private fun setAlphaValue() {
-        alpha = max(1.0f - abs(y) / (measuredHeight / 2), 0.1f)
+        alpha = max(1.0f - abs(y) / (measuredHeight / 2), ANIM_THRESHOLD_VISIBILITY)
     }
 
     private fun cancelAnim() {

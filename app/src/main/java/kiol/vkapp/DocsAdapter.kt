@@ -1,79 +1,19 @@
 package kiol.vkapp
 
-import android.content.res.ColorStateList
-import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.ContextCompat
-import androidx.core.view.doOnLayout
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import kiol.vkapp.commondata.data.VKDocItem
 import kiol.vkapp.commondata.domain.DocItem
-
-fun ImageView.setVKPreview(docItem: DocItem) {
-    val bgdColor = when (docItem.type) {
-        is VKDocItem.VKDocType.Text, is VKDocItem.VKDocType.Audio, is VKDocItem.VKDocType.Unknown, is VKDocItem.VKDocType.Image, is VKDocItem.VKDocType.Gif -> R.color.doc_type_color_1
-        is VKDocItem.VKDocType.Zip -> R.color.doc_type_color_2
-        is VKDocItem.VKDocType.Video -> R.color.doc_type_color_3
-        is VKDocItem.VKDocType.Ebook -> R.color.doc_type_color_4
-    }
-
-    val icon = when (docItem.type) {
-        is VKDocItem.VKDocType.Text -> R.drawable.ic_doc_type_text
-        is VKDocItem.VKDocType.Audio -> R.drawable.ic_doc_type_audio
-        is VKDocItem.VKDocType.Ebook -> R.drawable.ic_doc_type_ebook
-        is VKDocItem.VKDocType.Video -> R.drawable.ic_doc_type_video
-        is VKDocItem.VKDocType.Zip -> R.drawable.ic_doc_type_zip
-        else -> R.drawable.ic_doc_type_other
-    }
-
-    val shapeDrawable = ContextCompat.getDrawable(context, R.drawable.doc_image_bgd) as GradientDrawable
-    shapeDrawable.color = ColorStateList.valueOf(ContextCompat.getColor(context, bgdColor))
-    background = shapeDrawable
-
-    setImageDrawable(null)
-    val vkPreviews = docItem.images
-    vkPreviews?.let {
-        doOnLayout {
-            val tw = measuredWidth
-            val th = measuredHeight
-
-            scaleType = ImageView.ScaleType.CENTER_CROP
-
-            var best = vkPreviews.sizes.firstOrNull()
-            vkPreviews.sizes.forEach {
-                val ib = best
-                if (ib == null) {
-                    best = it
-                } else {
-                    if (it.width >= it.height) {
-                        if (it.width <= tw && it.width > ib.width) best = it
-                    } else {
-                        if (it.height <= th && it.height > ib.height) best = it
-                    }
-                }
-            }
-
-            best?.let {
-                Glide.with(this).load(it.src).into(this)
-            }
-        }
-    } ?: run {
-        scaleType = ImageView.ScaleType.CENTER_INSIDE
-        setImageResource(icon)
-    }
-}
+import kiol.vkapp.utils.setVKPreview
 
 class DocsAdapter(
-    recyclerView: RecyclerView,
     val onBind: (DocViewHolder, DocItem) -> Unit,
     val loadMore: () -> Unit
 ) : ListAdapter<DocItem, RecyclerView.ViewHolder>(diffUtil) {
@@ -110,12 +50,12 @@ class DocsAdapter(
     }
 
     class DocViewHolder(v: View) : RecyclerView.ViewHolder(v) {
-        val titleTv = v.findViewById<TextView>(R.id.docTitleTv)
-        val imageTv = v.findViewById<ImageView>(R.id.docImageIv)
-        val infoTv = v.findViewById<TextView>(R.id.docInfoTv)
-        val tagsTv = v.findViewById<TextView>(R.id.docTagsTv)
-        val tagsBadgeImg = v.findViewById<ImageView>(R.id.docTagsImg)
-        val menuBtn = v.findViewById<ImageButton>(R.id.docMenuBtn)
+        val titleTv: TextView = v.findViewById(R.id.docTitleTv)
+        val imageTv: ImageView = v.findViewById(R.id.docImageIv)
+        val infoTv: TextView = v.findViewById(R.id.docInfoTv)
+        val tagsTv: TextView = v.findViewById(R.id.docTagsTv)
+        val tagsBadgeImg: ImageView = v.findViewById(R.id.docTagsImg)
+        val menuBtn: ImageButton = v.findViewById(R.id.docMenuBtn)
     }
 
     class ProgressViewHolder(v: View) : RecyclerView.ViewHolder(v)
@@ -184,8 +124,6 @@ class DocsAdapter(
             }
 
             onBind(holder, item)
-        } else if (holder is ProgressViewHolder) {
-
         }
     }
 }

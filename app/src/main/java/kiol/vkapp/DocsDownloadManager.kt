@@ -9,8 +9,6 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Environment
 import android.widget.Toast
-import androidx.core.content.ContextCompat.getSystemService
-import androidx.lifecycle.LifecycleOwner
 import kiol.vkapp.commondata.domain.DocItem
 
 class DocsDownloadManager(private val app: Application) {

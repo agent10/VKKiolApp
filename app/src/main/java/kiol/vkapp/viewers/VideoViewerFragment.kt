@@ -12,9 +12,7 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
-import com.google.android.exoplayer2.util.Log
 import com.google.android.exoplayer2.util.Util
-import kiol.vkapp.DragToDismissFrameLayout
 import kiol.vkapp.R
 import kiol.vkapp.ViewerNotAvailable
 import kiol.vkapp.commondata.domain.DocItem
@@ -40,11 +38,6 @@ class VideoViewerFragment : Fragment(R.layout.video_viewer_fragment_layout) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        val dismissFrameLayout = view.findViewById<DragToDismissFrameLayout>(R.id.dismissLayout)
-        dismissFrameLayout.dissmissHandler = {
-            parentFragmentManager.popBackStack()
-        }
 
         val playerView = view.findViewById<PlayerView>(R.id.playerView)
 
