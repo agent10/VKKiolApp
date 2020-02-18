@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">TaskB</string>
+    <string name="permission_rational">Camera is required for barcode scanning</string>
+    <string name="camera_open_failed">Camera failed, try restart app</string>
 </resources>

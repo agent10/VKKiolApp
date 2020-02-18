@@ -1,4 +1,10 @@
 <resources>
 
     <style name="AppTheme" parent="VKKiolAppTheme" />
+
+    <style name="PermissionRationalDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
+        <!--        <item name="android:background">@color/main_dark_color</item>-->
+        <item name="android:textColor">#FFFFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFFFF</item>
+    </style>
 </resources>
