@@ -24,7 +24,10 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
+import kiol.vkapp.taskb.camera.QrOverlay
 import ru.timepad.domain.qr.QRBarRecognizer
 import timber.log.Timber
 import java.lang.IllegalStateException
@@ -137,6 +140,8 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
 
     private lateinit var qrBarRecognizer: QRBarRecognizer
 
+    private lateinit var qrOverlay: QrOverlay
+
     //    @Inject
     //    lateinit var sharedMainViewModel: SharedMainViewModel
 
@@ -147,10 +152,19 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
 
         val app = context?.applicationContext as TheApp
         qrBarRecognizer = app.qrBarRecognizer
+
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         textureView = view.findViewById(R.id.texture)
+        qrOverlay = view.findViewById(R.id.qrOverlay)
+
+        val d = qrBarRecognizer.subscribe().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
+            qrOverlay.drawQr(it.points)
+        }, {
+            Timber.e("Recognize error")
+        })
 
         //        disposable.add(sharedMainViewModel.uiEvents.subscribe {
         //            if (it is SharedMainViewModel.UIEvent.FlashTurn) {
@@ -537,6 +551,7 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
         matrix.preScale(scale, scale, centerX, centerY)
         textureView.setTransform(matrix)
     }
+
 
     companion object {
 

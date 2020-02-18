@@ -19,12 +19,13 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.contentViewer, CameraFragment.newInstance()).commit()
 
-        val app = applicationContext as TheApp
-        val qrBarRecognizer = app.qrBarRecognizer
-        val d = qrBarRecognizer.subscribe().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
-            Toast.makeText(this, it.text, Toast.LENGTH_SHORT).show()
-        }, {
-            Timber.e("Recognize error")
-        })
+//        val app = applicationContext as TheApp
+//        val qrBarRecognizer = app.qrBarRecognizer
+//        val d = qrBarRecognizer.subscribe().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
+//            Toast.makeText(this, it.text, Toast.LENGTH_SHORT).show()
+//            Timber.d("qr points: ${it.points}")
+//        }, {
+//            Timber.e("Recognize error")
+//        })
     }
 }

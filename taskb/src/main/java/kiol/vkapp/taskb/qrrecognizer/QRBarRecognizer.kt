@@ -1,10 +1,7 @@
 package ru.timepad.domain.qr
 
 import android.media.Image
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.BinaryBitmap
-import com.google.zxing.DecodeHintType
-import com.google.zxing.MultiFormatReader
+import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
 import io.reactivex.Completable
 import io.reactivex.Flowable
@@ -30,7 +27,7 @@ class QRBarRecognizer constructor(
 
     class ImageData(val buffer: ByteArray, val width: Int, val height: Int)
 
-    data class Result(val text: String, val type: Type)
+    data class Result(val text: String, val type: Type, val points: List<ResultPoint>)
 
     @Volatile
     private var lastResult: Result? = null
