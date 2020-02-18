@@ -14,8 +14,9 @@ import kiol.vkapp.widgets.DragToDismissFrameLayout
 class ImageViewerFragment : Fragment(R.layout.image_viewer_fragment_layout) {
     companion object {
         const val URL = "doc_url"
+        private val supportedFormats = listOf("jpg", "png", "gif")
         fun create(docItem: DocItem): ImageViewerFragment {
-            if (!listOf("jpg", "png", "gif").contains(docItem.type.ext)) {
+            if (!supportedFormats.contains(docItem.type.ext)) {
                 throw ViewerNotAvailable(docItem)
             }
             return ImageViewerFragment().apply {

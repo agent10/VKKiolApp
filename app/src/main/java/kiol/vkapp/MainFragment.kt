@@ -81,7 +81,7 @@ class MainFragment : Fragment(R.layout.main_fragment_layout) {
                 is MainViewModel.UIEvent.DocsError -> {
                     Timber.e("docs loading failed $it")
                     adapter.refreshing = false
-                    Toast.makeText(requireContext(), "Loading error", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), R.string.docs_loading_error, Toast.LENGTH_SHORT).show()
                 }
             }
         }, {
@@ -112,12 +112,12 @@ class MainFragment : Fragment(R.layout.main_fragment_layout) {
             Timber.w("Can't create content viewer, request for download, $e")
 
             val builder = AlertDialog.Builder(requireContext())
-                .setTitle("Скачивание")
-                .setMessage("Хотите скачать файл?")
-                .setPositiveButton("Скачать") { _, _ ->
+                .setTitle(R.string.download_dialog_title)
+                .setMessage(R.string.download_dialog_msg)
+                .setPositiveButton(R.string.download_dialog_ok) { _, _ ->
                     viewModel.downloadDoc(docItem)
                 }
-                .setNegativeButton("Отмена", null)
+                .setNegativeButton(R.string.common_cancel, null)
             builder.show()
         } catch (e: Exception) {
             Timber.e("Can't create content viewer, $e")
@@ -148,13 +148,13 @@ class MainFragment : Fragment(R.layout.main_fragment_layout) {
         val editText = view.findViewById<EditText>(R.id.renameET)
         editText.setText(docItem.docTitle)
         val dialog: AlertDialog = AlertDialog.Builder(requireContext())
-            .setTitle("Название документа")
+            .setTitle(R.string.rename_dialog_title)
             .setView(view)
-            .setPositiveButton("Save") { _, _ ->
+            .setPositiveButton(R.string.rename_dialog_save) { _, _ ->
                 val newList = viewModel.renameDoc(editText.text.toString(), docItem, adapter.currentList)
                 adapter.submitList(newList)
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.common_cancel, null)
             .create()
         dialog.show()
     }

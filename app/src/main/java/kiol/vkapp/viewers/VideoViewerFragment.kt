@@ -57,7 +57,7 @@ class VideoViewerFragment : Fragment(R.layout.video_viewer_fragment_layout) {
 
         mediaSource?.let {
             exoPlayer?.prepare(it)
-        } ?: Toast.makeText(requireContext(), "Can't create MediaSource", Toast.LENGTH_SHORT).show()
+        } ?: Toast.makeText(requireContext(), R.string.video_viewer_mediasoure_failed, Toast.LENGTH_SHORT).show()
     }
 
     private fun createMediaSource(uri: Uri): MediaSource? {

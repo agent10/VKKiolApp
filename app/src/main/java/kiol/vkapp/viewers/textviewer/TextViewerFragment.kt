@@ -29,7 +29,10 @@ class TextViewerViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun SimpleTxtFileLoader.loadDocTxtFile(url: String, docId: Int): Flowable<List<String>> {
-        return loadTxtFile(url, UUID.nameUUIDFromBytes(docId.toString().toByteArray()).toString() + "vkkiol")
+        return loadTxtFile(
+            url, UUID.nameUUIDFromBytes(docId.toString().toByteArray()).toString()
+                    + SimpleTxtFileLoader.fileSuffix
+        )
     }
 }
 
@@ -82,7 +85,7 @@ class TextViewerFragment : Fragment(R.layout.text_viewer_fragment_layout) {
 
     private fun showError(view: View) {
         view.findViewById<TextView>(R.id.error).apply {
-            text = "Не удалось загрузить файл"
+            setText(R.string.text_viewer_failed_download)
             visibility = View.VISIBLE
         }
     }

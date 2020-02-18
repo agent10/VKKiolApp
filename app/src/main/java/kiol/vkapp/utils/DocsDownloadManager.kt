@@ -9,6 +9,7 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.os.Environment
 import android.widget.Toast
+import kiol.vkapp.R
 import kiol.vkapp.commondata.domain.DocItem
 
 class DocsDownloadManager(private val app: Application) {
@@ -20,7 +21,7 @@ class DocsDownloadManager(private val app: Application) {
             val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
             val item = downloadIdsList.firstOrNull { it.first == id }
             if (item != null) {
-                Toast.makeText(app, "Download Completed:\n${item.second}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, "${app.getString(R.string.dm_completed)}\n${item.second}", Toast.LENGTH_SHORT).show()
                 downloadIdsList.removeAll {
                     it.first == item.first
                 }
@@ -32,7 +33,7 @@ class DocsDownloadManager(private val app: Application) {
         val request =
             DownloadManager.Request(Uri.parse(docItem.contentUrl))
                 .setTitle(docItem.docTitle)
-                .setDescription("Downloading")
+                .setDescription(app.getString(R.string.dm_title))
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, docItem.docTitle)
                 .setAllowedOverMetered(true)

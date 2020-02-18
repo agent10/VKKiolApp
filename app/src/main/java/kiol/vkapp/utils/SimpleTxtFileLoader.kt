@@ -12,7 +12,7 @@ import java.util.*
 class SimpleTxtFileLoader(private val context: Context) {
 
     companion object {
-        private const val fileSuffix = ".vkkiol"
+        const val fileSuffix = ".vkkiol"
     }
 
     private val httpClient = OkHttpClient()
