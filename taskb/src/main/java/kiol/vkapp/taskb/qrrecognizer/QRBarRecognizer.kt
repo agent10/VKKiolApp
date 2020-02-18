@@ -18,7 +18,7 @@ class QRBarRecognizer constructor(
 ) {
 
     private companion object {
-        const val MinTimeout = 2000L
+        const val MinTimeout = 200L
     }
 
     enum class Type {

@@ -24,10 +24,12 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.taskb.camera.QrOverlay
+import kiol.vkapp.taskb.camera.sensors.RotationSensor
 import ru.timepad.domain.qr.QRBarRecognizer
 import timber.log.Timber
 import java.lang.IllegalStateException
@@ -142,6 +144,8 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
 
     private lateinit var qrOverlay: QrOverlay
 
+    private lateinit var rotationSensor: RotationSensor
+
     //    @Inject
     //    lateinit var sharedMainViewModel: SharedMainViewModel
 
@@ -153,15 +157,23 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
         val app = context?.applicationContext as TheApp
         qrBarRecognizer = app.qrBarRecognizer
 
-
+        rotationSensor = RotationSensor(app)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         textureView = view.findViewById(R.id.texture)
         qrOverlay = view.findViewById(R.id.qrOverlay)
 
+        rotationSensor.register()
+
+//        val d1 = Flowable.interval(50, TimeUnit.MILLISECONDS).map {
+//            rotationSensor.updateOrientationAngles()
+//        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe {
+//            qrOverlay.drawTestQr(it)
+//        }
+
         val d = qrBarRecognizer.subscribe().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
-            qrOverlay.drawQr(it.points)
+            qrOverlay.drawQr(it.points, koefX, koefY, 0f)
         }, {
             Timber.e("Recognize error")
         })
@@ -182,6 +194,7 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
 
     override fun onDestroyView() {
         super.onDestroyView()
+        rotationSensor.unregister()
         disposable.clear()
     }
 
@@ -271,6 +284,10 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
         }
     }
 
+    private var koefX = 0f
+    private var koefY = 0f
+
+
     private fun setUpCameraOutputs(width: Int, height: Int) {
         val manager = activity!!.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         try {
@@ -322,6 +339,9 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
                         ImageFormat.YUV_420_888,
                         2
                     )
+
+                koefX = displaySize.x.toFloat() / MAX_ANALYSIS_HEIGHT.toFloat()
+                koefY = displaySize.y.toFloat() / MAX_ANALYSIS_WIDTH.toFloat()
 
                 this.cameraId = cameraId
 
