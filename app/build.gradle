@@ -53,8 +53,6 @@ dependencies {
     implementation project(":commondata")
     implementation project(":commonui")
 
-    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:1.1.0'
-
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
 
     implementation 'com.github.chrisbanes:PhotoView:2.0.0'

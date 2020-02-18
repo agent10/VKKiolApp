@@ -3,7 +3,7 @@
     android:id="@+id/dismissLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="?android:attr/colorBackground">
 
     <com.github.chrisbanes.photoview.PhotoView
         android:id="@+id/photo_view"

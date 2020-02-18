@@ -1,21 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/DocItemStyle"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:clickable="true"
-    android:focusable="true"
-    android:paddingStart="16dp"
-    android:paddingTop="6dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="6dp">
+    android:layout_height="wrap_content">
 
     <ImageView
         android:id="@+id/docImageIv"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:scaleType="centerCrop"
+        style="@style/DocItemImage"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -23,11 +15,9 @@
 
     <TextView
         android:id="@+id/docTitleTv"
+        style="@style/DocItemDesc"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:ellipsize="end"
-        android:maxLines="2"
         android:textAppearance="@style/DocListItemTitleTextAppearence"
         app:layout_constraintBottom_toTopOf="@id/docInfoTv"
         app:layout_constraintEnd_toStartOf="@id/docMenuBtn"
@@ -37,12 +27,10 @@
 
     <TextView
         android:id="@+id/docInfoTv"
+        style="@style/DocItemDesc"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:maxLines="1"
         android:textAppearance="@style/DocListItemSubtitleTextAppearence"
-
         app:layout_constraintBottom_toTopOf="@id/docTagsTv"
         app:layout_constraintEnd_toStartOf="@id/docMenuBtn"
         app:layout_constraintStart_toEndOf="@id/docImageIv"
@@ -52,9 +40,9 @@
         android:id="@+id/docTagsTv"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:layout_marginStart="4dp"
         android:textAppearance="@style/DocListItemSubtitleTextAppearence"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/docMenuBtn"
@@ -63,11 +51,7 @@
 
     <ImageView
         android:id="@+id/docTagsImg"
-        android:layout_width="11dp"
-        android:layout_height="11dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginStart="12dp"
-        android:src="@drawable/ic_tag_badge"
+        style="@style/DocItemTagImage"
         app:layout_constraintBottom_toBottomOf="@id/docTagsTv"
         app:layout_constraintStart_toEndOf="@id/docImageIv"
         app:layout_constraintTop_toTopOf="@id/docTagsTv" />
