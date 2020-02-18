@@ -51,6 +51,7 @@ dependencies {
     implementation 'com.google.android.exoplayer:exoplayer-ui:2.11.1'
 
     implementation project(":commondata")
+    implementation project(":commonui")
 
     implementation 'com.google.androidbrowserhelper:androidbrowserhelper:1.1.0'
 
