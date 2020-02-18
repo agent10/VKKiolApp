@@ -24,11 +24,14 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.google.zxing.ResultPoint
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.taskb.camera.QrOverlay
+import kiol.vkapp.taskb.camera.Vector
+import kiol.vkapp.taskb.camera.scalar
 import kiol.vkapp.taskb.camera.sensors.RotationSensor
 import ru.timepad.domain.qr.QRBarRecognizer
 import timber.log.Timber
@@ -37,6 +40,10 @@ import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
+import kotlin.math.acos
+import kotlin.math.pow
+import kotlin.math.sign
+import kotlin.math.sqrt
 
 class CameraFragment : Fragment(R.layout.camera_fragment_layout),
     ActivityCompat.OnRequestPermissionsResultCallback {
@@ -160,20 +167,74 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
         rotationSensor = RotationSensor(app)
     }
 
+    data class QrMyResult(val rect: RectF?, val angle: Float, val kX: Float, val kY: Float)
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         textureView = view.findViewById(R.id.texture)
         qrOverlay = view.findViewById(R.id.qrOverlay)
 
         rotationSensor.register()
 
-//        val d1 = Flowable.interval(50, TimeUnit.MILLISECONDS).map {
-//            rotationSensor.updateOrientationAngles()
-//        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe {
-//            qrOverlay.drawTestQr(it)
-//        }
+        //        val d1 = Flowable.interval(50, TimeUnit.MILLISECONDS).map {
+        //            rotationSensor.updateOrientationAngles()
+        //        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe {
+        //            qrOverlay.drawTestQr(it)
+        //        }
 
-        val d = qrBarRecognizer.subscribe().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
-            qrOverlay.drawQr(it.points, koefX, koefY, 0f)
+        val d = qrBarRecognizer.subscribe().map {
+            val points = it.points
+            if (points.size == 4) {
+
+                val arr = arrayOf(
+                    points[0].x, points[0].y,
+                    points[1].x, points[1].y,
+                    points[2].x, points[2].y,
+                    points[3].x, points[3].y
+                )
+
+                val ar = FloatArray(8)
+                arr.forEachIndexed { index, fl ->
+                    ar.set(index, fl)
+                }
+                val m = Matrix()
+                m.preRotate(90f)
+                m.preTranslate(0f, -480f)
+                m.mapPoints(ar)
+
+                val lastRects = arrayListOf(
+                    ResultPoint(ar[0], ar[1]),
+                    ResultPoint(ar[2], ar[3]),
+                    ResultPoint(ar[4], ar[5]),
+                    ResultPoint(ar[6], ar[7])
+                )
+
+                var xa = lastRects!!.sumByDouble {
+                    it.x.toDouble()
+                }.toFloat() / 4f
+
+                var ya = lastRects!!.sumByDouble {
+                    it.y.toDouble()
+                }.toFloat() / 4f
+
+                var r = sqrt((xa - lastRects!![0].x).pow(2) + (ya - lastRects!![0].y).pow(2))
+
+                val lastRect = RectF(xa - r, ya - r, xa + r, ya + r)
+
+                val rv = Vector(xa, ya, lastRect!!.right, lastRect!!.top)
+                val lv = Vector(xa, ya, lastRects!![0].x, lastRects!![0].y)
+
+                val v = acos(scalar(rv, lv))
+                val z = rv.vec.x * lv.vec.y - rv.vec.y * lv.vec.x
+
+                Timber.d("scalar: $v")
+                val cosa = v * sign(z) * 180 / Math.PI.toFloat()
+
+                QrMyResult(lastRect, cosa, koefX, koefY)
+            } else {
+                QrMyResult(null, 0f, koefX, koefY)
+            }
+        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
+            qrOverlay.drawQr2(it)
         }, {
             Timber.e("Recognize error")
         })
