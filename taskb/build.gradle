@@ -38,6 +38,8 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxjava:2.2.17'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
 
+    implementation 'com.google.zxing:core:3.3.0'
+
     implementation project(":commondata")
     implementation project(":commonui")
     testImplementation 'junit:junit:4.12'

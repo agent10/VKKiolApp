@@ -3,6 +3,7 @@ package kiol.vkapp.taskb
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -24,6 +25,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import io.reactivex.disposables.CompositeDisposable
+import ru.timepad.domain.qr.QRBarRecognizer
 import timber.log.Timber
 import java.lang.IllegalStateException
 import java.util.*
@@ -133,13 +135,19 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
 
     private lateinit var imageReader: ImageReader
 
-    //    @Inject
-    //    lateinit var recognizeImageUseCase: RecognizeImageUseCase
+    private lateinit var qrBarRecognizer: QRBarRecognizer
 
     //    @Inject
     //    lateinit var sharedMainViewModel: SharedMainViewModel
 
     private val disposable = CompositeDisposable()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val app = context?.applicationContext as TheApp
+        qrBarRecognizer = app.qrBarRecognizer
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         textureView = view.findViewById(R.id.texture)
@@ -398,7 +406,7 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
                     val h = img.height
                     img.close()
 
-                    //                    recognizeImageUseCase.recognize(data, w, h)
+                    qrBarRecognizer.recognize(QRBarRecognizer.ImageData(data, w, h))
                 }
             }, backgroundHandler)
 
