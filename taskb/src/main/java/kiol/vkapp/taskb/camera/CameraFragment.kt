@@ -9,7 +9,9 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.*
 import android.hardware.camera2.*
+import android.media.CamcorderProfile
 import android.media.ImageReader
+import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -36,6 +38,7 @@ import kiol.vkapp.taskb.camera.scalar
 import kiol.vkapp.taskb.camera.sensors.RotationSensor
 import ru.timepad.domain.qr.QRBarRecognizer
 import timber.log.Timber
+import java.io.File
 import java.lang.IllegalStateException
 import java.util.*
 import java.util.concurrent.Semaphore
@@ -149,7 +152,7 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
 
     private lateinit var qrOverlay: QrOverlay
 
-    private lateinit var rotationSensor: RotationSensor
+    private lateinit var mediaRecorder: MediaRecorder
 
     //    @Inject
     //    lateinit var sharedMainViewModel: SharedMainViewModel
@@ -157,6 +160,8 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
     private val disposable = CompositeDisposable()
 
     private lateinit var scaleGestureDetector: ScaleGestureDetector
+
+    private var isVideoRecording = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -175,10 +180,10 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
                 }
             })
 
+        mediaRecorder = MediaRecorder()
+
         val app = context?.applicationContext as TheApp
         qrBarRecognizer = app.qrBarRecognizer
-
-        rotationSensor = RotationSensor(app)
     }
 
     data class QrMyResult(val rect: RectF?, val angle: Float, val kX: Float, val kY: Float)
@@ -188,11 +193,17 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         textureView = view.findViewById(R.id.texture)
         textureView.setOnTouchListener { v, event ->
-            scaleGestureDetector.onTouchEvent(event)
+            //            scaleGestureDetector.onTouchEvent(event)
+            if (isVideoRecording) {
+                stopCameraVideoRecording()
+            } else {
+                backgroundHandler?.post {
+                    startCameraRecordingSession(cameraDevice!!)
+                }
+            }
+            false
         }
         qrOverlay = view.findViewById(R.id.qrOverlay)
-
-        rotationSensor.register()
 
         //        val d1 = Flowable.interval(50, TimeUnit.MILLISECONDS).map {
         //            rotationSensor.updateOrientationAngles()
@@ -278,7 +289,6 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
 
     override fun onDestroyView() {
         super.onDestroyView()
-        rotationSensor.unregister()
         disposable.clear()
     }
 
@@ -329,7 +339,7 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
     }
 
     private fun requestCameraPermissions() {
-        requestPermissions(arrayOf(Manifest.permission.CAMERA), 1)
+        requestPermissions(arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO), 1)
     }
 
     private fun setNoPermissionsStub(enabled: Boolean) {
@@ -356,7 +366,11 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
     }
 
     private fun isCameraPermissionGranted() =
-        ContextCompat.checkSelfPermission(activity!!, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        ContextCompat.checkSelfPermission(activity!!, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(
+                    activity!!,
+                    Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
 
     override fun onPause() {
         closeCamera()
@@ -374,14 +388,16 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
             Timber.d("perms, onRequestPermissionsResult, grantResults: $grantResults, permissions: $permissions")
 
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                val shouldRational = shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)
+                val shouldRational =
+                    shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) ||
+                            shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
                 Timber.d("perms, requestCameraPermission, shouldRational: $shouldRational")
                 if (shouldRational) {
                     AlertDialog.Builder(context, R.style.PermissionRationalDialog)
                         .setMessage(getString(R.string.permission_rational))
                         .setPositiveButton(android.R.string.ok) { _, _ ->
                             parentFragment?.requestPermissions(
-                                arrayOf(Manifest.permission.CAMERA),
+                                arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO),
                                 1
                             )
                         }
@@ -538,10 +554,7 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
 
     }
 
-    /**
-     * Creates a new [CameraCaptureSession] for camera preview.
-     */
-    private fun createCameraPreviewSession(cameraDeviceInternal: CameraDevice) {
+    private fun startCameraPreviewSession(cameraDeviceInternal: CameraDevice) {
         try {
             val texture = textureView.surfaceTexture
 
@@ -602,6 +615,9 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
                                     null, backgroundHandler
                                 )
                                 Timber.d("createCaptureSession onConfigured finished")
+                                activity?.runOnUiThread {
+                                    Toast.makeText(requireContext(), "Start qr mode", Toast.LENGTH_SHORT).show()
+                                }
                             }
 
                         } catch (e: CameraAccessException) {
@@ -628,6 +644,115 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
             Timber.e(e)
             Toast.makeText(context, R.string.camera_open_failed, Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun stopCameraPreviewSession() {
+        captureSession?.close()
+        captureSession = null
+    }
+
+    private fun startCameraRecordingSession(cameraDeviceInternal: CameraDevice) {
+        try {
+            stopCameraPreviewSession()
+            setupMediaRecorder()
+
+            val texture = textureView.surfaceTexture
+
+            // We configure the size of default buffer to be the size of camera preview we want.
+            texture.setDefaultBufferSize(previewSize.width, previewSize.height)
+
+            // This is the output Surface we need to start preview.
+            val surface = Surface(texture)
+
+            val recorderSurface = mediaRecorder.surface
+
+            // We set up a CaptureRequest.Builder with the output Surface.
+            previewRequestBuilder = cameraDeviceInternal.createCaptureRequest(
+                CameraDevice.TEMPLATE_RECORD
+            )
+            previewRequestBuilder?.addTarget(surface)
+            previewRequestBuilder?.addTarget(recorderSurface)
+
+            // Here, we create a CameraCaptureSession for camera preview.
+            cameraDeviceInternal.createCaptureSession(
+                Arrays.asList(surface, recorderSurface),
+                object : CameraCaptureSession.StateCallback() {
+
+                    override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
+                        Timber.d("createCaptureSession onConfigured started")
+
+                        // When the session is ready, we start displaying the preview.
+                        captureSession = cameraCaptureSession
+                        try {
+                            previewRequestBuilder?.let { builder ->
+                                // Auto focus should be continuous for camera preview.
+                                builder.set(
+                                    CaptureRequest.CONTROL_AF_MODE,
+                                    CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                                )
+                                builder.set(
+                                    CaptureRequest.CONTROL_AE_MODE,
+                                    CaptureRequest.CONTROL_AE_MODE_ON
+                                )
+
+                                // Finally, we start displaying the camera preview.
+                                val previewRequest = builder.build()
+                                captureSession?.setRepeatingRequest(
+                                    previewRequest,
+                                    null, backgroundHandler
+                                )
+
+                                isVideoRecording = true
+                                mediaRecorder.start()
+
+                                Timber.d("createCaptureSession onConfigured finished")
+                                activity?.runOnUiThread {
+                                    Toast.makeText(requireContext(), "Start recording mode", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+
+                        } catch (e: CameraAccessException) {
+                            Timber.e(e)
+                        } catch (e: IllegalStateException) {
+                            Timber.e(e)
+                        }
+                    }
+
+                    override fun onClosed(session: CameraCaptureSession) {
+                        super.onClosed(session)
+                        Timber.d("onConfigureFailed")
+                    }
+
+                    override fun onConfigureFailed(session: CameraCaptureSession) {
+                        //                        activity.showToast("Failed")
+                        Timber.e("onConfigureFailed")
+                    }
+                }, null
+            )
+        } catch (e: CameraAccessException) {
+            Timber.e(e)
+        } catch (e: IllegalStateException) {
+            Timber.e(e)
+            Toast.makeText(context, R.string.camera_open_failed, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun stopCameraVideoRecording() {
+        captureSession?.close()
+        captureSession = null
+        resetMediaRecorder()
+        backgroundHandler?.post {
+            cameraDevice?.let {
+                startCameraPreviewSession(it)
+            }
+        }
+    }
+
+    /**
+     * Creates a new [CameraCaptureSession] for camera preview.
+     */
+    private fun createCameraPreviewSession(cameraDeviceInternal: CameraDevice) {
+        startCameraPreviewSession(cameraDeviceInternal)
     }
 
     /**
@@ -687,6 +812,36 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
         textureView.setTransform(matrix)
     }
 
+    private fun setupMediaRecorder() {
+        val profile = CamcorderProfile.get(CamcorderProfile.QUALITY_720P)
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+        mediaRecorder.setOutputFile(requireContext().filesDir.absolutePath + "/myvideo.mp4")
+        mediaRecorder.setVideoEncodingBitRate(profile.videoBitRate)
+        mediaRecorder.setAudioEncodingBitRate(profile.audioBitRate)
+        mediaRecorder.setAudioSamplingRate(profile.audioSampleRate)
+        mediaRecorder.setVideoFrameRate(profile.videoFrameRate)
+        mediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight)
+        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+        //        int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+        //        switch (mSensorOrientation) {
+        //            case SENSOR_ORIENTATION_DEFAULT_DEGREES:
+        //                mMediaRecorder.setOrientationHint(DEFAULT_ORIENTATIONS.get(rotation));
+        //                break;
+        //            case SENSOR_ORIENTATION_INVERSE_DEGREES:
+        //                mMediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
+        //                break;
+        //        }
+        mediaRecorder.prepare()
+    }
+
+    private fun resetMediaRecorder() {
+        mediaRecorder.stop()
+        mediaRecorder.reset()
+        isVideoRecording = false
+    }
 
     companion object {
 
