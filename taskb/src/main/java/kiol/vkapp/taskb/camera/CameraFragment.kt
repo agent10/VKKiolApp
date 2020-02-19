@@ -9,9 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.*
 import android.hardware.camera2.*
-import android.media.CamcorderProfile
-import android.media.ImageReader
-import android.media.MediaRecorder
+import android.media.*
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -825,14 +823,15 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
         mediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight)
         mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-        //        int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-        //        switch (mSensorOrientation) {
-        //            case SENSOR_ORIENTATION_DEFAULT_DEGREES:
-        //                mMediaRecorder.setOrientationHint(DEFAULT_ORIENTATIONS.get(rotation));
-        //                break;
-        //            case SENSOR_ORIENTATION_INVERSE_DEGREES:
-        //                mMediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
-        //                break;
+        mediaRecorder.setOrientationHint(90)
+        //        val rotation = activity?.getWindowManager()?.defaultDisplay?.rotation
+        //        switch(mSensorOrientation) {
+        //            case SENSOR_ORIENTATION_DEFAULT_DEGREES :
+        //            mMediaRecorder.setOrientationHint(DEFAULT_ORIENTATIONS.get(rotation));
+        //            break;
+        //            case SENSOR_ORIENTATION_INVERSE_DEGREES :
+        //            mMediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
+        //            break;
         //        }
         mediaRecorder.prepare()
     }
@@ -841,6 +840,30 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
         mediaRecorder.stop()
         mediaRecorder.reset()
         isVideoRecording = false
+
+        val d = Flowable.fromCallable {
+            val mediaExtractor = MediaExtractor()
+            mediaExtractor.setDataSource(requireContext().filesDir.absolutePath + "/myvideo.mp4")
+            for (i in 0 until mediaExtractor.trackCount) {
+                val trackFormat = mediaExtractor.getTrackFormat(i)
+                val w = trackFormat.getInteger(MediaFormat.KEY_WIDTH)
+                val h = trackFormat.getInteger(MediaFormat.KEY_HEIGHT)
+                val dur = trackFormat.getLong(MediaFormat.KEY_HEIGHT)
+
+                val a = 10
+            }
+
+//            val mediaMetadataRetriever = MediaMetadataRetriever()
+//            mediaMetadataRetriever.setDataSource(requireContext().filesDir.absolutePath + "/myvideo.mp4")
+//
+//            val duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+//
+//            mediaMetadataRetriever.getScaledFrameAtTime()
+        }.subscribeOn(Schedulers.computation()).observeOn(AndroidSchedulers.mainThread()).subscribe({
+
+        }, {
+
+        })
     }
 
     companion object {
