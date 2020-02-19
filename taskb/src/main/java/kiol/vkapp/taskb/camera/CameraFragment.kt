@@ -23,6 +23,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toRect
 import androidx.fragment.app.Fragment
 import com.google.zxing.ResultPoint
 import io.reactivex.Flowable
@@ -40,10 +41,7 @@ import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
-import kotlin.math.acos
-import kotlin.math.pow
-import kotlin.math.sign
-import kotlin.math.sqrt
+import kotlin.math.*
 
 class CameraFragment : Fragment(R.layout.camera_fragment_layout),
     ActivityCompat.OnRequestPermissionsResultCallback {
@@ -158,8 +156,24 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
 
     private val disposable = CompositeDisposable()
 
+    private lateinit var scaleGestureDetector: ScaleGestureDetector
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        scaleGestureDetector =
+            ScaleGestureDetector(requireContext(), object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                override fun onScale(detector: ScaleGestureDetector?): Boolean {
+                    val scaleFactor = detector?.scaleFactor
+                    scaleFactor?.let {
+                        zLevel -= (1.0f - scaleFactor)
+                        zLevel = max(min(zLevel, 0.75f), 0f)
+                        setZoom(zLevel)
+                    }
+                    Timber.d("kiol scaleFactor: $scaleFactor, zLevel: $zLevel")
+                    return true
+                }
+            })
 
         val app = context?.applicationContext as TheApp
         qrBarRecognizer = app.qrBarRecognizer
@@ -169,8 +183,13 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
 
     data class QrMyResult(val rect: RectF?, val angle: Float, val kX: Float, val kY: Float)
 
+    var zLevel = 0.0f
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         textureView = view.findViewById(R.id.texture)
+        textureView.setOnTouchListener { v, event ->
+            scaleGestureDetector.onTouchEvent(event)
+        }
         qrOverlay = view.findViewById(R.id.qrOverlay)
 
         rotationSensor.register()
@@ -184,6 +203,8 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
         val d = qrBarRecognizer.subscribe().map {
             val points = it.points
             if (points.size == 4) {
+
+                val t = System.currentTimeMillis()
 
                 val arr = arrayOf(
                     points[0].x, points[0].y,
@@ -229,6 +250,8 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
                 Timber.d("scalar: $v")
                 val cosa = v * sign(z) * 180 / Math.PI.toFloat()
 
+
+                Timber.d("qr coords time: ${System.currentTimeMillis() - t}")
                 QrMyResult(lastRect, cosa, koefX, koefY)
             } else {
                 QrMyResult(null, 0f, koefX, koefY)
@@ -271,6 +294,36 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
                 )
                 val previewRequest = builder.build()
                 captureSession?.setRepeatingRequest(previewRequest, null, backgroundHandler)
+            }
+        }
+    }
+
+    private fun setZoom(level: Float) {
+        val manager = activity!!.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        for (cameraId in manager.cameraIdList) {
+            val characteristics = manager.getCameraCharacteristics(cameraId)
+
+            // We don't use a front facing camera in this sample.
+            val cameraDirection = characteristics.get(CameraCharacteristics.LENS_FACING)
+            if (cameraDirection != null &&
+                cameraDirection == CameraCharacteristics.LENS_FACING_FRONT
+            ) {
+                continue
+            }
+
+            val rect = RectF(characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE))
+            val maxZoom = characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)
+            rect?.let {
+                val m = Matrix()
+                m.preScale(1f - level, 1f - level, rect.width() / 2f, rect.height() / 2f)
+                m.mapRect(rect)
+                val zoom = rect.toRect()
+
+                previewRequestBuilder?.let { builder ->
+                    builder.set(CaptureRequest.SCALER_CROP_REGION, zoom)
+                    val previewRequest = builder.build()
+                    captureSession?.setRepeatingRequest(previewRequest, null, backgroundHandler)
+                }
             }
         }
     }
@@ -416,6 +469,7 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
             Timber.e(e)
         }
     }
+
 
     /**
      * Opens the camera specified by [CameraFragment.cameraId].
