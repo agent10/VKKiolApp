@@ -26,7 +26,7 @@ class VideoEditor(private val file: String) {
 
     private val frameWidth = mediaMetadataRetriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH).toInt()
     private val frameHeight = mediaMetadataRetriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT).toInt()
-    private val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION).toLong()
+    val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION).toLong()
 
     fun getThumbnails(): Flowable<Pair<Int, Bitmap>> {
         return Flowable.create<Pair<Int, Bitmap>>({ emitter ->

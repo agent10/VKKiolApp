@@ -3,6 +3,7 @@ package kiol.vkapp.taskb.editor
 import android.icu.util.TimeUnit
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
 import android.view.View
 import android.widget.ImageView
 import android.widget.Toast
@@ -10,6 +11,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.Timeline
 import com.google.android.exoplayer2.source.ClippingMediaPeriod
 import com.google.android.exoplayer2.source.ClippingMediaSource
 import com.google.android.exoplayer2.source.MediaSource
@@ -21,6 +23,7 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.upstream.FileDataSource
 import com.google.android.exoplayer2.upstream.FileDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.taskb.R
@@ -29,6 +32,7 @@ import timber.log.Timber
 class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
     private lateinit var videoEditor: VideoEditor
+    private lateinit var timebar: VideoEditorTimebar
     private var exoPlayer: SimpleExoPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,14 +45,20 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
         val playerView = view.findViewById<PlayerView>(R.id.playerView)
         val tempTh = view.findViewById<ImageView>(R.id.tempThumb)
+        timebar = view.findViewById<VideoEditorTimebar>(R.id.timeBar)
+
+        val d1 = Flowable.interval(100, java.util.concurrent.TimeUnit.MILLISECONDS).subscribe {
+            timebar.setPosition(exoPlayer?.currentPosition ?: 0L, exoPlayer?.duration ?: 0L)
+        }
 
         val d = videoEditor.getThumbnails().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
             tempTh.setImageBitmap(it.second)
+            timebar.addThumbnail(it.second)
         }, {
 
         })
 
-        videoEditor.cut(3000, 13000)
+        //        videoEditor.cut(3000, 13000)
 
         val context = requireContext()
         exoPlayer = SimpleExoPlayer.Builder(context).setTrackSelector(DefaultTrackSelector(context)).build()
