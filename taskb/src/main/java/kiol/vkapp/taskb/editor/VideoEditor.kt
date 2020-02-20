@@ -21,7 +21,8 @@ class VideoEditor(private val file: String) {
 
     companion object {
         private const val NUM_FRAMES = 10
-        private const val DEFAULT_BUFFER_SIZE = 1 * 1024 * 1024
+        private const val DEFAULT_BUFFER_SIZE = 2 * 1024 * 1024
+        const val FULL_DURATION = -1L
     }
 
     private val frameWidth = mediaMetadataRetriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH).toInt()
@@ -46,10 +47,10 @@ class VideoEditor(private val file: String) {
         }, BackpressureStrategy.BUFFER)
     }
 
-    fun cut(startMs: Int, endMs: Int) {
+    fun cut(startUs: Long, endUs: Long) {
         val t = System.currentTimeMillis()
         val d = Flowable.fromCallable {
-            genVideoUsingMuxer(file, file + "cutted.mp4", startMs, endMs, true, true)
+            genVideoUsingMuxer(file, file + "cutted.mp4", startUs, endUs, true, true)
         }.subscribeOn(Schedulers.computation()).subscribe({
             Timber.d("Cut finished, time: ${System.currentTimeMillis() - t}ms")
         }, {
@@ -61,7 +62,7 @@ class VideoEditor(private val file: String) {
     @Throws(IOException::class)
     private fun genVideoUsingMuxer(
         srcPath: String, dstPath: String,
-        startMs: Int, endMs: Int, useAudio: Boolean, useVideo: Boolean
+        startUs: Long, endUs: Long, useAudio: Boolean, useVideo: Boolean
     ) { // Set up MediaExtractor to read from the source.
         val extractor = MediaExtractor()
         extractor.setDataSource(srcPath)
@@ -106,8 +107,8 @@ class VideoEditor(private val file: String) {
                 muxer.setOrientationHint(degrees)
             }
         }
-        if (startMs > 0) {
-            extractor.seekTo(startMs * 1000L, MediaExtractor.SEEK_TO_NEXT_SYNC)
+        if (startUs > 0) {
+            extractor.seekTo(startUs, MediaExtractor.SEEK_TO_NEXT_SYNC)
         }
         // Copy the samples from MediaExtractor to MediaMuxer. We will loop
         // for copying each sample and stop when we get to the end of the source
@@ -127,7 +128,9 @@ class VideoEditor(private val file: String) {
                     break
                 } else {
                     bufferInfo.presentationTimeUs = extractor.sampleTime
-                    if (endMs > 0 && bufferInfo.presentationTimeUs > endMs * 1000) {
+                    val internalEndUs = if (endUs <= 0) duration else endUs
+
+                    if (internalEndUs > 0 && bufferInfo.presentationTimeUs > internalEndUs) {
                         Timber.e("The current sample is over the trim end time.")
                         break
                     } else {

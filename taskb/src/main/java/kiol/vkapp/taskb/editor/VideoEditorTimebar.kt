@@ -21,15 +21,20 @@ class VideoEditorTimebar @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
+    var onCutCallback: (left: Float, right: Float, inProcess: Boolean) -> Unit = { _, _, _ -> }
+
     private enum class SelectedCutThumb {
         LEFT, RIGHT, NONE
     }
 
     companion object {
         private const val RADIUS = 40f
+        private const val RADIUS_POS_THUMB = 20f
+        private const val POS_THUMB_OFFSET = 30f
         private const val BORDERSTROKE = 10f
-        private const val CUT_THUMB_W = 75f
+        private const val CUT_THUMB_W = 50f
         private const val CUT_THUMB_STROKE = 15f
+        private const val MIN_CUT_THRESHOLD = 0.1f
     }
 
     private val linearLayout: LinearLayout
@@ -66,8 +71,10 @@ class VideoEditorTimebar @JvmOverloads constructor(
 
     private var currentRelativePos = 0f
 
-    private var leftCut = 0.25f
-    private var rightCut = 0.75f
+    private var flagCutChanged = false
+    private var leftCut = 0.0f
+    private var rightCut = 1.0f
+
 
     init {
         val v = LayoutInflater.from(context).inflate(R.layout.video_editor_timebar_layout, this, true)
@@ -93,6 +100,11 @@ class VideoEditorTimebar @JvmOverloads constructor(
         }
     }
 
+    fun setPosition(relativePos: Float) {
+        currentRelativePos = relativePos
+        invalidate()
+    }
+
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
@@ -108,19 +120,33 @@ class VideoEditorTimebar @JvmOverloads constructor(
                     lastEventThumbX = event.x
                     when (selectedCutThumb) {
                         LEFT -> {
-                            leftCut += delta
-                            leftCut = max(0.0f, leftCut)
+                            if (leftCut + delta <= rightCut - MIN_CUT_THRESHOLD) {
+                                leftCut += delta
+                                leftCut = max(0.0f, leftCut)
+                                flagCutChanged = true
+                            }
                         }
                         RIGHT -> {
-                            rightCut += delta
-                            rightCut = min(1.0f, rightCut)
+                            if (rightCut + delta >= leftCut + MIN_CUT_THRESHOLD) {
+                                rightCut += delta
+                                rightCut = min(1.0f, rightCut)
+                                flagCutChanged = true
+
+                            }
                         }
+                    }
+                    if (flagCutChanged) {
+                        onCutCallback(leftCut, rightCut, true)
                     }
                     invalidate()
                     return true
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (flagCutChanged) {
+                    onCutCallback(leftCut, rightCut, false)
+                    flagCutChanged = false
+                }
                 setNewSelectedCutThumb(NONE)
                 return true
             }
@@ -196,78 +222,23 @@ class VideoEditorTimebar @JvmOverloads constructor(
             clipRect(cutClipRect, Region.Op.DIFFERENCE)
             drawPath(cutThumbRect, paintThumbCut)
             restore()
+
+            if(!flagCutChanged) {
+                val curPos = leftCutX + CUT_THUMB_W / 2 + (rightCutX - leftCutX - CUT_THUMB_W) * currentRelativePos
+                drawLine(
+                    curPos,
+                    linearLayout.bottom.toFloat(),
+                    curPos,
+                    linearLayout.top.toFloat() - POS_THUMB_OFFSET, paintThumb
+                )
+
+                drawCircle(
+                    curPos,
+                    linearLayout.top.toFloat() - POS_THUMB_OFFSET,
+                    RADIUS_POS_THUMB, paintThumbCircle
+                )
+            }
         }
-
-
-        //        canvas?.drawRoundRect(
-        //            linearLayout.left.toFloat(),
-        //            linearLayout.top.toFloat(),
-        //            leftCut + 10, linearLayout.bottom.toFloat(), 20f, 20f, paintBorder
-        //        )
-        //
-        //        canvas?.drawRoundRect(
-        //            linearLayout.left.toFloat(),
-        //            linearLayout.top.toFloat(),
-        //            leftCut + 10, linearLayout.bottom.toFloat(), 20f, 20f, paintBorderStroke
-        //        )
-        //
-        //        canvas?.drawRoundRect(
-        //            rightCut,
-        //            linearLayout.top.toFloat(),
-        //            linearLayout.right.toFloat(), linearLayout.bottom.toFloat(), 20f, 20f, paintBorder
-        //        )
-        //
-        //        canvas?.drawRoundRect(
-        //            rightCut,
-        //            linearLayout.top.toFloat(),
-        //            linearLayout.right.toFloat(), linearLayout.bottom.toFloat(), 20f, 20f, paintBorderStroke
-        //        )
-        //
-        //        drawCut(canvas!!)
-        //
-        //        val curPos = linearLayout.left + currentRelativePos * (linearLayout.measuredWidth).toFloat()
-        //        canvas?.drawLine(
-        //            curPos,
-        //            linearLayout.bottom.toFloat(),
-        //            curPos,
-        //            linearLayout.top.toFloat() - 20f, paintThumb
-        //        )
-        //
-        //        canvas?.drawCircle(
-        //            curPos,
-        //            linearLayout.top.toFloat() - 20f,
-        //            20f, paintThumbCircle
-        //        )
-    }
-
-    private fun drawCut(canvas: Canvas) {
-        canvas.drawPath(
-            partlyRoundedRect(
-                leftCut,
-                linearLayout.top.toFloat() - 5,
-                leftCut + 100f, linearLayout.bottom.toFloat() + 5, 20f, 20f, true, false, false, true
-            ), paintThumbCut
-        )
-
-        canvas.drawPath(
-            partlyRoundedRect(
-                rightCut,
-                linearLayout.top.toFloat() - 5,
-                rightCut + 100f, linearLayout.bottom.toFloat() + 5, 20f, 20f, false, true, true, false
-            ), paintThumbCut
-        )
-
-        canvas.drawLine(
-            leftCut + 20,
-            linearLayout.top.toFloat() - 5,
-            rightCut,
-            linearLayout.top.toFloat() - 5,
-            paintThumbCut
-        )
-        canvas.drawLine(
-            leftCut + 20, linearLayout.bottom.toFloat() + 5, rightCut, linearLayout.bottom.toFloat() + 5,
-            paintThumbCut
-        )
     }
 
     private fun partlyRoundedRect(

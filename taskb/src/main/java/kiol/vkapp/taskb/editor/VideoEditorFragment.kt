@@ -35,6 +35,9 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     private lateinit var timebar: VideoEditorTimebar
     private var exoPlayer: SimpleExoPlayer? = null
 
+    private var lastStartUs = 0L
+    private var lastEndUs = 0L
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         videoEditor = VideoEditor(requireContext().filesDir.absolutePath + "/myvideo.mp4")
@@ -45,10 +48,20 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
         val playerView = view.findViewById<PlayerView>(R.id.playerView)
         val tempTh = view.findViewById<ImageView>(R.id.tempThumb)
+        tempTh.setOnClickListener {
+            videoEditor.cut(lastStartUs, lastEndUs)
+        }
+
         timebar = view.findViewById<VideoEditorTimebar>(R.id.timeBar)
 
         val d1 = Flowable.interval(100, java.util.concurrent.TimeUnit.MILLISECONDS).subscribe {
             timebar.setPosition(exoPlayer?.currentPosition ?: 0L, exoPlayer?.duration ?: 0L)
+
+            exoPlayer?.let {
+                if (it.duration != 0L) {
+                    timebar.setPosition(it.currentPosition.toFloat() / it.duration)
+                }
+            }
         }
 
         val d = videoEditor.getThumbnails().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
@@ -57,6 +70,15 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
         }, {
 
         })
+
+        timebar.onCutCallback = { left, right, inProcess ->
+            if (inProcess) {
+                exoPlayer?.stop()
+            } else {
+                timebar.setPosition(0.0f)
+                updateMediaSource(left, right)
+            }
+        }
 
         //        videoEditor.cut(3000, 13000)
 
@@ -85,10 +107,12 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
         }
     }
 
-    private fun updateMediaSource() {
+    private fun updateMediaSource(left: Float = 0.0f, right: Float = 1.0f) {
         val uri = Uri.parse(requireContext().filesDir.absolutePath + "/myvideo.mp4")
 
-        val mediaSource = ClippingMediaSource(createMediaSource(uri), 0, C.TIME_END_OF_SOURCE)
+        lastStartUs = ((videoEditor.duration) * left * 1000L).toLong()
+        lastEndUs = ((videoEditor.duration) * right * 1000L).toLong()
+        val mediaSource = ClippingMediaSource(createMediaSource(uri), lastStartUs, lastEndUs)
 
         mediaSource?.let {
             exoPlayer?.prepare(it)
