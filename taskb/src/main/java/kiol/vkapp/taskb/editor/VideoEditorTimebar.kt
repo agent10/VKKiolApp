@@ -1,29 +1,43 @@
 package kiol.vkapp.taskb.editor
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Path
+import android.graphics.*
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.core.graphics.withClip
 import kiol.vkapp.taskb.R
+import kiol.vkapp.taskb.editor.VideoEditorTimebar.SelectedCutThumb.*
+import timber.log.Timber
+import kotlin.math.max
+import kotlin.math.min
 
 
 class VideoEditorTimebar @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
+    private enum class SelectedCutThumb {
+        LEFT, RIGHT, NONE
+    }
+
+    companion object {
+        private const val RADIUS = 40f
+        private const val BORDERSTROKE = 10f
+        private const val CUT_THUMB_W = 75f
+        private const val CUT_THUMB_STROKE = 15f
+    }
+
     private val linearLayout: LinearLayout
 
     private val paintBorderStroke = Paint().apply {
         color = 0xFFFFFFFF.toInt()
         style = Paint.Style.STROKE
-        strokeWidth = 5f
+        strokeWidth = BORDERSTROKE
     }
 
     private val paintBorder = Paint().apply {
@@ -44,14 +58,16 @@ class VideoEditorTimebar @JvmOverloads constructor(
     private val paintThumbCut = Paint().apply {
         style = Paint.Style.FILL_AND_STROKE
         color = 0xFF000000.toInt()
-        strokeWidth = 15f
+        strokeWidth = CUT_THUMB_STROKE
     }
 
+    private var selectedCutThumb = NONE
+    private var lastEventThumbX = 0f
 
     private var currentRelativePos = 0f
 
-    private var leftCut = 100f
-    private var rightCut = 500f
+    private var leftCut = 0.25f
+    private var rightCut = 0.75f
 
     init {
         val v = LayoutInflater.from(context).inflate(R.layout.video_editor_timebar_layout, this, true)
@@ -77,47 +93,151 @@ class VideoEditorTimebar @JvmOverloads constructor(
         }
     }
 
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        when (event?.action) {
+            MotionEvent.ACTION_DOWN -> {
+                checkCutThumb(event)
+                if (selectedCutThumb != NONE) {
+                    lastEventThumbX = event.x
+                    return true
+                }
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (selectedCutThumb != NONE) {
+                    val delta = (event.x - lastEventThumbX) / linearLayout.measuredWidth
+                    lastEventThumbX = event.x
+                    when (selectedCutThumb) {
+                        LEFT -> {
+                            leftCut += delta
+                            leftCut = max(0.0f, leftCut)
+                        }
+                        RIGHT -> {
+                            rightCut += delta
+                            rightCut = min(1.0f, rightCut)
+                        }
+                    }
+                    invalidate()
+                    return true
+                }
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                setNewSelectedCutThumb(NONE)
+                return true
+            }
+        }
+        return super.onTouchEvent(event)
+    }
+
+    private fun checkCutThumb(event: MotionEvent) {
+        val ex = event.x
+        val ey = event.y
+        if (ey >= linearLayout.top && ey <= linearLayout.bottom) {
+            val leftCutX = linearLayout.left.toFloat() + leftCut * linearLayout.measuredWidth
+            val rightCutX = linearLayout.left.toFloat() + rightCut * linearLayout.measuredWidth
+
+            if (ex >= leftCutX - CUT_THUMB_W / 2 && ex <= leftCutX + CUT_THUMB_W) {
+                setNewSelectedCutThumb(LEFT)
+            } else if (ex >= rightCutX - CUT_THUMB_W / 2 && ex <= rightCutX + CUT_THUMB_W) {
+                setNewSelectedCutThumb(RIGHT)
+            } else {
+                setNewSelectedCutThumb(NONE)
+            }
+        } else {
+            setNewSelectedCutThumb(NONE)
+        }
+    }
+
+    private fun setNewSelectedCutThumb(thumb: SelectedCutThumb) {
+        selectedCutThumb = thumb
+        Timber.d("selectedCutThumb: $selectedCutThumb")
+    }
+
     override fun dispatchDraw(canvas: Canvas?) {
-        super.dispatchDraw(canvas)
-        canvas?.drawRoundRect(
-            linearLayout.left.toFloat(),
-            linearLayout.top.toFloat(),
-            leftCut + 10, linearLayout.bottom.toFloat(), 20f, 20f, paintBorder
+        val outerRect = partlyRoundedRect(
+            linearLayout.left.toFloat(), linearLayout.top.toFloat(), linearLayout.right.toFloat()
+            , linearLayout.bottom.toFloat(), RADIUS, RADIUS, true, true, true, true
         )
 
-        canvas?.drawRoundRect(
-            linearLayout.left.toFloat(),
+        val leftCutX = linearLayout.left.toFloat() + leftCut * linearLayout.measuredWidth
+        val rightCutX = linearLayout.left.toFloat() + rightCut * linearLayout.measuredWidth
+
+        val cutThumbRect = partlyRoundedRect(
+            leftCutX - CUT_THUMB_W / 2,
             linearLayout.top.toFloat(),
-            leftCut + 10, linearLayout.bottom.toFloat(), 20f, 20f, paintBorderStroke
-        )
-
-        canvas?.drawRoundRect(
-            rightCut,
-            linearLayout.top.toFloat(),
-            linearLayout.right.toFloat(), linearLayout.bottom.toFloat(), 20f, 20f, paintBorder
-        )
-
-        canvas?.drawRoundRect(
-            rightCut,
-            linearLayout.top.toFloat(),
-            linearLayout.right.toFloat(), linearLayout.bottom.toFloat(), 20f, 20f, paintBorderStroke
-        )
-
-        drawCut(canvas!!)
-
-        val curPos = linearLayout.left + currentRelativePos * (linearLayout.measuredWidth).toFloat()
-        canvas?.drawLine(
-            curPos,
+            rightCutX + CUT_THUMB_W / 2
+            ,
             linearLayout.bottom.toFloat(),
-            curPos,
-            linearLayout.top.toFloat() - 20f, paintThumb
+            RADIUS,
+            RADIUS,
+            true,
+            true,
+            true,
+            true
         )
 
-        canvas?.drawCircle(
-            curPos,
-            linearLayout.top.toFloat() - 20f,
-            20f, paintThumbCircle
+        val cutClipRect = RectF(
+            leftCutX + CUT_THUMB_W / 2, linearLayout.top.toFloat() + CUT_THUMB_STROKE, rightCutX - CUT_THUMB_W / 2,
+            linearLayout
+                .bottom.toFloat() - CUT_THUMB_STROKE
         )
+
+        canvas?.apply {
+            withClip(outerRect) {
+                super.dispatchDraw(canvas)
+
+                save()
+                clipRect(cutClipRect, Region.Op.DIFFERENCE)
+                drawPath(outerRect, paintBorder)
+                drawPath(outerRect, paintBorderStroke)
+                restore()
+            }
+
+            save()
+            clipRect(cutClipRect, Region.Op.DIFFERENCE)
+            drawPath(cutThumbRect, paintThumbCut)
+            restore()
+        }
+
+
+        //        canvas?.drawRoundRect(
+        //            linearLayout.left.toFloat(),
+        //            linearLayout.top.toFloat(),
+        //            leftCut + 10, linearLayout.bottom.toFloat(), 20f, 20f, paintBorder
+        //        )
+        //
+        //        canvas?.drawRoundRect(
+        //            linearLayout.left.toFloat(),
+        //            linearLayout.top.toFloat(),
+        //            leftCut + 10, linearLayout.bottom.toFloat(), 20f, 20f, paintBorderStroke
+        //        )
+        //
+        //        canvas?.drawRoundRect(
+        //            rightCut,
+        //            linearLayout.top.toFloat(),
+        //            linearLayout.right.toFloat(), linearLayout.bottom.toFloat(), 20f, 20f, paintBorder
+        //        )
+        //
+        //        canvas?.drawRoundRect(
+        //            rightCut,
+        //            linearLayout.top.toFloat(),
+        //            linearLayout.right.toFloat(), linearLayout.bottom.toFloat(), 20f, 20f, paintBorderStroke
+        //        )
+        //
+        //        drawCut(canvas!!)
+        //
+        //        val curPos = linearLayout.left + currentRelativePos * (linearLayout.measuredWidth).toFloat()
+        //        canvas?.drawLine(
+        //            curPos,
+        //            linearLayout.bottom.toFloat(),
+        //            curPos,
+        //            linearLayout.top.toFloat() - 20f, paintThumb
+        //        )
+        //
+        //        canvas?.drawCircle(
+        //            curPos,
+        //            linearLayout.top.toFloat() - 20f,
+        //            20f, paintThumbCircle
+        //        )
     }
 
     private fun drawCut(canvas: Canvas) {
