@@ -40,7 +40,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        videoEditor = VideoEditor(requireContext().filesDir.absolutePath + "/myvideo.mp4")
+        videoEditor = VideoEditor(requireContext().applicationContext, requireContext().filesDir.absolutePath + "/myvideo.mp4")
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -64,12 +64,12 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
             }
         }
 
-        val d = videoEditor.getThumbnails().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
-            tempTh.setImageBitmap(it.second)
-            timebar.addThumbnail(it.second)
-        }, {
+        val d = videoEditor.getThumbnails2().subscribeOn(Schedulers.computation()).observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                timebar.addThumbnail(it)
+            }, {
 
-        })
+            })
 
         timebar.onCutCallback = { left, right, inProcess ->
             if (inProcess) {

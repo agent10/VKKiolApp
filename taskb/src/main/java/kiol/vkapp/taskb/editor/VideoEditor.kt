@@ -1,20 +1,25 @@
 package kiol.vkapp.taskb.editor
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.ImageFormat
+import android.graphics.ImageFormat.getBitsPerPixel
+import android.graphics.Rect
+import android.graphics.YuvImage
 import android.media.*
 import android.media.MediaMetadataRetriever.*
 import android.os.Build
+import android.renderscript.*
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
-import io.reactivex.Scheduler
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
-import java.io.File
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 
 
-class VideoEditor(private val file: String) {
+class VideoEditor(private val app: Context, private val file: String) {
     private val mediaMetadataRetriever = MediaMetadataRetriever().apply {
         setDataSource(file)
     }
@@ -25,26 +30,12 @@ class VideoEditor(private val file: String) {
         const val FULL_DURATION = -1L
     }
 
-    private val frameWidth = mediaMetadataRetriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH).toInt()
-    private val frameHeight = mediaMetadataRetriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT).toInt()
+    private val previewsExtractor = PreviewsExtractor(app, file)
+
     val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION).toLong()
 
-    fun getThumbnails(): Flowable<Pair<Int, Bitmap>> {
-        return Flowable.create<Pair<Int, Bitmap>>({ emitter ->
-            repeat(NUM_FRAMES) {
-                if (Build.VERSION.SDK_INT >= 27) {
-                    val b = mediaMetadataRetriever.getScaledFrameAtTime(
-                        duration / NUM_FRAMES * it * 1000L, OPTION_CLOSEST,
-                        frameWidth / 10, frameHeight / 10
-                    )
-                    emitter.onNext(Pair(0, b))
-                } else {
-                    val b = mediaMetadataRetriever.getFrameAtTime(duration / NUM_FRAMES * it * 1000L, OPTION_CLOSEST)
-                    emitter.onNext(Pair(it, Bitmap.createScaledBitmap(b, b.width / 10, b.height / 10, true)))
-                }
-            }
-            emitter.onComplete()
-        }, BackpressureStrategy.BUFFER)
+    fun getThumbnails2(): Flowable<Bitmap> {
+        return previewsExtractor.getPreviews().subscribeOn(Schedulers.computation())
     }
 
     fun cut(startUs: Long, endUs: Long) {
