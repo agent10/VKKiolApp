@@ -811,7 +811,7 @@ class CameraFragment : Fragment(R.layout.camera_fragment_layout),
     }
 
     private fun setupMediaRecorder() {
-        val profile = CamcorderProfile.get(CamcorderProfile.QUALITY_720P)
+        val profile = CamcorderProfile.get(CamcorderProfile.QUALITY_480P)
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)

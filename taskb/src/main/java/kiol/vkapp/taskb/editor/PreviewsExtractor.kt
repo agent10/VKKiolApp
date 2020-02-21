@@ -15,7 +15,7 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
     class DecoderInitFailed : Exception("Fail to create MediaCodec")
 
     companion object {
-        private const val DEQUEUE_TIMEOUT_US = 10000L
+        private const val DEQUEUE_TIMEOUT_US = 0L
         const val NUM_FRAMES = 10
     }
 
@@ -28,6 +28,7 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
             val mediaMetadataRetriever = setupMetadataRetriever()
 
             try {
+                val rotation = mediaMetadataRetriever.getRotation()
                 val durationUs = mediaMetadataRetriever.getDurationUs()
 
                 val seekUsStep = durationUs / NUM_FRAMES
@@ -35,52 +36,74 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
                 var currSeek = 0L
                 decoder.start()
 
-                repeat(NUM_FRAMES) {
+                val info: MediaCodec.BufferInfo = MediaCodec.BufferInfo()
 
-                    extractor.seekTo(currSeek, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+                var stop = false
+                var processed = 0
+                while (!stop) {
+                    while (true) {
+                        val inIndex = decoder.dequeueInputBuffer(DEQUEUE_TIMEOUT_US)
+                        if (inIndex >= 0) {
+                            val buffer = decoder.getInputBuffer(inIndex)
+                            buffer?.let {
+                                buffer.clear()
+                                extractor.seekTo(currSeek, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+                                val size = extractor.readSampleData(buffer, 0)
+                                if (size < 0) {
+                                    decoder.queueInputBuffer(inIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                                    stop = true
+                                } else {
+                                    Timber.d("kiolMC, queueInput index: $inIndex")
+                                    processed++
+                                    decoder.queueInputBuffer(inIndex, 0, size, extractor.sampleTime, 0)
+                                }
 
-                    var retb: Bitmap? = null
-
-                    val inIndex = decoder.dequeueInputBuffer(DEQUEUE_TIMEOUT_US)
-                    if (inIndex >= 0) {
-                        val buffer = decoder.getInputBuffer(inIndex)
-                        buffer?.let {
-                            val size = extractor.readSampleData(buffer, 0)
-                            if (size < 0) {
-                                decoder.queueInputBuffer(inIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-                            } else {
-                                decoder.queueInputBuffer(inIndex, 0, size, extractor.sampleTime, 0)
-                                extractor.advance()
+                                currSeek += seekUsStep
+                                if (currSeek > durationUs) {
+                                    Timber.d("kiolMC, setFlagStop")
+                                    stop = true
+                                }
                             }
+                        } else {
+                            break
                         }
 
-                        val info: MediaCodec.BufferInfo = MediaCodec.BufferInfo()
-                        while (true) {
-                            val outIndex = decoder.dequeueOutputBuffer(info, DEQUEUE_TIMEOUT_US)
-                            if (outIndex >= 0) {
-                                try {
-                                    val outputFormat = decoder.getOutputFormat(outIndex)
-                                    val rotation = outputFormat.getInteger(MediaFormat.KEY_ROTATION)
+                        if (stop) {
+                            break
+                        }
+                    }
 
-                                    val image = decoder.getOutputImage(outIndex)
-                                    image?.let {
-                                        retb = imageConverter.convert(it, rotation)
-                                        it.close()
-                                    }
-                                    decoder.releaseOutputBuffer(outIndex, false)
+                    while (true) {
+                        val outIndex = decoder.dequeueOutputBuffer(info, DEQUEUE_TIMEOUT_US)
+                        if (outIndex >= 0) {
+                            Timber.d("kiolMC, dequeueOutputBuffer index: $outIndex")
 
-                                } catch (e: Exception) {
-                                    Timber.e("getOutputImage error: $e")
+                            try {
+                                val image = decoder.getOutputImage(outIndex)
+                                image?.let {
+                                    processed--
+                                    val retb = imageConverter.convert(it, rotation)
+                                    it.close()
+
+                                    emitter.onNext(retb)
                                 }
+                                decoder.releaseOutputBuffer(outIndex, false)
+
+                            } catch (e: Exception) {
+                                Timber.e("getOutputImage error: $e")
+                            }
+                        } else {
+                            if (stop) {
+                                Timber.d("kiolMC, dequeueOutputBuffer try to stop, but wait other $processed will process")
+                                if (processed == 0) {
+                                    break
+                                }
+                            } else {
                                 break
                             }
                         }
                     }
 
-                    retb?.let {
-                        emitter.onNext(it)
-                    }
-                    currSeek += seekUsStep
                 }
 
                 emitter.onComplete()
@@ -127,5 +150,9 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
 
     private fun MediaMetadataRetriever.getDurationUs(): Long {
         return extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong() * 1000L
+    }
+
+    private fun MediaMetadataRetriever.getRotation(): Int {
+        return extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION).toInt()
     }
 }

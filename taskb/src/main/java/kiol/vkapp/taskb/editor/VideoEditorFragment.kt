@@ -54,7 +54,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
         timebar = view.findViewById<VideoEditorTimebar>(R.id.timeBar)
 
-        val d1 = Flowable.interval(100, java.util.concurrent.TimeUnit.MILLISECONDS).subscribe {
+        val d1 = Flowable.interval(100, java.util.concurrent.TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe {
             timebar.setPosition(exoPlayer?.currentPosition ?: 0L, exoPlayer?.duration ?: 0L)
 
             exoPlayer?.let {
