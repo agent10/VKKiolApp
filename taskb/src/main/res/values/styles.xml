@@ -1,10 +1,18 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="AppTheme" parent="VKKiolAppTheme" />
+    <style name="AppTheme" parent="VKKiolAppTheme">
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+    </style>
 
     <style name="PermissionRationalDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
         <!--        <item name="android:background">@color/main_dark_color</item>-->
         <item name="android:textColor">#FFFFFFFF</item>
         <item name="android:textColorPrimary">#FFFFFFFF</item>
+    </style>
+
+    <style name="ToolbarButtonStyle" parent="Widget.AppCompat.Toolbar.Button.Navigation">
+
     </style>
 </resources>

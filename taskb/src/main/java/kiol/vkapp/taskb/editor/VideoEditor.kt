@@ -25,9 +25,7 @@ class VideoEditor(private val app: Context, private val file: String) {
     }
 
     companion object {
-        private const val NUM_FRAMES = 10
         private const val DEFAULT_BUFFER_SIZE = 2 * 1024 * 1024
-        const val FULL_DURATION = -1L
     }
 
     private val previewsExtractor = PreviewsExtractor(app, file)
@@ -38,10 +36,10 @@ class VideoEditor(private val app: Context, private val file: String) {
         return previewsExtractor.getPreviews().subscribeOn(Schedulers.computation())
     }
 
-    fun cut(startUs: Long, endUs: Long) {
+    fun cut(startUs: Long, endUs: Long, withAudio: Boolean) {
         val t = System.currentTimeMillis()
         val d = Flowable.fromCallable {
-            genVideoUsingMuxer(file, file + "cutted.mp4", startUs, endUs, true, true)
+            genVideoUsingMuxer(file, file + "cutted.mp4", startUs, endUs, withAudio, true)
         }.subscribeOn(Schedulers.computation()).subscribe({
             Timber.d("Cut finished, time: ${System.currentTimeMillis() - t}ms")
         }, {

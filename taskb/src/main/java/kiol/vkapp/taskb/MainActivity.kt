@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
 //            .replace(R.id.contentViewer, CameraFragment.newInstance()).commit()
 
         supportFragmentManager.beginTransaction()
-            .replace(R.id.contentViewer, VideoEditorFragment()).commit()
+            .replace(R.id.contentViewer, VideoEditorFragment()).addToBackStack(null).commit()
 
         //        val app = applicationContext as TheApp
         //        val qrBarRecognizer = app.qrBarRecognizer

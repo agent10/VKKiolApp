@@ -5,8 +5,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
+import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.Player
@@ -35,11 +37,17 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     private lateinit var timebar: VideoEditorTimebar
     private var exoPlayer: SimpleExoPlayer? = null
 
+    private var lastVolume = -1f
+
     private var lastStartUs = 0L
     private var lastEndUs = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        activity?.window?.setFlags(
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+        )
         videoEditor = VideoEditor(requireContext().applicationContext, requireContext().filesDir.absolutePath + "/myvideo.mp4")
     }
 
@@ -48,8 +56,33 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
         val playerView = view.findViewById<PlayerView>(R.id.playerView)
         val updateView = view.findViewById<View>(R.id.updateView)
+        val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
 
-        timebar = view.findViewById<VideoEditorTimebar>(R.id.timeBar)
+        toolbar.setNavigationOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
+
+        toolbar.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.soundOff -> {
+                    if (lastVolume == -1f) {
+                        lastVolume = exoPlayer?.volume ?: -1f
+                        exoPlayer?.volume = 0f
+                    } else {
+                        exoPlayer?.volume = lastVolume
+                        lastVolume = -1f
+                    }
+                }
+                R.id.save -> {
+                    videoEditor.cut(lastStartUs, lastEndUs, lastVolume == -1f)
+                }
+                else -> {
+                }
+            }
+            true
+        }
+
+        timebar = view.findViewById(R.id.timeBar)
 
         val d1 = Flowable.interval(100, java.util.concurrent.TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread())
             .subscribe {
