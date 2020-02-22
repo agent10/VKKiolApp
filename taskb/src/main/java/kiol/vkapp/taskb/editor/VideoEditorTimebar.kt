@@ -24,9 +24,9 @@ class VideoEditorTimebar @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
-    var onCutCallback: (left: Float, right: Float, inProcess: Boolean) -> Unit = { _, _, _ -> }
+    var onCutCallback: (left: Float, right: Float, inProcess: Boolean, activeThumb: SelectedCutThumb) -> Unit = { _, _, _, _ -> }
 
-    private enum class SelectedCutThumb {
+    enum class SelectedCutThumb {
         LEFT, RIGHT, NONE
     }
 
@@ -218,7 +218,7 @@ class VideoEditorTimebar @JvmOverloads constructor(
                         }
                     }
                     if (flagCutChanged) {
-                        onCutCallback(leftCut, rightCut, true)
+                        onCutCallback(leftCut, rightCut, true, selectedCutThumb)
                     }
                     updateDrawingPositions()
                     return true
@@ -226,7 +226,7 @@ class VideoEditorTimebar @JvmOverloads constructor(
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (flagCutChanged) {
-                    onCutCallback(leftCut, rightCut, false)
+                    onCutCallback(leftCut, rightCut, false, NONE)
                     setFlatCutChanging(false)
                 }
                 setNewSelectedCutThumb(NONE)

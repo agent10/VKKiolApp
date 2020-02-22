@@ -29,7 +29,9 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.taskb.R
+import kiol.vkapp.taskb.editor.VideoEditorTimebar.SelectedCutThumb.*
 import timber.log.Timber
+import kotlin.math.roundToLong
 
 class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
@@ -102,11 +104,19 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
             })
 
-        timebar.onCutCallback = { left, right, inProcess ->
+        timebar.onCutCallback = { left, right, inProcess, activeThumb ->
             if (inProcess) {
-                exoPlayer?.stop()
+                exoPlayer?.playWhenReady = false
+                val roundPos = when (activeThumb) {
+                    LEFT -> ((exoPlayer?.duration ?: 0L) * left / 100f).roundToLong()
+                    RIGHT -> ((exoPlayer?.duration ?: 0L) * right / 100f).roundToLong()
+                    NONE -> 0L
+                }
+                exoPlayer?.seekTo(roundPos * 100L)
             } else {
+                lastSeekMs = -1
                 timebar.setPosition(0.0f)
+                exoPlayer?.seekTo(0)
                 updateView.animate().alpha(1.0f).withEndAction {
                     updateMediaSource(left, right)
                     updateView.animate().alpha(0.0f).duration = 250
@@ -121,6 +131,8 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
         setupPlayer()
     }
+
+    var lastSeekMs = -1
 
     private fun setupPlayer() {
         exoPlayer?.playWhenReady = true
@@ -149,6 +161,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
         mediaSource?.let {
             exoPlayer?.prepare(it)
+            exoPlayer?.playWhenReady = true
         } ?: Toast.makeText(requireContext(), "Failed", Toast.LENGTH_SHORT).show()
     }
 }
