@@ -47,22 +47,20 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
         super.onViewCreated(view, savedInstanceState)
 
         val playerView = view.findViewById<PlayerView>(R.id.playerView)
-        val tempTh = view.findViewById<ImageView>(R.id.tempThumb)
-        tempTh.setOnClickListener {
-            videoEditor.cut(lastStartUs, lastEndUs)
-        }
+        val updateView = view.findViewById<View>(R.id.updateView)
 
         timebar = view.findViewById<VideoEditorTimebar>(R.id.timeBar)
 
-        val d1 = Flowable.interval(100, java.util.concurrent.TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread()).subscribe {
-            timebar.setPosition(exoPlayer?.currentPosition ?: 0L, exoPlayer?.duration ?: 0L)
+        val d1 = Flowable.interval(100, java.util.concurrent.TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                timebar.setPosition(exoPlayer?.currentPosition ?: 0L, exoPlayer?.duration ?: 0L)
 
-            exoPlayer?.let {
-                if (it.duration != 0L) {
-                    timebar.setPosition(it.currentPosition.toFloat() / it.duration)
+                exoPlayer?.let {
+                    if (it.duration != 0L) {
+                        timebar.setPosition(it.currentPosition.toFloat() / it.duration)
+                    }
                 }
             }
-        }
 
         val d = videoEditor.getThumbnails2().subscribeOn(Schedulers.computation()).observeOn(AndroidSchedulers.mainThread())
             .subscribe({
@@ -76,15 +74,17 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
                 exoPlayer?.stop()
             } else {
                 timebar.setPosition(0.0f)
-                updateMediaSource(left, right)
+                updateView.animate().alpha(1.0f).withEndAction {
+                    updateMediaSource(left, right)
+                    updateView.animate().alpha(0.0f).duration = 250
+                }.duration = 250
             }
         }
-
-        //        videoEditor.cut(3000, 13000)
 
         val context = requireContext()
         exoPlayer = SimpleExoPlayer.Builder(context).setTrackSelector(DefaultTrackSelector(context)).build()
         playerView.player = exoPlayer
+        playerView.isEnabled = false
 
         setupPlayer()
     }
