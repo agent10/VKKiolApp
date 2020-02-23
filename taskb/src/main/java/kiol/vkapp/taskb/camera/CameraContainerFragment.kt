@@ -9,6 +9,7 @@ import android.view.TextureView
 import android.view.View
 import android.widget.ImageButton
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import kiol.vkapp.taskb.R
 import kotlinx.android.synthetic.main.camera_container_fragment.*
@@ -47,38 +48,12 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
             myCamera.switchCamera()
         }
 
-        val recordBtn = view.findViewById<ImageButton>(R.id.recordBtn)
-        //            .setOnClickListener {
-        ////            if (myCamera.isRecording) {
-        ////                myCamera.stopRecord()
-        ////            } else {
-        ////                myCamera.startRecord()
-        ////            }
-        //        }
-        recordBtn.setOnTouchListener { v, event ->
-
-            when (event?.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    lastDownY = event.y
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    if (lastDownY >= 0f) {
-                        Timber.d("Rec zoom level y: ${event.y}")
-                        if (event.y < 0) {
-                            val zl = 3 * (abs(event.y) / cameraView.height)
-                            myCamera.setZoom(zl)
-                        }
-                        return@setOnTouchListener true
-                    }
-                    false
-                }
-                MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
-                    lastDownY = -1f
-                    false
-                }
-                else -> false
-            }
+        val recordBtn = view.findViewById<RecordButton>(R.id.recordBtn)
+        recordBtn.callback = {
+            myCamera.setZoom(it)
+        }
+        cameraView.doOnLayout {
+            recordBtn.zoomHeight = it.measuredHeight.toFloat()
         }
 
         view.findViewById<ImageButton>(R.id.torchSwitcher).setOnClickListener {
