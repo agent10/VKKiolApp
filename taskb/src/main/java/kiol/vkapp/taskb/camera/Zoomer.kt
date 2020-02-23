@@ -44,7 +44,8 @@ class Zoomer(private val context: Context, private val backgroundHandler: Handle
         this.captureSession = captureSession
     }
 
-    private fun setZoom(level: Float) {
+    fun setZoom(level: Float) {
+        val li = max(min(level, 0.75f), 0f)
         cameraConfig?.let {
             val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
             val characteristics = manager.getCameraCharacteristics(it.cameraId)
@@ -53,7 +54,7 @@ class Zoomer(private val context: Context, private val backgroundHandler: Handle
             val maxZoom = characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)
             rect.let {
                 val m = Matrix()
-                m.preScale(1f - level, 1f - level, rect.width() / 2f, rect.height() / 2f)
+                m.preScale(1f - li, 1f - li, rect.width() / 2f, rect.height() / 2f)
                 m.mapRect(rect)
                 val zoom = rect.toRect()
 

@@ -165,4 +165,8 @@ class MyCamera(private val context: Context) {
         }
         captureSessionCreator.create(sessionStrategy, camera, textureView, cameraConfig, backgroundHandler)
     }
+
+    fun setZoom(zoomLevel: Float) {
+        zoomer.setZoom(zoomLevel)
+    }
 }
