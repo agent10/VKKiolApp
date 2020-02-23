@@ -84,29 +84,6 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
             } else {
 
             }
-
-            //            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-            //                val shouldRational =
-            //                    shouldShowRequestPermissionRationale(Manifest.permission.CAMERA) ||
-            //                            shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)
-            //                Timber.d("perms, requestCameraPermission, shouldRational: $shouldRational")
-            //                if (shouldRational) {
-            //                    AlertDialog.Builder(context, R.style.PermissionRationalDialog)
-            //                        .setMessage(getString(R.string.permission_rational))
-            //                        .setPositiveButton(android.R.string.ok) { _, _ ->
-            //                            parentFragment?.requestPermissions(
-            //                                arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO),
-            //                                1
-            //                            )
-            //                        }
-            //                        .setNegativeButton(android.R.string.cancel) { _, _ ->
-            //                            setNoPermissionsStub(true)
-            //                        }
-            //                        .create().show()
-            //                } else {
-            //                    setNoPermissionsStub(true)
-            //                }
-            //            }
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }

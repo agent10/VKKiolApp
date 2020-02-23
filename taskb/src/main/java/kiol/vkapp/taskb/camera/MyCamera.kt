@@ -3,13 +3,17 @@ package kiol.vkapp.taskb.camera
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureRequest
 import android.media.ImageReader
 import android.os.Handler
 import android.os.HandlerThread
+import android.view.ScaleGestureDetector
 import android.view.Surface
 import android.view.TextureView
+import androidx.core.graphics.toRect
 import com.google.zxing.ResultPoint
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
@@ -19,10 +23,7 @@ import kiol.vkapp.taskb.camera.MyCamera.CameraType.Back
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.Front
 import ru.timepad.domain.qr.QRBarRecognizer
 import timber.log.Timber
-import kotlin.math.acos
-import kotlin.math.pow
-import kotlin.math.sign
-import kotlin.math.sqrt
+import kotlin.math.*
 
 class MyCamera(private val context: Context) {
 
@@ -50,6 +51,9 @@ class MyCamera(private val context: Context) {
     private val torch = Torch(backgroundHandler)
 
     private var cameraDevice: CameraDevice? = null
+
+
+    private val zoomer = Zoomer(context, backgroundHandler)
 
     private fun changeCamera(cameraType: CameraType) {
         if (this.cameraType != cameraType) {
@@ -81,6 +85,7 @@ class MyCamera(private val context: Context) {
         mediaRecorder.stop()
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     fun setTextureView(textureView: TextureView) {
         this.textureView = textureView
         this.textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
@@ -93,6 +98,9 @@ class MyCamera(private val context: Context) {
             override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
                 checkTextureView()
             }
+        }
+        this.textureView.setOnTouchListener { v, event ->
+            zoomer.scaleGestureDetector.onTouchEvent(event)
         }
         checkTextureView()
     }
@@ -152,8 +160,8 @@ class MyCamera(private val context: Context) {
 
     private fun startCameraSession(camera: CameraDevice, cameraConfig: CameraConfigurator.Config) {
         val sessionStrategy = when (cameraType) {
-            Back -> CaptureSessionCreator.BackCameraSessionStrategy(recognizer.imageReader, mediaRecorder, torch)
-            Front -> CaptureSessionCreator.FrontCameraSessionStrategy(mediaRecorder, torch)
+            Back -> CaptureSessionCreator.BackCameraSessionStrategy(zoomer, recognizer.imageReader, mediaRecorder, torch)
+            Front -> CaptureSessionCreator.FrontCameraSessionStrategy(zoomer, mediaRecorder, torch)
         }
         captureSessionCreator.create(sessionStrategy, camera, textureView, cameraConfig, backgroundHandler)
     }

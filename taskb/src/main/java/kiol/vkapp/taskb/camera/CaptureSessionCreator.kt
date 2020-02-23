@@ -22,24 +22,34 @@ class CaptureSessionCreator(private val context: Context) {
 
     abstract class RecorderCameraSessionStrategy(
         private val mediaRecorderInternal: MediaRecorderInternal,
-        protected val torch: Torch
+        protected val torch: Torch, protected val zoomer: Zoomer
     ) :
         SessionStrategy {
         override fun onPreSetup(cameraConfig: CameraConfigurator.Config) {
             mediaRecorderInternal.setup(cameraConfig)
+            zoomer.setConfg(cameraConfig)
         }
 
         override fun onSurfaces(surfaces: MutableList<Surface>) {
             surfaces += mediaRecorderInternal.getSurface()
         }
+
+        override fun onSessionConfigured(
+            previewRequestBuilder: CaptureRequest.Builder,
+            cameraCaptureSession: CameraCaptureSession
+        ) {
+            zoomer.setup(previewRequestBuilder, cameraCaptureSession)
+        }
     }
 
     class BackCameraSessionStrategy(
-        private val imageReader: ImageReader, mediaRecorderInternal: MediaRecorderInternal, torch:
-        Torch
+        zoomer: Zoomer,
+        private val imageReader: ImageReader,
+        mediaRecorderInternal: MediaRecorderInternal,
+        torch: Torch
     ) :
         RecorderCameraSessionStrategy
-            (mediaRecorderInternal, torch) {
+            (mediaRecorderInternal, torch, zoomer) {
 
         override fun onSurfaces(surfaces: MutableList<Surface>) {
             super.onSurfaces(surfaces)
@@ -50,16 +60,23 @@ class CaptureSessionCreator(private val context: Context) {
             previewRequestBuilder: CaptureRequest.Builder,
             cameraCaptureSession: CameraCaptureSession
         ) {
+            super.onSessionConfigured(previewRequestBuilder, cameraCaptureSession)
             torch.setup(previewRequestBuilder, cameraCaptureSession)
         }
     }
 
-    class FrontCameraSessionStrategy(mediaRecorderInternal: MediaRecorderInternal, torch: Torch) : RecorderCameraSessionStrategy
-        (mediaRecorderInternal, torch) {
+    class FrontCameraSessionStrategy(
+        zoomer: Zoomer,
+        mediaRecorderInternal: MediaRecorderInternal,
+        torch: Torch
+    ) :
+        RecorderCameraSessionStrategy
+            (mediaRecorderInternal, torch, zoomer) {
         override fun onSessionConfigured(
             previewRequestBuilder: CaptureRequest.Builder,
             cameraCaptureSession: CameraCaptureSession
         ) {
+            super.onSessionConfigured(previewRequestBuilder, cameraCaptureSession)
             torch.reset()
         }
     }
