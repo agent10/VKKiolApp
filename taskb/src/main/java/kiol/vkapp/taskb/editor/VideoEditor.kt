@@ -2,19 +2,12 @@ package kiol.vkapp.taskb.editor
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.ImageFormat
-import android.graphics.ImageFormat.getBitsPerPixel
-import android.graphics.Rect
-import android.graphics.YuvImage
 import android.media.*
-import android.media.MediaMetadataRetriever.*
-import android.os.Build
-import android.renderscript.*
-import io.reactivex.BackpressureStrategy
+import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
+import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION
 import io.reactivex.Flowable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 

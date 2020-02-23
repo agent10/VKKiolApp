@@ -2,7 +2,7 @@ package kiol.vkapp.taskb
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import kiol.vkapp.taskb.editor.VideoEditorFragment
+import kiol.vkapp.taskb.camera.CameraContainerFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -11,11 +11,11 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-//        supportFragmentManager.beginTransaction()
-//            .replace(R.id.contentViewer, CameraFragment.newInstance()).commit()
-
         supportFragmentManager.beginTransaction()
-            .replace(R.id.contentViewer, VideoEditorFragment()).addToBackStack(null).commit()
+            .replace(R.id.contentViewer, CameraContainerFragment()).commit()
+
+//        supportFragmentManager.beginTransaction()
+//            .replace(R.id.contentViewer, VideoEditorFragment()).addToBackStack(null).commit()
 
         //        val app = applicationContext as TheApp
         //        val qrBarRecognizer = app.qrBarRecognizer

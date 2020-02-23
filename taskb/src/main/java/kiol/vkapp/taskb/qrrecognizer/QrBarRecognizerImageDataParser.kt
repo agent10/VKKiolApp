@@ -2,7 +2,6 @@ package ru.timepad.domain.qr
 
 import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
-import kiol.vkapp.taskb.qrrecognizer.MyPlanarYUVLuminanceSource
 import timber.log.Timber
 
 class QrBarRecognizerImageDataParser constructor() {
