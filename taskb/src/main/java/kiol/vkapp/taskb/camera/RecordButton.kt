@@ -45,6 +45,15 @@ class RecordButton @JvmOverloads constructor(
         }
     }
 
+    private var progressValue = 0f
+    private val progressAnimator = ValueAnimator.ofFloat(0.0f, 360f).apply {
+        duration = 1000 * 15
+        addUpdateListener {
+            progressValue = it.animatedValue as Float
+            invalidate()
+        }
+    }
+
     var zoomHeight = 1.0f
         set(value) {
             field = max(1.0f, value)
@@ -59,6 +68,8 @@ class RecordButton @JvmOverloads constructor(
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
+                progressAnimator.cancel()
+                progressAnimator.start()
                 setScale(true)
                 return true
             }
@@ -71,6 +82,8 @@ class RecordButton @JvmOverloads constructor(
                 return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                progressAnimator.cancel()
+                progressValue = 0.0f
                 setScale(false)
                 return true
             }
@@ -103,7 +116,7 @@ class RecordButton @JvmOverloads constructor(
                 val r = RectF(0f, 0f, measuredWidth.toFloat(), measuredHeight.toFloat())
                 r.inset(measuredWidth * 0.15f, measuredHeight * 0.15f)
                 drawArc(r, 0f, 360f, true, progressButtonBackgroundPaint)
-                drawArc(r, 0f, 300f, true, progressButtonPaint)
+                drawArc(r, 0f, progressValue, true, progressButtonPaint)
 
                 restore()
 
