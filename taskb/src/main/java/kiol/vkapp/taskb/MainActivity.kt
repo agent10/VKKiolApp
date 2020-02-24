@@ -3,6 +3,7 @@ package kiol.vkapp.taskb
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import kiol.vkapp.taskb.camera.CameraContainerFragment
@@ -10,6 +11,10 @@ import kiol.vkapp.taskb.camera.CameraContainerFragment
 operator fun CompositeDisposable.plusAssign(d: Disposable) {
     this.add(d)
 }
+
+fun Fragment.getAppContext() = requireContext().applicationContext
+fun Fragment.getTempVideoFile() = requireContext().filesDir.absolutePath + TEMP_RECORDING_FILE
+fun Fragment.getTempCutVideoFile() = requireContext().filesDir.absolutePath + TEMP_CUTTED_FILE
 
 class MainActivity : AppCompatActivity() {
 

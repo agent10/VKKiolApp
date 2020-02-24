@@ -14,6 +14,7 @@ import kiol.vkapp.taskb.TheApp
 import kiol.vkapp.taskb.camera.ui.QrDrawModel
 import kiol.vkapp.taskb.camera.ui.QrOverlay
 import ru.timepad.domain.qr.QRBarRecognizer
+import ru.timepad.domain.qr.QrBarRecognizerImageDataParser
 import timber.log.Timber
 import kotlin.math.acos
 import kotlin.math.pow
@@ -55,7 +56,7 @@ class Recognizer(context: Context, private val backgroundHandler: Handler, val o
             qrOverlay.drawQr(QrOverlay.EmptyQrDrawModel)
         }
 
-    private val qrBarRecognizer = (context.applicationContext as TheApp).qrBarRecognizer
+    private val qrBarRecognizer = QRBarRecognizer(QrBarRecognizerImageDataParser())
     val imageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2).apply {
         setOnImageAvailableListener({ reader ->
             if (isEnabled) {

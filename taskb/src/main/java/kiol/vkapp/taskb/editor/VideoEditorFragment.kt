@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.Timeline
 import com.google.android.exoplayer2.source.ClippingMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
@@ -21,9 +22,8 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import kiol.vkapp.commonui.pxF
-import kiol.vkapp.taskb.R
+import kiol.vkapp.taskb.*
 import kiol.vkapp.taskb.editor.VideoEditorTimebar.SelectedCutThumb.*
-import kiol.vkapp.taskb.plusAssign
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToLong
@@ -39,6 +39,8 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     private var lastEndUs = 0L
 
     private var lastSeekMs = -1
+
+    private var initialDuration = -1L
 
     private lateinit var timebar: VideoEditorTimebar
     private lateinit var playerView: PlayerView
@@ -74,9 +76,11 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
                     if (lastVolume == -1f) {
                         lastVolume = exoPlayer?.volume ?: -1f
                         exoPlayer?.volume = 0f
+                        it.setIcon(R.drawable.ic_sound_on)
                     } else {
                         exoPlayer?.volume = lastVolume
                         lastVolume = -1f
+                        it.setIcon(R.drawable.ic_sound_off)
                     }
                 }
                 R.id.save -> {
@@ -132,10 +136,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     }
 
     private fun createVideoEditor() {
-        videoEditor = VideoEditor(
-            requireContext().applicationContext,
-            requireContext().filesDir.absolutePath + "/myvideo.mp4"
-        )
+        videoEditor = VideoEditor(getAppContext(), getTempVideoFile(), getTempCutVideoFile())
     }
 
     private fun getThumbnails() {
@@ -157,6 +158,15 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
         exoPlayer?.playWhenReady = true
         exoPlayer?.repeatMode = Player.REPEAT_MODE_ALL
 
+        exoPlayer?.addListener(object : Player.EventListener {
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                super.onTimelineChanged(timeline, reason)
+                if (initialDuration == -1L) {
+                    initialDuration = exoPlayer?.duration ?: -1L
+                }
+            }
+        })
+
         compositeDisposable += Flowable.interval(100, TimeUnit.MILLISECONDS)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
@@ -169,6 +179,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
                 }
             }
 
+        getSimpleRouter()
         updateMediaSource()
     }
 
@@ -185,8 +196,16 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     private fun updateMediaSource(left: Float = 0.0f, right: Float = 1.0f) {
         val uri = Uri.parse(requireContext().filesDir.absolutePath + "/myvideo.mp4")
 
-        lastStartUs = ((videoEditor.duration) * left * 1000L).toLong()
-        lastEndUs = ((videoEditor.duration) * right * 1000L).toLong()
+        lastStartUs = if (initialDuration == -1L) {
+            0L
+        } else {
+            (initialDuration * left * 1000L).toLong()
+        }
+        lastEndUs = if (initialDuration == -1L) {
+            C.TIME_END_OF_SOURCE
+        } else {
+            (initialDuration * right * 1000L).toLong()
+        }
 
         val mediaSource = ClippingMediaSource(createMediaSource(uri), lastStartUs, lastEndUs)
         mediaSource.let {
@@ -194,4 +213,6 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
             exoPlayer?.playWhenReady = true
         }
     }
+
+
 }
