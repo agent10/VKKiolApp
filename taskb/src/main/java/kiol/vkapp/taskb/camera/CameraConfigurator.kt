@@ -24,7 +24,7 @@ internal class CompareSizesByArea : Comparator<Size> {
 class CameraConfigurator(private val context: Context) {
     class CameraNotFoundException : Exception("Camera not found")
 
-    class Config(val cameraId: String, val previewSize: Size, val mediaRecorderSize: Array<Size>)
+    class Config(val cameraId: String, val previewSize: Size, val mediaRecorderSize: Array<Size>, val isFaceCamera: Boolean)
 
     fun createConfig(displaySize: Point? = null, width: Int, height: Int, isFaceCamera: Boolean): Config {
         val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -60,13 +60,12 @@ class CameraConfigurator(private val context: Context) {
                 val mediaRecorderSizes = map.getOutputSizes(MediaRecorder::class.java)
                 Timber.d("MediaRecorder available sizes: ${mediaRecorderSizes.toList()}")
 
-                return Config(cameraId, previewSize, mediaRecorderSizes)
+                return Config(cameraId, previewSize, mediaRecorderSizes, isFaceCamera)
             }
         }
 
         throw CameraNotFoundException()
     }
-
 
 
     private fun chooseOptimalSize(

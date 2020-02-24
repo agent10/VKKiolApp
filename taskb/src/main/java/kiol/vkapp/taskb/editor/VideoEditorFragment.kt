@@ -1,20 +1,21 @@
 package kiol.vkapp.taskb.editor
 
+import android.app.Activity.RESULT_OK
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.Timeline
 import com.google.android.exoplayer2.source.ClippingMediaSource
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.FileDataSource
 import com.google.android.exoplayer2.util.Util
@@ -52,8 +53,12 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
     private val handler = Handler()
 
+    private var playOnAppResume = false
+
     companion object {
         private const val WAIT_FOR_MEDIARECORDER = 1500L
+        private const val VIDEO_FILE_NAME_TO_SAVE = "vktaskbmyvideo.mp4"
+        private const val FILE_EXPORT_REQUEST_CODE = 43
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -85,6 +90,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
                 }
                 R.id.save -> {
                     videoEditor.cut(lastStartUs, lastEndUs, lastVolume == -1f)
+                    selectFileToSave()
                 }
                 else -> {
                 }
@@ -123,6 +129,18 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
         }, WAIT_FOR_MEDIARECORDER)
     }
 
+    override fun onPause() {
+        super.onPause()
+        exoPlayer?.playWhenReady = false
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (playOnAppResume) {
+            exoPlayer?.playWhenReady = true
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         releasePlayer()
@@ -146,8 +164,8 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     }
 
     private fun showUIAnimated() {
-        toolbar.animate().alpha(1.0f).translationY(10.pxF).duration = 500
-        timebar.animate().alpha(1.0f).translationY((-10).pxF).duration = 500
+        toolbar.animate().alpha(1.0f).translationY(10.pxF).duration = 1000
+        timebar.animate().alpha(1.0f).translationY((-10).pxF).duration = 1000
 
     }
 
@@ -158,22 +176,16 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
         exoPlayer?.playWhenReady = true
         exoPlayer?.repeatMode = Player.REPEAT_MODE_ALL
 
-        exoPlayer?.addListener(object : Player.EventListener {
-            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-                super.onTimelineChanged(timeline, reason)
-                if (initialDuration == -1L) {
-                    initialDuration = exoPlayer?.duration ?: -1L
-                }
-            }
-        })
-
         compositeDisposable += Flowable.interval(100, TimeUnit.MILLISECONDS)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
                 timebar.setPosition(exoPlayer?.currentPosition ?: 0L, exoPlayer?.duration ?: 0L)
 
                 exoPlayer?.let {
-                    if (it.duration != 0L) {
+                    if (it.duration > 0L) {
+                        if (initialDuration == -1L) {
+                            initialDuration = exoPlayer?.duration ?: -1L
+                        }
                         timebar.setPosition(it.currentPosition.toFloat() / it.duration)
                     }
                 }
@@ -194,7 +206,8 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     }
 
     private fun updateMediaSource(left: Float = 0.0f, right: Float = 1.0f) {
-        val uri = Uri.parse(requireContext().filesDir.absolutePath + "/myvideo.mp4")
+
+        val uri = Uri.parse(getTempVideoFile())
 
         lastStartUs = if (initialDuration == -1L) {
             0L
@@ -214,5 +227,37 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
         }
     }
 
+    private fun selectFileToSave() {
+        playOnAppResume = false
+        val exportIntent = Intent(Intent.ACTION_CREATE_DOCUMENT)
+        exportIntent.addCategory(Intent.CATEGORY_OPENABLE)
+        exportIntent.type = "video/mp4"
+        exportIntent.putExtra(Intent.EXTRA_TITLE, VIDEO_FILE_NAME_TO_SAVE)
+        startActivityForResult(exportIntent, FILE_EXPORT_REQUEST_CODE)
+    }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == FILE_EXPORT_REQUEST_CODE && resultCode == RESULT_OK) {
+            data?.let {
+                val uri = data.data
+                uri?.let {
+                    requireContext().contentResolver
+                        .openFileDescriptor(uri, "rwt")?.fileDescriptor?.let {
+                        compositeDisposable += videoEditor.saveCuttedFile(it)
+                            .doOnEvent {
+                                playOnAppResume = true
+                            }
+                            .subscribe({
+                                parentFragmentManager.popBackStack()
+                                Toast.makeText(requireContext(), "File saved", Toast.LENGTH_SHORT).show()
+                            }, {
+                                exoPlayer?.playWhenReady = true
+                                Toast.makeText(requireContext(), "Error saving", Toast.LENGTH_SHORT).show()
+                            })
+                    }
+                }
+            }
+        }
+    }
 }

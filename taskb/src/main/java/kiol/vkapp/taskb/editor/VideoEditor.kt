@@ -5,10 +5,12 @@ import android.graphics.Bitmap
 import android.media.*
 import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
 import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION
+import android.net.Uri
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import java.io.FileDescriptor
 import java.io.IOException
 import java.nio.ByteBuffer
 
@@ -27,4 +29,6 @@ class VideoEditor(app: Context, file: String, cutFile: String) {
     fun cut(startUs: Long, endUs: Long, withAudio: Boolean) {
         videoCutter.cut(startUs, endUs, withAudio)
     }
+
+    fun saveCuttedFile(fd: FileDescriptor) = videoCutter.trySaveFile(fd).observeOn(AndroidSchedulers.mainThread())
 }

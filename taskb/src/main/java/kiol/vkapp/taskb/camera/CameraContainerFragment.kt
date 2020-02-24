@@ -21,6 +21,7 @@ import kiol.vkapp.taskb.camera.ui.QrDialog
 import kiol.vkapp.taskb.camera.ui.QrOverlay
 import kiol.vkapp.taskb.camera.ui.RecordButton
 import kiol.vkapp.taskb.getSimpleRouter
+import kiol.vkapp.taskb.getTempVideoFile
 import kotlinx.android.synthetic.main.camera_container_fragment.*
 import timber.log.Timber
 
@@ -41,7 +42,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        myCamera = MyCamera(requireContext())
+        myCamera = MyCamera(requireContext(), getTempVideoFile())
     }
 
     @SuppressLint("ClickableViewAccessibility")

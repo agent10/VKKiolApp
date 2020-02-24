@@ -1,10 +1,13 @@
 package kiol.vkapp.taskb.editor
 
 import android.media.*
+import android.net.Uri
+import android.os.FileUtils
+import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
-import java.io.IOException
+import java.io.*
 import java.nio.ByteBuffer
 
 class VideoCutter(private val file: String, private val cutFile: String) {
@@ -12,14 +15,34 @@ class VideoCutter(private val file: String, private val cutFile: String) {
         private const val DEFAULT_BUFFER_SIZE = 2 * 1024 * 1024
     }
 
-    private val mediaMetadataRetriever = MediaMetadataRetriever().apply {
-        setDataSource(file)
+
+    fun trySaveFile(fd: FileDescriptor): Completable {
+        return Completable.create {
+
+            var inputStream: InputStream? = null
+            var outputStream: OutputStream? = null
+            try {
+                inputStream = FileInputStream(cutFile)
+                outputStream = FileOutputStream(fd)
+                inputStream.copyTo(outputStream)
+                it.onComplete()
+            } catch (e: Exception) {
+                Timber.e("Can't save cutted video: $e")
+                it.onError(e)
+            } finally {
+                try {
+                    inputStream?.close()
+                    outputStream?.close()
+                } catch (e: Exception) {
+                }
+            }
+        }.subscribeOn(Schedulers.io())
     }
 
     fun cut(startUs: Long, endUs: Long, withAudio: Boolean) {
         val t = System.currentTimeMillis()
         val d = Flowable.fromCallable {
-            genVideoUsingMuxer(file, cutFile, startUs, endUs, withAudio, true)
+            genVideoUsingMuxer(file, cutFile, startUs, endUs, withAudio)
         }.subscribeOn(Schedulers.computation()).subscribe({
             Timber.d("Cut finished, time: ${System.currentTimeMillis() - t}ms")
         }, {
@@ -30,8 +53,8 @@ class VideoCutter(private val file: String, private val cutFile: String) {
     @Throws(IOException::class)
     private fun genVideoUsingMuxer(
         srcPath: String, dstPath: String,
-        startUs: Long, endUs: Long, useAudio: Boolean, useVideo: Boolean
-    ) { // Set up MediaExtractor to read from the source.
+        startUs: Long, endUs: Long, useAudio: Boolean
+    ) {
         val extractor = MediaExtractor()
         extractor.setDataSource(srcPath)
         val trackCount: Int = extractor.trackCount
@@ -41,11 +64,9 @@ class VideoCutter(private val file: String, private val cutFile: String) {
         for (i in 0 until trackCount) {
             val format: MediaFormat = extractor.getTrackFormat(i)
             val mime: String = format.getString(MediaFormat.KEY_MIME)
-            var selectCurrentTrack = false
-            if (mime.startsWith("audio/") && useAudio) {
-                selectCurrentTrack = true
-            } else if (mime.startsWith("video/") && useVideo) {
-                selectCurrentTrack = true
+            var selectCurrentTrack = true
+            if (mime.startsWith("audio/") && !useAudio) {
+                selectCurrentTrack = false
             }
             if (selectCurrentTrack) {
                 extractor.selectTrack(i)
@@ -65,12 +86,17 @@ class VideoCutter(private val file: String, private val cutFile: String) {
         val degreesString = retrieverSrc.extractMetadata(
             MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION
         )
+        val durationUs = retrieverSrc.extractMetadata(
+            MediaMetadataRetriever.METADATA_KEY_DURATION
+        ).toLong() * 1000L
+
         if (degreesString != null) {
             val degrees = degreesString.toInt()
             if (degrees >= 0) {
                 muxer.setOrientationHint(degrees)
             }
         }
+
         if (startUs > 0) {
             extractor.seekTo(startUs, MediaExtractor.SEEK_TO_NEXT_SYNC)
         }
@@ -89,9 +115,8 @@ class VideoCutter(private val file: String, private val cutFile: String) {
                     break
                 } else {
                     bufferInfo.presentationTimeUs = extractor.sampleTime
-                    val duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toLong()
-                    val internalEndUs = if (endUs <= 0) duration else endUs
 
+                    val internalEndUs = if (endUs <= 0) durationUs else endUs
                     if (internalEndUs > 0 && bufferInfo.presentationTimeUs > internalEndUs) {
                         Timber.e("The current sample is over the trim end time.")
                         break
@@ -107,10 +132,7 @@ class VideoCutter(private val file: String, private val cutFile: String) {
                 }
             }
             muxer.stop()
-            //deleting the old file
-            //            val file = File(srcPath)
-            //            file.delete()
-        } catch (e: IllegalStateException) { // Swallow the exception due to malformed source.
+        } catch (e: IllegalStateException) {
             Timber.e("The source video file is malformed")
         } finally {
             muxer.release()

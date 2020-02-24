@@ -1,6 +1,5 @@
 package kiol.vkapp.taskb.camera.components
 
-import android.content.Context
 import android.media.CamcorderProfile
 import android.media.MediaRecorder
 import android.util.Size
@@ -8,7 +7,7 @@ import android.view.Surface
 import kiol.vkapp.taskb.camera.CameraConfigurator
 import timber.log.Timber
 
-class MediaRecorderInternal(private val context: Context) {
+class MediaRecorderInternal(private val file: String) {
     class MediaRecorderNotConfigured : Exception()
 
     private val mediaRecorder = MediaRecorder()
@@ -66,7 +65,7 @@ class MediaRecorderInternal(private val context: Context) {
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
         mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-        mediaRecorder.setOutputFile(context.filesDir.absolutePath + "/myvideo.mp4")
+        mediaRecorder.setOutputFile(file)
         mediaRecorder.setVideoEncodingBitRate(profile.videoBitRate)
         mediaRecorder.setAudioEncodingBitRate(profile.audioBitRate)
         mediaRecorder.setAudioSamplingRate(profile.audioSampleRate)
@@ -74,16 +73,7 @@ class MediaRecorderInternal(private val context: Context) {
         mediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight)
         mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-        mediaRecorder.setOrientationHint(90)
-        //        val rotation = activity?.getWindowManager()?.defaultDisplay?.rotation
-        //        switch(mSensorOrientation) {
-        //            case SENSOR_ORIENTATION_DEFAULT_DEGREES :
-        //            mMediaRecorder.setOrientationHint(DEFAULT_ORIENTATIONS.get(rotation));
-        //            break;
-        //            case SENSOR_ORIENTATION_INVERSE_DEGREES :
-        //            mMediaRecorder.setOrientationHint(INVERSE_ORIENTATIONS.get(rotation));
-        //            break;
-        //        }
+        mediaRecorder.setOrientationHint(if (cameraConfig.isFaceCamera) 270 else 90)
         mediaRecorder.prepare()
         configured = true
         Timber.d("Finish setup")

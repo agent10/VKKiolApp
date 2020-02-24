@@ -23,7 +23,7 @@ import kiol.vkapp.taskb.camera.ui.configureTransform
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
-class MyCamera(private val context: Context) {
+class MyCamera(private val context: Context, file: String) {
 
     enum class CameraType {
         Back, Front
@@ -72,13 +72,13 @@ class MyCamera(private val context: Context) {
 
     private var recordStartTimestampMs = 0L
 
-    private val recognizer = Recognizer(context, backgroundHandler) {
+    private val recognizer = Recognizer(context, backgroundHandler, uiHandler) {
         if (qrListenerEnabled) {
             _qrListener.onNext(it)
         }
     }
 
-    private val mediaRecorder = MediaRecorderInternal(context)
+    private val mediaRecorder = MediaRecorderInternal(file)
     private val torch = Torch(backgroundHandler)
 
     private var cameraDevice: CameraDevice? = null

@@ -53,14 +53,14 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
                                     decoder.queueInputBuffer(inIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                                     stop = true
                                 } else {
-                                    Timber.d("kiolMC, queueInput index: $inIndex")
+                                    Timber.d("queueInput index: $inIndex")
                                     processed++
                                     decoder.queueInputBuffer(inIndex, 0, size, extractor.sampleTime, 0)
                                 }
 
                                 currSeek += seekUsStep
                                 if (currSeek > durationUs) {
-                                    Timber.d("kiolMC, setFlagStop")
+                                    Timber.d("setFlagStop")
                                     stop = true
                                 }
                             }
@@ -76,7 +76,7 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
                     while (true) {
                         val outIndex = decoder.dequeueOutputBuffer(info, DEQUEUE_TIMEOUT_US)
                         if (outIndex >= 0) {
-                            Timber.d("kiolMC, dequeueOutputBuffer index: $outIndex")
+                            Timber.d("dequeueOutputBuffer index: $outIndex")
 
                             try {
                                 val image = decoder.getOutputImage(outIndex)
@@ -94,7 +94,7 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
                             }
                         } else {
                             if (stop) {
-                                Timber.d("kiolMC, dequeueOutputBuffer try to stop, but wait other $processed will process")
+                                Timber.d("dequeueOutputBuffer try to stop, but wait other $processed will process")
                                 if (processed == 0) {
                                     break
                                 }
