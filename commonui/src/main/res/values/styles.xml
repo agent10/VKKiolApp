@@ -33,6 +33,7 @@
 
     <style name="Button" parent="Widget.AppCompat.Button">
         <item name="android:textAllCaps">false</item>
+        <item name="android:backgroundTint">?attr/colorAccent</item>
     </style>
 
 </resources>

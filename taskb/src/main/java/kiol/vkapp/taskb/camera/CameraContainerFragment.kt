@@ -115,6 +115,12 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
             }
             torch.isChecked = myCamera.isTorchEnabled()
         }
+
+        val d = myCamera.getQrListener().subscribe({
+            QrDialog.create(it).show(childFragmentManager, null)
+        }, {
+            Timber.e(it)
+        })
     }
 
     private fun changeTorchButton(show: Boolean): ViewPropertyAnimator {

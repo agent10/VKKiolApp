@@ -8,9 +8,14 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
 import android.view.TextureView
+import io.reactivex.Flowable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.processors.PublishProcessor
+import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.Back
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.Front
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 
 class MyCamera(private val context: Context) {
 
@@ -24,6 +29,7 @@ class MyCamera(private val context: Context) {
     }
 
     companion object {
+        private const val QR_WINDOW_MS = 5000L
         const val MIN_VALID_RECORD_TIME_MS = 1000L
     }
 
@@ -32,6 +38,8 @@ class MyCamera(private val context: Context) {
     var camSwitchFinished: (cameraType: CameraType) -> Unit = {}
 
     var onCamRecord: (isRecord: Record) -> Unit = { }
+
+    private val _qrListener: PublishProcessor<String> = PublishProcessor.create()
 
     private val captureSessionCreator = CaptureSessionCreator(context) {
         uiHandler.post {
@@ -55,12 +63,12 @@ class MyCamera(private val context: Context) {
     @Volatile
     var isCamHardWorking = false
 
-    var isRecording = false
-        get() = mediaRecorder.isRecording
-
     private var recordStartTimestampMs = 0L
 
-    private val recognizer = Recognizer(context, backgroundHandler)
+    private val recognizer = Recognizer(context, backgroundHandler) {
+        _qrListener.onNext(it)
+    }
+
     private val mediaRecorder = MediaRecorderInternal(context)
     private val torch = Torch(backgroundHandler)
 
@@ -94,6 +102,12 @@ class MyCamera(private val context: Context) {
         if (!isCamHardWorking) {
             torch.setEnabled(on)
         }
+    }
+
+    fun getQrListener(): Flowable<String> {
+        return _qrListener.window(QR_WINDOW_MS, QR_WINDOW_MS, TimeUnit.MILLISECONDS).flatMap {
+            it.distinctUntilChanged()
+        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
     }
 
     fun isTorchEnabled() = torch.isTorchEnabled
@@ -213,6 +227,10 @@ class MyCamera(private val context: Context) {
     }
 
     fun setZoom(zoomLevel: Float) {
-        zoomer.setZoom(zoomLevel)
+        try {
+            zoomer.setZoom(zoomLevel)
+        } catch (e: Exception) {
+            Timber.e("Zoom failed: $e")
+        }
     }
 }

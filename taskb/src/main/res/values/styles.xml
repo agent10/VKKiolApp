@@ -4,15 +4,31 @@
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialog</item>
     </style>
 
     <style name="PermissionRationalDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
-        <!--        <item name="android:background">@color/main_dark_color</item>-->
         <item name="android:textColor">#FFFFFFFF</item>
         <item name="android:textColorPrimary">#FFFFFFFF</item>
     </style>
 
-    <style name="ToolbarButtonStyle" parent="Widget.AppCompat.Toolbar.Button.Navigation">
+    <style name="ToolbarButtonStyle" parent="Widget.AppCompat.Toolbar.Button.Navigation" />
 
+    <style name="CustomBottomSheetDialog" parent="@style/ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/CustomBottomSheet</item>
     </style>
+
+    <style name="CustomBottomSheet" parent="Widget.MaterialComponents.BottomSheet">
+        <item name="shapeAppearanceOverlay">@style/CustomShapeAppearanceBottomSheetDialog</item>
+        <item name="backgroundTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="CustomShapeAppearanceBottomSheetDialog" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopRight">?attr/dialogCornerRadius</item>
+        <item name="cornerSizeTopLeft">?attr/dialogCornerRadius</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+    </style>
+
 </resources>

@@ -8,6 +8,7 @@ import android.graphics.RectF
 import android.media.ImageReader
 import android.os.Handler
 import android.view.TextureView
+import android.webkit.URLUtil
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -43,7 +44,7 @@ fun scalar(v1: Vector, v2: Vector): Float {
     return t / g
 }
 
-class Recognizer(context: Context, private val backgroundHandler: Handler) {
+class Recognizer(context: Context, private val backgroundHandler: Handler, val onQrHttpUrl: (url: String) -> Unit) {
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -79,7 +80,11 @@ class Recognizer(context: Context, private val backgroundHandler: Handler) {
     fun setViews(qrOverlay: QrOverlay) {
         this.qrOverlay = qrOverlay
 
-        compositeDisposable.add(qrBarRecognizer.subscribe().map {
+        compositeDisposable.add(qrBarRecognizer.subscribe().doOnNext {
+            if (it.text.isNotEmpty()) {
+                onQrHttpUrl(it.text)
+            }
+        }.map {
             parse(it)
         }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
             qrOverlay.drawQr(it)
