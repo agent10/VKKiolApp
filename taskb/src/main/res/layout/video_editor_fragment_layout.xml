@@ -2,8 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#55000000">
+    android:layout_height="match_parent">
 
     <com.google.android.exoplayer2.ui.PlayerView
         android:id="@+id/playerView"
@@ -12,10 +11,18 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:use_controller="false"
         app:layout_constraintTop_toTopOf="parent"
         app:resize_mode="zoom"
-        app:shutter_background_color="#55000000" />
+        app:use_controller="false" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <View
         android:id="@+id/updateView"
@@ -31,8 +38,10 @@
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
-        android:layout_marginTop="32dp"
         android:layout_height="?actionBarSize"
+        android:layout_marginTop="32dp"
+        android:alpha="0"
+        android:translationY="-10dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -46,6 +55,8 @@
         android:layout_marginLeft="14dp"
         android:layout_marginRight="14dp"
         android:layout_marginBottom="28dp"
+        android:alpha="0"
+        android:translationY="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />

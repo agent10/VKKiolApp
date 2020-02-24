@@ -20,6 +20,7 @@ import kiol.vkapp.taskb.camera.ui.CheckableImageButton
 import kiol.vkapp.taskb.camera.ui.QrDialog
 import kiol.vkapp.taskb.camera.ui.QrOverlay
 import kiol.vkapp.taskb.camera.ui.RecordButton
+import kiol.vkapp.taskb.getSimpleRouter
 import kotlinx.android.synthetic.main.camera_container_fragment.*
 import timber.log.Timber
 
@@ -104,7 +105,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         myCamera.onCamRecord = {
             if (it is MyCamera.Record.End) {
                 if (it.timeMs >= MIN_VALID_RECORD_TIME_MS) {
-                    //getSimpleRouter().routeToEditor()
+                    getSimpleRouter().routeToEditor()
                 } else {
                     Toast.makeText(requireContext(), "The video is too short", Toast.LENGTH_SHORT).show()
                 }

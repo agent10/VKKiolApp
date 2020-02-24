@@ -2,9 +2,9 @@ package kiol.vkapp.taskb.editor
 
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
 import android.view.View
-import android.view.WindowManager
-import android.widget.Toast
+import android.widget.ProgressBar
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.C
@@ -19,16 +19,18 @@ import com.google.android.exoplayer2.upstream.FileDataSource
 import com.google.android.exoplayer2.util.Util
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
+import io.reactivex.disposables.CompositeDisposable
+import kiol.vkapp.commonui.pxF
 import kiol.vkapp.taskb.R
 import kiol.vkapp.taskb.editor.VideoEditorTimebar.SelectedCutThumb.*
+import kiol.vkapp.taskb.plusAssign
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToLong
 
 class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
     private lateinit var videoEditor: VideoEditor
-    private lateinit var timebar: VideoEditorTimebar
     private var exoPlayer: SimpleExoPlayer? = null
 
     private var lastVolume = -1f
@@ -36,21 +38,31 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     private var lastStartUs = 0L
     private var lastEndUs = 0L
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        activity?.window?.setFlags(
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-        )
-        videoEditor = VideoEditor(requireContext().applicationContext, requireContext().filesDir.absolutePath + "/myvideo.mp4")
+    private var lastSeekMs = -1
+
+    private lateinit var timebar: VideoEditorTimebar
+    private lateinit var playerView: PlayerView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var updateView: View
+    private lateinit var toolbar: Toolbar
+
+    private val compositeDisposable = CompositeDisposable()
+
+    private val handler = Handler()
+
+    companion object {
+        private const val WAIT_FOR_MEDIARECORDER = 1500L
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val playerView = view.findViewById<PlayerView>(R.id.playerView)
-        val updateView = view.findViewById<View>(R.id.updateView)
-        val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
+        progressBar = view.findViewById(R.id.progressBar)
+        playerView = view.findViewById(R.id.playerView)
+        updateView = view.findViewById(R.id.updateView)
+        toolbar = view.findViewById(R.id.toolbar)
+        timebar = view.findViewById(R.id.timeBar)
+
 
         toolbar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
@@ -76,26 +88,6 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
             true
         }
 
-        timebar = view.findViewById(R.id.timeBar)
-
-        val d1 = Flowable.interval(100, java.util.concurrent.TimeUnit.MILLISECONDS).observeOn(AndroidSchedulers.mainThread())
-            .subscribe {
-                timebar.setPosition(exoPlayer?.currentPosition ?: 0L, exoPlayer?.duration ?: 0L)
-
-                exoPlayer?.let {
-                    if (it.duration != 0L) {
-                        timebar.setPosition(it.currentPosition.toFloat() / it.duration)
-                    }
-                }
-            }
-
-        val d = videoEditor.getThumbnails2().subscribeOn(Schedulers.computation()).observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                timebar.addThumbnail(it)
-            }, {
-
-            })
-
         timebar.onCutCallback = { left, right, inProcess, activeThumb ->
             if (inProcess) {
                 exoPlayer?.playWhenReady = false
@@ -116,26 +108,72 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
             }
         }
 
-        val context = requireContext()
-        exoPlayer = SimpleExoPlayer.Builder(context).setTrackSelector(DefaultTrackSelector(context)).build()
-        playerView.player = exoPlayer
-        playerView.isEnabled = false
+        progressBar.visibility = View.VISIBLE
 
-        setupPlayer()
+        handler.postDelayed({
+            progressBar.visibility = View.GONE
+            createVideoEditor()
+            getThumbnails()
+            setupPlayer()
+            showUIAnimated()
+        }, WAIT_FOR_MEDIARECORDER)
     }
 
-    var lastSeekMs = -1
+    override fun onDestroyView() {
+        super.onDestroyView()
+        releasePlayer()
+        compositeDisposable.clear()
+    }
+
+    private fun releasePlayer() {
+        exoPlayer?.stop()
+        exoPlayer?.release()
+        exoPlayer = null
+    }
+
+    private fun createVideoEditor() {
+        videoEditor = VideoEditor(
+            requireContext().applicationContext,
+            requireContext().filesDir.absolutePath + "/myvideo.mp4"
+        )
+    }
+
+    private fun getThumbnails() {
+        compositeDisposable += videoEditor.getThumbnails().subscribe({ timebar.addThumbnail(it) }, {
+            Timber.e("Can't load thumbnails: $it")
+        })
+    }
+
+    private fun showUIAnimated() {
+        toolbar.animate().alpha(1.0f).translationY(10.pxF).duration = 500
+        timebar.animate().alpha(1.0f).translationY((-10).pxF).duration = 500
+
+    }
 
     private fun setupPlayer() {
+        exoPlayer = SimpleExoPlayer.Builder(requireContext()).build()
+        playerView.player = exoPlayer
+        playerView.isEnabled = false
         exoPlayer?.playWhenReady = true
         exoPlayer?.repeatMode = Player.REPEAT_MODE_ALL
+
+        compositeDisposable += Flowable.interval(100, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                timebar.setPosition(exoPlayer?.currentPosition ?: 0L, exoPlayer?.duration ?: 0L)
+
+                exoPlayer?.let {
+                    if (it.duration != 0L) {
+                        timebar.setPosition(it.currentPosition.toFloat() / it.duration)
+                    }
+                }
+            }
 
         updateMediaSource()
     }
 
     private fun createMediaSource(uri: Uri): MediaSource? {
-        val type = Util.inferContentType(uri)
-        return when (@ContentType type) {
+        return when (@ContentType Util.inferContentType(uri)) {
             C.TYPE_OTHER -> ProgressiveMediaSource.Factory(FileDataSource.Factory()).createMediaSource(uri)
             else -> {
                 Timber.e("Unknown URI format, can't create MediaSource")
@@ -149,11 +187,11 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
         lastStartUs = ((videoEditor.duration) * left * 1000L).toLong()
         lastEndUs = ((videoEditor.duration) * right * 1000L).toLong()
-        val mediaSource = ClippingMediaSource(createMediaSource(uri), lastStartUs, lastEndUs)
 
-        mediaSource?.let {
+        val mediaSource = ClippingMediaSource(createMediaSource(uri), lastStartUs, lastEndUs)
+        mediaSource.let {
             exoPlayer?.prepare(it)
             exoPlayer?.playWhenReady = true
-        } ?: Toast.makeText(requireContext(), "Failed", Toast.LENGTH_SHORT).show()
+        }
     }
 }

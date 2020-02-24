@@ -6,6 +6,7 @@ import android.media.*
 import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
 import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION
 import io.reactivex.Flowable
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.io.IOException
@@ -25,8 +26,10 @@ class VideoEditor(private val app: Context, private val file: String) {
 
     val duration = mediaMetadataRetriever.extractMetadata(METADATA_KEY_DURATION).toLong()
 
-    fun getThumbnails2(): Flowable<Bitmap> {
-        return previewsExtractor.getPreviews().subscribeOn(Schedulers.computation())
+    fun getThumbnails(): Flowable<Bitmap> {
+        return previewsExtractor.getPreviews()
+            .subscribeOn(Schedulers.computation())
+            .observeOn(AndroidSchedulers.mainThread())
     }
 
     fun cut(startUs: Long, endUs: Long, withAudio: Boolean) {

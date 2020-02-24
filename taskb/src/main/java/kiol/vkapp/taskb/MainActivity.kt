@@ -1,8 +1,15 @@
 package kiol.vkapp.taskb
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 import kiol.vkapp.taskb.camera.CameraContainerFragment
+
+operator fun CompositeDisposable.plusAssign(d: Disposable) {
+    this.add(d)
+}
 
 class MainActivity : AppCompatActivity() {
 
@@ -13,22 +20,15 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
+        window?.setFlags(
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+        )
+
         simpleRouter = SimpleRouter(supportFragmentManager)
 
         supportFragmentManager.beginTransaction()
             .replace(R.id.contentViewer, CameraContainerFragment()).commit()
-
-//        supportFragmentManager.beginTransaction()
-//            .replace(R.id.contentViewer, VideoEditorFragment()).addToBackStack(null).commit()
-
-        //        val app = applicationContext as TheApp
-        //        val qrBarRecognizer = app.qrBarRecognizer
-        //        val d = qrBarRecognizer.subscribe().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
-        //            Toast.makeText(this, it.text, Toast.LENGTH_SHORT).show()
-        //            Timber.d("qr points: ${it.points}")
-        //        }, {
-        //            Timber.e("Recognize error")
-        //        })
     }
 
 
