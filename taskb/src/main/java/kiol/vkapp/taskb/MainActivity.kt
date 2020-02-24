@@ -32,8 +32,7 @@ class MainActivity : AppCompatActivity() {
 
         simpleRouter = SimpleRouter(supportFragmentManager)
 
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.contentViewer, CameraContainerFragment()).commit()
+        simpleRouter.routeToCamera()
     }
 
 

@@ -2,6 +2,8 @@ package kiol.vkapp.taskb
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentTransaction
+import kiol.vkapp.taskb.camera.CameraContainerFragment
 import kiol.vkapp.taskb.editor.VideoEditorFragment
 
 fun Fragment.getSimpleRouter() = (requireActivity() as MainActivity).getRouter()
@@ -9,7 +11,19 @@ fun Fragment.getSimpleRouter() = (requireActivity() as MainActivity).getRouter()
 class SimpleRouter(private val fragmentManager: FragmentManager) {
 
     fun routeToEditor() {
-        fragmentManager.beginTransaction()
-            .replace(R.id.contentViewer, VideoEditorFragment()).addToBackStack(null).commit()
+        beginDefTransaction().replace(R.id.contentViewer, VideoEditorFragment()).addToBackStack(null).commit()
+    }
+
+    fun routeToCamera() {
+        beginDefTransaction().replace(R.id.contentViewer, CameraContainerFragment()).commit()
+    }
+
+    private fun beginDefTransaction(): FragmentTransaction {
+        return fragmentManager.beginTransaction().setCustomAnimations(
+            R.anim.viewer_fragment_open_enter,
+            R.anim.viewer_fragment_open_enter,
+            R.anim.viewer_fragment_open_exit,
+            R.anim.viewer_fragment_open_exit
+        )
     }
 }
