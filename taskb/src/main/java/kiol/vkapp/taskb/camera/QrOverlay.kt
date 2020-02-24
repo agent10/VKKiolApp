@@ -5,16 +5,10 @@ import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
+import androidx.core.graphics.toRect
 import androidx.core.graphics.withRotation
-import kiol.vkapp.commonui.dpF
-import kiol.vkapp.commonui.pxF
-import kiol.vkapp.taskb.CameraFragment
-import timber.log.Timber
-import kotlin.math.max
-import kotlin.math.pow
-import kotlin.math.sqrt
-
-
+import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
+import kiol.vkapp.taskb.R
 
 
 data class QrDrawModel(val x: Float, val y: Float, val size: Float, val angle: Float)
@@ -25,6 +19,7 @@ class QrOverlay @JvmOverloads constructor(
 
     companion object {
         val EmptyQrDrawModel = QrDrawModel(0f, 0f, 0f, 0f)
+        private const val QRRectScale = 1.2f
     }
 
     private var isShowing = false
@@ -86,43 +81,17 @@ class QrOverlay @JvmOverloads constructor(
         }
     }
 
+    private val qrBoundsDrawable: VectorDrawableCompat?
 
     init {
         setWillNotDraw(false)
+
+        qrBoundsDrawable = VectorDrawableCompat.create(resources, R.drawable.ic_cam_qr_bounds, null)
     }
 
-    private var lastQrResult: CameraFragment.QrMyResult? = null
     private var qrDrawModel: QrDrawModel? = null
 
     private val qrRect = RectF()
-
-    private val paint = Paint().apply {
-        color = Color.RED
-    }
-
-    private val paintDebug = Paint().apply {
-        color = Color.BLUE
-        style = Paint.Style.STROKE
-        strokeWidth = 4f
-    }
-
-    private val paintDebug2 = Paint().apply {
-        color = Color.GREEN
-        style = Paint.Style.STROKE
-        strokeWidth = 4f
-    }
-
-    private val paint2 = Paint().apply {
-        color = Color.YELLOW
-        style = Paint.Style.STROKE
-        strokeWidth = 5.pxF
-    }
-
-    fun drawQr2(qrRes: CameraFragment.QrMyResult) {
-        lastQrResult = qrRes
-
-        invalidate()
-    }
 
     fun drawQr(qrDrawModel: QrDrawModel) {
         this.qrDrawModel = qrDrawModel
@@ -135,7 +104,7 @@ class QrOverlay @JvmOverloads constructor(
         if (toShow) {
             centerAnimatorX.setFloatValues(centerPoint.x, qrDrawModel.x)
             centerAnimatorY.setFloatValues(centerPoint.y, qrDrawModel.y)
-            rectSizeAnimator.setFloatValues(rectSize, qrDrawModel.size)
+            rectSizeAnimator.setFloatValues(rectSize, qrDrawModel.size * QRRectScale)
             angleAnimator.setFloatValues(angle, if (qrDrawModel.angle < 0) 360f + qrDrawModel.angle else qrDrawModel.angle)
 
             centerAnimatorX.start()
@@ -163,13 +132,16 @@ class QrOverlay @JvmOverloads constructor(
         super.onDraw(canvas)
         canvas?.apply {
             qrDrawModel?.let {
+                qrBoundsDrawable?.let {
+                    qrRect.set(centerPoint.x, centerPoint.y, centerPoint.x, centerPoint.y)
+                    qrRect.inset(-rectSize + animScale, -rectSize + animScale)
 
-                qrRect.set(centerPoint.x, centerPoint.y, centerPoint.x, centerPoint.y)
-                qrRect.inset(-rectSize + animScale, -rectSize + animScale)
-                paint2.alpha = (255 * alphaValue).toInt()
+                    it.bounds = qrRect.toRect()
+                    it.alpha = (255 * alphaValue).toInt()
 
-                withRotation(angle, qrRect.centerX(), qrRect.centerY()) {
-                    drawRoundRect(qrRect, 30f, 30f, paint2)
+                    withRotation(angle, qrRect.centerX(), qrRect.centerY()) {
+                        it.draw(canvas)
+                    }
                 }
             }
         }

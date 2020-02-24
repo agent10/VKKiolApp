@@ -4,23 +4,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.hardware.camera2.*
-import android.media.ImageReader
 import android.os.Handler
 import android.os.HandlerThread
-import android.view.ScaleGestureDetector
 import android.view.Surface
 import android.view.TextureView
-import androidx.core.graphics.toRect
-import com.google.zxing.ResultPoint
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
-import kiol.vkapp.taskb.CameraFragment
-import kiol.vkapp.taskb.TheApp
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.Back
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.Front
-import ru.timepad.domain.qr.QRBarRecognizer
 import timber.log.Timber
-import kotlin.math.*
 
 class MyCamera(private val context: Context) {
 
@@ -36,7 +26,9 @@ class MyCamera(private val context: Context) {
 
     private val captureSessionCreator = CaptureSessionCreator(context) {
         isCamChanging = false
-        camSwitchFinished(cameraType)
+        uiHandler.post {
+            camSwitchFinished(cameraType)
+        }
     }
 
     private val cameraConfigurator = CameraConfigurator(context)
@@ -44,6 +36,7 @@ class MyCamera(private val context: Context) {
     private val backgroundThread = HandlerThread("MyCameraThread").apply {
         start()
     }
+    private val uiHandler = Handler()
     private val backgroundHandler = Handler(backgroundThread.looper)
 
     private lateinit var textureView: TextureView
@@ -67,8 +60,11 @@ class MyCamera(private val context: Context) {
         if (this.cameraType != cameraType) {
             this.cameraType = cameraType
 
-            onStop()
-            checkTextureView()
+            onStop {
+                uiHandler.post {
+                    checkTextureView()
+                }
+            }
         }
     }
 
@@ -134,7 +130,7 @@ class MyCamera(private val context: Context) {
     }
 
     @Synchronized
-    fun onStop() {
+    fun onStop(onClosed: () -> Unit = {}) {
         Timber.d("onStop")
         backgroundHandler.post {
             mediaRecorder.stop()
@@ -142,6 +138,7 @@ class MyCamera(private val context: Context) {
 
             cameraDevice?.close()
             cameraDevice = null
+            onClosed()
         }
     }
 
