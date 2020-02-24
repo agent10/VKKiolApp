@@ -9,13 +9,13 @@ import android.view.View
 import android.view.ViewPropertyAnimator
 import android.widget.ImageButton
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewPropertyAnimatorCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import kiol.vkapp.taskb.R
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.*
-import kiol.vkapp.taskb.getSimpleRouter
+import kiol.vkapp.taskb.camera.MyCamera.Companion.MIN_VALID_RECORD_TIME_MS
 import kotlinx.android.synthetic.main.camera_container_fragment.*
 import timber.log.Timber
 
@@ -29,6 +29,9 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     private lateinit var torch: CheckableImageButton
     private lateinit var camSwithcProgress: ProgressBar
     private lateinit var camSwitcher: ImageButton
+
+    private var torchX = 0f
+    private var switchX = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +55,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
 
         camSwitcher = view.findViewById(R.id.camSwitcher)
         camSwitcher.setOnClickListener {
-            if (!myCamera.isCamChanging) {
+            if (!myCamera.isCamHardWorking) {
                 changeCamSwithcProgress(true).withEndAction {
                     myCamera.switchCamera()
                 }
@@ -83,13 +86,24 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
             }
         }
 
+        torch.doOnLayout {
+            torchX = it.x
+        }
+        camSwitcher.doOnLayout {
+            switchX = it.x
+        }
+
         cameraView.doOnLayout {
             recordBtn.zoomHeight = it.measuredHeight.toFloat()
         }
 
         myCamera.onCamRecord = {
-            if (!it) {
-                getSimpleRouter().routeToEditor()
+            if (it is MyCamera.Record.End) {
+                if (it.timeMs >= MIN_VALID_RECORD_TIME_MS) {
+                    //getSimpleRouter().routeToEditor()
+                } else {
+                    Toast.makeText(requireContext(), "The video is too short", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -104,8 +118,9 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     }
 
     private fun changeTorchButton(show: Boolean): ViewPropertyAnimator {
+        torch.clearAnimation()
         return if (show) {
-            torch.animate().alpha(1.0f).translationXBy(20f).apply { duration = 100 }
+            torch.animate().alpha(1.0f).x(torchX).apply { duration = 100 }
         } else {
             torch.animate().alpha(0.0f).translationXBy(-20f).apply { duration = 100 }
         }
@@ -122,8 +137,9 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     }
 
     private fun changeCamSwitchButton(show: Boolean): ViewPropertyAnimator {
+        camSwitcher.clearAnimation()
         return if (show) {
-            camSwitcher.animate().alpha(1.0f).translationXBy(-20f).apply { duration = 100 }
+            camSwitcher.animate().alpha(1.0f).x(switchX).apply { duration = 100 }
 
         } else {
             camSwitcher.animate().alpha(0.0f).translationXBy(20f).apply { duration = 100 }

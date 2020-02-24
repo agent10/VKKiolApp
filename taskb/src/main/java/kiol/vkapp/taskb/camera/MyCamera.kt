@@ -18,16 +18,27 @@ class MyCamera(private val context: Context) {
         Back, Front
     }
 
+    sealed class Record {
+        object Start : Record()
+        data class End(val timeMs: Long, val isStopped: Boolean) : Record()
+    }
+
+    companion object {
+        const val MIN_VALID_RECORD_TIME_MS = 1000L
+    }
+
     private var cameraType = Back
 
     var camSwitchFinished: (cameraType: CameraType) -> Unit = {}
 
-    var onCamRecord: (isRecord: Boolean) -> Unit = {}
+    var onCamRecord: (isRecord: Record) -> Unit = { }
 
     private val captureSessionCreator = CaptureSessionCreator(context) {
-        isCamChanging = false
         uiHandler.post {
-            camSwitchFinished(cameraType)
+            if (isCamHardWorking) {
+                camSwitchFinished(cameraType)
+            }
+            isCamHardWorking = false
         }
     }
 
@@ -42,17 +53,18 @@ class MyCamera(private val context: Context) {
     private lateinit var textureView: TextureView
 
     @Volatile
-    var isCamChanging = false
+    var isCamHardWorking = false
 
     var isRecording = false
         get() = mediaRecorder.isRecording
+
+    private var recordStartTimestampMs = 0L
 
     private val recognizer = Recognizer(context, backgroundHandler)
     private val mediaRecorder = MediaRecorderInternal(context)
     private val torch = Torch(backgroundHandler)
 
     private var cameraDevice: CameraDevice? = null
-
 
     private val zoomer = Zoomer(context, backgroundHandler)
 
@@ -70,7 +82,7 @@ class MyCamera(private val context: Context) {
 
     fun switchCamera() {
         backgroundHandler.post {
-            isCamChanging = true
+            isCamHardWorking = true
             when (cameraType) {
                 Back -> changeCamera(Front)
                 Front -> changeCamera(Back)
@@ -79,7 +91,7 @@ class MyCamera(private val context: Context) {
     }
 
     fun setTorch(on: Boolean) {
-        if (!isCamChanging) {
+        if (!isCamHardWorking) {
             torch.setEnabled(on)
         }
     }
@@ -87,16 +99,33 @@ class MyCamera(private val context: Context) {
     fun isTorchEnabled() = torch.isTorchEnabled
 
     fun startRecord() {
-        backgroundHandler.post {
-            mediaRecorder.record()
-            onCamRecord(true)
+        if (!isCamHardWorking) {
+            backgroundHandler.post {
+                isCamHardWorking = true
+                recordStartTimestampMs = System.currentTimeMillis()
+                mediaRecorder.record()
+                onCamRecord(Record.Start)
+                isCamHardWorking = false
+
+            }
         }
     }
 
     fun stopRecord() {
-        backgroundHandler.post {
-            mediaRecorder.stop()
-            onCamRecord(false)
+        if (!isCamHardWorking) {
+            backgroundHandler.post {
+                isCamHardWorking = true
+                val time = System.currentTimeMillis() - recordStartTimestampMs
+                uiHandler.post {
+                    onCamRecord(Record.End(time, false))
+                }
+                onStop {
+                    uiHandler.post {
+                        checkTextureView()
+                    }
+                    isCamHardWorking = false
+                }
+            }
         }
     }
 

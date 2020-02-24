@@ -26,7 +26,11 @@ class MediaRecorderInternal(private val context: Context) {
     fun stop() {
         if (configured && isRecording) {
             configured = false
-            mediaRecorder.stop()
+            try {
+                mediaRecorder.stop()
+            } catch (e: Exception) {
+                Timber.e("Error during recording stop, e: $e")
+            }
             mediaRecorder.reset()
             Timber.d("Stop and reset recorder")
             isRecording = false
@@ -43,7 +47,7 @@ class MediaRecorderInternal(private val context: Context) {
     fun setup(cameraConfig: CameraConfigurator.Config) {
         if (isRecording) {
             stop()
-        } else if(configured) {
+        } else if (configured) {
             mediaRecorder.reset()
             configured = false
         }
