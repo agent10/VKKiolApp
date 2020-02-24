@@ -6,10 +6,14 @@ import kiol.vkapp.taskb.camera.CameraContainerFragment
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var simpleRouter: SimpleRouter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
+
+        simpleRouter = SimpleRouter(supportFragmentManager)
 
         supportFragmentManager.beginTransaction()
             .replace(R.id.contentViewer, CameraContainerFragment()).commit()
@@ -26,4 +30,7 @@ class MainActivity : AppCompatActivity() {
         //            Timber.e("Recognize error")
         //        })
     }
+
+
+    fun getRouter() = simpleRouter
 }

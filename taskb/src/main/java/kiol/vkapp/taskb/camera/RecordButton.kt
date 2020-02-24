@@ -18,6 +18,11 @@ class RecordButton @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    interface Callback {
+        fun onZoomLevel(zoomLevel: Float)
+        fun onRecord(started: Boolean)
+    }
+
     private val recClipPath = Path()
 
     private val progressButtonPaint = Paint().apply {
@@ -59,7 +64,10 @@ class RecordButton @JvmOverloads constructor(
             field = max(1.0f, value)
         }
 
-    var callback: (zoomLevel: Float) -> Unit = {}
+    var callback: Callback = object : Callback {
+        override fun onZoomLevel(zoomLevel: Float) {}
+        override fun onRecord(started: Boolean) {}
+    }
 
     init {
         setWillNotDraw(false)
@@ -70,6 +78,7 @@ class RecordButton @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 progressAnimator.cancel()
                 progressAnimator.start()
+                callback.onRecord(true)
                 setScale(true)
                 return true
             }
@@ -77,13 +86,14 @@ class RecordButton @JvmOverloads constructor(
                 if (event.y < 0) {
                     val zl = 3 * (abs(event.y) / zoomHeight)
                     Timber.d("Record button: $zl")
-                    callback.invoke(zl)
+                    callback.onZoomLevel(zl)
                 }
                 return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 progressAnimator.cancel()
                 progressValue = 0.0f
+                callback.onRecord(false)
                 setScale(false)
                 return true
             }

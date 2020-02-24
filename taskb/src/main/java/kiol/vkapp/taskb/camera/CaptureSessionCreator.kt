@@ -12,7 +12,7 @@ import android.widget.Toast
 import kiol.vkapp.taskb.R
 import timber.log.Timber
 
-class CaptureSessionCreator(private val context: Context) {
+class CaptureSessionCreator(private val context: Context, private val configFinished: (session: CameraCaptureSession) -> Unit) {
 
     interface SessionStrategy {
         fun onPreSetup(cameraConfig: CameraConfigurator.Config)
@@ -138,6 +138,18 @@ class CaptureSessionCreator(private val context: Context) {
 
                     override fun onConfigureFailed(session: CameraCaptureSession) {
                         Timber.e("onConfigureFailed")
+                    }
+
+                    override fun onReady(session: CameraCaptureSession) {
+                        super.onReady(session)
+                        configFinished(session)
+                        Timber.d("onReady, cid = ${session.device.id}")
+
+                    }
+
+                    override fun onActive(session: CameraCaptureSession) {
+                        super.onActive(session)
+                        Timber.d("onActive, cid = ${session.device.id}")
                     }
                 }, backgroundHandler
             )

@@ -3,10 +3,7 @@ package kiol.vkapp.taskb.camera
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.*
 import android.media.ImageReader
 import android.os.Handler
 import android.os.HandlerThread
@@ -33,7 +30,15 @@ class MyCamera(private val context: Context) {
 
     private var cameraType = Back
 
-    private val captureSessionCreator = CaptureSessionCreator(context)
+    var camSwitchFinished: (cameraType: CameraType) -> Unit = {}
+
+    var onCamRecord: (isRecord: Boolean) -> Unit = {}
+
+    private val captureSessionCreator = CaptureSessionCreator(context) {
+        isCamChanging = false
+        camSwitchFinished(cameraType)
+    }
+
     private val cameraConfigurator = CameraConfigurator(context)
 
     private val backgroundThread = HandlerThread("MyCameraThread").apply {
@@ -42,6 +47,9 @@ class MyCamera(private val context: Context) {
     private val backgroundHandler = Handler(backgroundThread.looper)
 
     private lateinit var textureView: TextureView
+
+    @Volatile
+    var isCamChanging = false
 
     var isRecording = false
         get() = mediaRecorder.isRecording
@@ -65,24 +73,35 @@ class MyCamera(private val context: Context) {
     }
 
     fun switchCamera() {
-        when (cameraType) {
-            Back -> changeCamera(Front)
-            Front -> changeCamera(Back)
+        backgroundHandler.post {
+            isCamChanging = true
+            when (cameraType) {
+                Back -> changeCamera(Front)
+                Front -> changeCamera(Back)
+            }
         }
     }
 
     fun setTorch(on: Boolean) {
-        torch.setEnabled(on)
+        if (!isCamChanging) {
+            torch.setEnabled(on)
+        }
     }
 
     fun isTorchEnabled() = torch.isTorchEnabled
 
     fun startRecord() {
-        mediaRecorder.record()
+        backgroundHandler.post {
+            mediaRecorder.record()
+            onCamRecord(true)
+        }
     }
 
     fun stopRecord() {
-        mediaRecorder.stop()
+        backgroundHandler.post {
+            mediaRecorder.stop()
+            onCamRecord(false)
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -117,12 +136,13 @@ class MyCamera(private val context: Context) {
     @Synchronized
     fun onStop() {
         Timber.d("onStop")
-        mediaRecorder.stop()
-        torch.reset()
+        backgroundHandler.post {
+            mediaRecorder.stop()
+            torch.reset()
 
-        cameraDevice?.close()
-        cameraDevice = null
-
+            cameraDevice?.close()
+            cameraDevice = null
+        }
     }
 
     @SuppressLint("MissingPermission")

@@ -4,17 +4,20 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.MotionEvent
 import android.view.TextureView
 import android.view.View
+import android.view.ViewPropertyAnimator
 import android.widget.ImageButton
+import android.widget.ProgressBar
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewPropertyAnimatorCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import kiol.vkapp.taskb.R
+import kiol.vkapp.taskb.camera.MyCamera.CameraType.*
+import kiol.vkapp.taskb.getSimpleRouter
 import kotlinx.android.synthetic.main.camera_container_fragment.*
 import timber.log.Timber
-import kotlin.math.abs
 
 class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
 
@@ -23,14 +26,15 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     }
 
     private lateinit var myCamera: MyCamera
+    private lateinit var torch: CheckableImageButton
+    private lateinit var camSwithcProgress: ProgressBar
+    private lateinit var camSwitcher: ImageButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         myCamera = MyCamera(requireContext())
     }
-
-    var lastDownY = -1f
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -44,23 +48,86 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
             myCamera.setQROverlay(this)
         }
 
-        view.findViewById<ImageButton>(R.id.camSwitcher).setOnClickListener {
-            myCamera.switchCamera()
+        camSwithcProgress = view.findViewById(R.id.camSwitchProgress)
+
+        camSwitcher = view.findViewById(R.id.camSwitcher)
+        camSwitcher.setOnClickListener {
+            if (!myCamera.isCamChanging) {
+                changeCamSwithcProgress(true).withEndAction {
+                    myCamera.switchCamera()
+                }
+            }
+        }
+
+        torch = view.findViewById(R.id.torchSwitcher)
+        torch.setOnClickListener {
+            myCamera.setTorch(!myCamera.isTorchEnabled())
         }
 
         val recordBtn = view.findViewById<RecordButton>(R.id.recordBtn)
-        recordBtn.callback = {
-            myCamera.setZoom(it)
+        recordBtn.callback = object : RecordButton.Callback {
+            override fun onZoomLevel(zoomLevel: Float) {
+                myCamera.setZoom(zoomLevel)
+            }
+
+            override fun onRecord(started: Boolean) {
+                if (started) {
+                    myCamera.startRecord()
+                    changeCamSwitchButton(false)
+                    changeTorchButton(false)
+                } else {
+                    myCamera.stopRecord()
+                    changeCamSwitchButton(true)
+                    changeTorchButton(true)
+                }
+            }
         }
+
         cameraView.doOnLayout {
             recordBtn.zoomHeight = it.measuredHeight.toFloat()
         }
 
-        view.findViewById<ImageButton>(R.id.torchSwitcher).setOnClickListener {
-            myCamera.setTorch(!myCamera.isTorchEnabled())
+        myCamera.onCamRecord = {
+            if (!it) {
+                getSimpleRouter().routeToEditor()
+            }
         }
 
-        //        childFragmentManager.beginTransaction().replace(R.id.cameraContainer, CameraFragment.newInstance()).commit()
+        myCamera.camSwitchFinished = {
+            changeCamSwithcProgress(false)
+            when (it) {
+                Back -> changeTorchButton(true)
+                Front -> changeTorchButton(false)
+            }
+            torch.isChecked = myCamera.isTorchEnabled()
+        }
+    }
+
+    private fun changeTorchButton(show: Boolean): ViewPropertyAnimator {
+        return if (show) {
+            torch.animate().alpha(1.0f).translationXBy(20f).apply { duration = 100 }
+        } else {
+            torch.animate().alpha(0.0f).translationXBy(-20f).apply { duration = 100 }
+        }
+    }
+
+    private fun changeCamSwithcProgress(show: Boolean): ViewPropertyAnimator {
+        return if (show) {
+            camSwithcProgress.animate().alpha(1.0f).scaleX(1.0f).scaleY(1.0f).apply {
+                duration = 100
+            }
+        } else {
+            camSwithcProgress.animate().alpha(0.0f).scaleX(0.5f).scaleY(0.5f).apply { duration = 100 }
+        }
+    }
+
+    private fun changeCamSwitchButton(show: Boolean): ViewPropertyAnimator {
+        return if (show) {
+            camSwitcher.animate().alpha(1.0f).translationXBy(-20f).apply { duration = 100 }
+
+        } else {
+            camSwitcher.animate().alpha(0.0f).translationXBy(20f).apply { duration = 100 }
+        }
     }
 
     override fun onStart() {
