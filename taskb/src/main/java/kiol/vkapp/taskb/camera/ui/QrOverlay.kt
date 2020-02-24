@@ -1,4 +1,4 @@
-package kiol.vkapp.taskb.camera
+package kiol.vkapp.taskb.camera.ui
 
 import android.animation.ValueAnimator
 import android.content.Context
@@ -105,7 +105,11 @@ class QrOverlay @JvmOverloads constructor(
             centerAnimatorX.setFloatValues(centerPoint.x, qrDrawModel.x)
             centerAnimatorY.setFloatValues(centerPoint.y, qrDrawModel.y)
             rectSizeAnimator.setFloatValues(rectSize, qrDrawModel.size * QRRectScale)
-            angleAnimator.setFloatValues(angle, if (qrDrawModel.angle < 0) 360f + qrDrawModel.angle else qrDrawModel.angle)
+
+            var newAngle = if (qrDrawModel.angle < 0) 360f + qrDrawModel.angle else qrDrawModel.angle
+            if (newAngle.isNaN()) newAngle = 0f
+            if (angle.isNaN()) angle = 0f
+            angleAnimator.setFloatValues(angle, newAngle)
 
             centerAnimatorX.start()
             centerAnimatorY.start()
@@ -130,17 +134,20 @@ class QrOverlay @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        canvas?.apply {
-            qrDrawModel?.let {
-                qrBoundsDrawable?.let {
-                    qrRect.set(centerPoint.x, centerPoint.y, centerPoint.x, centerPoint.y)
-                    qrRect.inset(-rectSize + animScale, -rectSize + animScale)
+        if (alphaValue > 0.0f) {
+            canvas?.apply {
+                qrDrawModel?.let {
+                    qrBoundsDrawable?.let {
 
-                    it.bounds = qrRect.toRect()
-                    it.alpha = (255 * alphaValue).toInt()
+                        qrRect.set(centerPoint.x, centerPoint.y, centerPoint.x, centerPoint.y)
+                        qrRect.inset(-rectSize + animScale, -rectSize + animScale)
 
-                    withRotation(angle, qrRect.centerX(), qrRect.centerY()) {
-                        it.draw(canvas)
+                        it.bounds = qrRect.toRect()
+                        it.alpha = (255 * alphaValue).toInt()
+
+                        withRotation(angle, qrRect.centerX(), qrRect.centerY()) {
+                            it.draw(canvas)
+                        }
                     }
                 }
             }

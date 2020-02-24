@@ -14,6 +14,12 @@ import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.Back
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.Front
+import kiol.vkapp.taskb.camera.components.MediaRecorderInternal
+import kiol.vkapp.taskb.camera.components.Recognizer
+import kiol.vkapp.taskb.camera.components.Torch
+import kiol.vkapp.taskb.camera.components.Zoomer
+import kiol.vkapp.taskb.camera.ui.QrOverlay
+import kiol.vkapp.taskb.camera.ui.configureTransform
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
@@ -39,6 +45,7 @@ class MyCamera(private val context: Context) {
 
     var onCamRecord: (isRecord: Record) -> Unit = { }
 
+    private var qrListenerEnabled = true
     private val _qrListener: PublishProcessor<String> = PublishProcessor.create()
 
     private val captureSessionCreator = CaptureSessionCreator(context) {
@@ -66,7 +73,9 @@ class MyCamera(private val context: Context) {
     private var recordStartTimestampMs = 0L
 
     private val recognizer = Recognizer(context, backgroundHandler) {
-        _qrListener.onNext(it)
+        if (qrListenerEnabled) {
+            _qrListener.onNext(it)
+        }
     }
 
     private val mediaRecorder = MediaRecorderInternal(context)
@@ -80,7 +89,7 @@ class MyCamera(private val context: Context) {
         if (this.cameraType != cameraType) {
             this.cameraType = cameraType
 
-            onStop {
+            stopCamera {
                 uiHandler.post {
                     checkTextureView()
                 }
@@ -92,8 +101,14 @@ class MyCamera(private val context: Context) {
         backgroundHandler.post {
             isCamHardWorking = true
             when (cameraType) {
-                Back -> changeCamera(Front)
-                Front -> changeCamera(Back)
+                Back -> {
+                    setEnableQrCallback(false)
+                    changeCamera(Front)
+                }
+                Front -> {
+                    setEnableQrCallback(true)
+                    changeCamera(Back)
+                }
             }
         }
     }
@@ -133,7 +148,7 @@ class MyCamera(private val context: Context) {
                 uiHandler.post {
                     onCamRecord(Record.End(time, false))
                 }
-                onStop {
+                stopCamera {
                     uiHandler.post {
                         checkTextureView()
                     }
@@ -173,8 +188,15 @@ class MyCamera(private val context: Context) {
     }
 
     @Synchronized
-    fun onStop(onClosed: () -> Unit = {}) {
+    fun onStop() {
         Timber.d("onStop")
+        recognizer.release()
+        stopCamera()
+    }
+
+    @Synchronized
+    private fun stopCamera(onClosed: () -> Unit = {}) {
+        Timber.d("stopCamera")
         backgroundHandler.post {
             mediaRecorder.stop()
             torch.reset()
@@ -220,8 +242,14 @@ class MyCamera(private val context: Context) {
 
     private fun startCameraSession(camera: CameraDevice, cameraConfig: CameraConfigurator.Config) {
         val sessionStrategy = when (cameraType) {
-            Back -> CaptureSessionCreator.BackCameraSessionStrategy(zoomer, recognizer.imageReader, mediaRecorder, torch)
-            Front -> CaptureSessionCreator.FrontCameraSessionStrategy(zoomer, mediaRecorder, torch)
+            Back -> CaptureSessionCreator.BackCameraSessionStrategy(
+                zoomer,
+                recognizer.imageReader,
+                mediaRecorder,
+                torch,
+                recognizer
+            )
+            Front -> CaptureSessionCreator.FrontCameraSessionStrategy(zoomer, mediaRecorder, torch, recognizer)
         }
         captureSessionCreator.create(sessionStrategy, camera, textureView, cameraConfig, backgroundHandler)
     }
@@ -232,5 +260,10 @@ class MyCamera(private val context: Context) {
         } catch (e: Exception) {
             Timber.e("Zoom failed: $e")
         }
+    }
+
+    fun setEnableQrCallback(value: Boolean) {
+        qrListenerEnabled = value
+        Timber.e("setEnableQrCallback: $value")
     }
 }

@@ -13,7 +13,7 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <kiol.vkapp.taskb.camera.QrOverlay
+    <kiol.vkapp.taskb.camera.ui.QrOverlay
         android:id="@+id/qrOverlay"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -31,7 +31,7 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <kiol.vkapp.taskb.camera.RecordButton
+    <kiol.vkapp.taskb.camera.ui.RecordButton
         android:id="@+id/recordBtn"
         android:layout_width="100dp"
         android:layout_height="100dp"
@@ -40,7 +40,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
-    <kiol.vkapp.taskb.camera.CheckableImageButton
+    <kiol.vkapp.taskb.camera.ui.CheckableImageButton
         android:id="@+id/torchSwitcher"
         android:layout_width="48dp"
         android:layout_height="48dp"

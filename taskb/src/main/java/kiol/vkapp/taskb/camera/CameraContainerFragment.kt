@@ -16,6 +16,10 @@ import androidx.fragment.app.Fragment
 import kiol.vkapp.taskb.R
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.*
 import kiol.vkapp.taskb.camera.MyCamera.Companion.MIN_VALID_RECORD_TIME_MS
+import kiol.vkapp.taskb.camera.ui.CheckableImageButton
+import kiol.vkapp.taskb.camera.ui.QrDialog
+import kiol.vkapp.taskb.camera.ui.QrOverlay
+import kiol.vkapp.taskb.camera.ui.RecordButton
 import kotlinx.android.synthetic.main.camera_container_fragment.*
 import timber.log.Timber
 
@@ -117,10 +121,15 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         }
 
         val d = myCamera.getQrListener().subscribe({
+            setEnableQrCallback(false)
             QrDialog.create(it).show(childFragmentManager, null)
         }, {
             Timber.e(it)
         })
+    }
+
+    fun setEnableQrCallback(value: Boolean) {
+        myCamera.setEnableQrCallback(value)
     }
 
     private fun changeTorchButton(show: Boolean): ViewPropertyAnimator {

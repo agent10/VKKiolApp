@@ -8,11 +8,18 @@ import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.media.MediaRecorder
 import android.util.Size
-import kiol.vkapp.taskb.CompareSizesByArea
 import timber.log.Timber
+import java.lang.Long
 import java.util.*
 import kotlin.collections.ArrayList
 
+internal class CompareSizesByArea : Comparator<Size> {
+
+    // We cast here to ensure the multiplications won't overflow
+    override fun compare(lhs: Size, rhs: Size) =
+        Long.signum(lhs.width.toLong() * lhs.height - rhs.width.toLong() * rhs.height)
+
+}
 
 class CameraConfigurator(private val context: Context) {
     class CameraNotFoundException : Exception("Camera not found")

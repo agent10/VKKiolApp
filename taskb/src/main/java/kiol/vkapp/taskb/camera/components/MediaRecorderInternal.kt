@@ -1,10 +1,11 @@
-package kiol.vkapp.taskb.camera
+package kiol.vkapp.taskb.camera.components
 
 import android.content.Context
 import android.media.CamcorderProfile
 import android.media.MediaRecorder
 import android.util.Size
 import android.view.Surface
+import kiol.vkapp.taskb.camera.CameraConfigurator
 import timber.log.Timber
 
 class MediaRecorderInternal(private val context: Context) {

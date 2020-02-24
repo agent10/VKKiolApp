@@ -1,4 +1,4 @@
-package kiol.vkapp.taskb.camera
+package kiol.vkapp.taskb.camera.components
 
 import android.content.Context
 import android.graphics.ImageFormat
@@ -7,13 +7,12 @@ import android.graphics.PointF
 import android.graphics.RectF
 import android.media.ImageReader
 import android.os.Handler
-import android.view.TextureView
-import android.webkit.URLUtil
-import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.taskb.TheApp
+import kiol.vkapp.taskb.camera.ui.QrDrawModel
+import kiol.vkapp.taskb.camera.ui.QrOverlay
 import ru.timepad.domain.qr.QRBarRecognizer
 import timber.log.Timber
 import kotlin.math.acos
@@ -50,19 +49,27 @@ class Recognizer(context: Context, private val backgroundHandler: Handler, val o
 
     private lateinit var qrOverlay: QrOverlay
 
+    var isEnabled = true
+        set(value) {
+            field = value
+            qrOverlay.drawQr(QrOverlay.EmptyQrDrawModel)
+        }
+
     private val qrBarRecognizer = (context.applicationContext as TheApp).qrBarRecognizer
     val imageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2).apply {
         setOnImageAvailableListener({ reader ->
-            val img = reader.acquireLatestImage()
-            img?.let {
-                val buf = img.planes[0].buffer
-                val data = ByteArray(buf.remaining())
-                buf.get(data)
-                val w = img.width
-                val h = img.height
-                img.close()
+            if (isEnabled) {
+                val img = reader.acquireLatestImage()
+                img?.let {
+                    val buf = img.planes[0].buffer
+                    val data = ByteArray(buf.remaining())
+                    buf.get(data)
+                    val w = img.width
+                    val h = img.height
+                    img.close()
 
-                qrBarRecognizer.recognize(QRBarRecognizer.ImageData(data, w, h))
+                    qrBarRecognizer.recognize(QRBarRecognizer.ImageData(data, w, h))
+                }
             }
         }, backgroundHandler)
     }
@@ -86,11 +93,14 @@ class Recognizer(context: Context, private val backgroundHandler: Handler, val o
             }
         }.map {
             parse(it)
-        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
-            qrOverlay.drawQr(it)
-        }, {
-            Timber.e("Recognize error")
-        }))
+        }.onErrorReturnItem(QrOverlay.EmptyQrDrawModel).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(
+            {
+                qrOverlay.drawQr(it)
+            },
+            {
+                Timber.e("Recognize error")
+            })
+        )
     }
 
     fun release() {
@@ -146,7 +156,12 @@ class Recognizer(context: Context, private val backgroundHandler: Handler, val o
             m2.mapPoints(floatArrayFinishPoints)
             val r2 = m2.mapRadius(r)
 
-            return QrDrawModel(floatArrayFinishPoints[0], floatArrayFinishPoints[1], r2, angle)
+            return QrDrawModel(
+                floatArrayFinishPoints[0],
+                floatArrayFinishPoints[1],
+                r2,
+                angle
+            )
         }
 
         return QrOverlay.EmptyQrDrawModel

@@ -10,9 +10,16 @@ import android.view.Surface
 import android.view.TextureView
 import android.widget.Toast
 import kiol.vkapp.taskb.R
+import kiol.vkapp.taskb.camera.components.MediaRecorderInternal
+import kiol.vkapp.taskb.camera.components.Recognizer
+import kiol.vkapp.taskb.camera.components.Torch
+import kiol.vkapp.taskb.camera.components.Zoomer
 import timber.log.Timber
 
-class CaptureSessionCreator(private val context: Context, private val configFinished: (session: CameraCaptureSession) -> Unit) {
+class CaptureSessionCreator(
+    private val context: Context,
+    private val configFinished: (session: CameraCaptureSession) -> Unit
+) {
 
     interface SessionStrategy {
         fun onPreSetup(cameraConfig: CameraConfigurator.Config)
@@ -22,7 +29,7 @@ class CaptureSessionCreator(private val context: Context, private val configFini
 
     abstract class RecorderCameraSessionStrategy(
         private val mediaRecorderInternal: MediaRecorderInternal,
-        protected val torch: Torch, protected val zoomer: Zoomer
+        protected val torch: Torch, private val zoomer: Zoomer, protected val recognizer: Recognizer
     ) :
         SessionStrategy {
         override fun onPreSetup(cameraConfig: CameraConfigurator.Config) {
@@ -46,10 +53,15 @@ class CaptureSessionCreator(private val context: Context, private val configFini
         zoomer: Zoomer,
         private val imageReader: ImageReader,
         mediaRecorderInternal: MediaRecorderInternal,
-        torch: Torch
+        torch: Torch, recognizer: Recognizer
     ) :
         RecorderCameraSessionStrategy
-            (mediaRecorderInternal, torch, zoomer) {
+            (mediaRecorderInternal, torch, zoomer, recognizer) {
+
+        override fun onPreSetup(cameraConfig: CameraConfigurator.Config) {
+            super.onPreSetup(cameraConfig)
+            recognizer.isEnabled = true
+        }
 
         override fun onSurfaces(surfaces: MutableList<Surface>) {
             super.onSurfaces(surfaces)
@@ -68,10 +80,16 @@ class CaptureSessionCreator(private val context: Context, private val configFini
     class FrontCameraSessionStrategy(
         zoomer: Zoomer,
         mediaRecorderInternal: MediaRecorderInternal,
-        torch: Torch
+        torch: Torch, recognizer: Recognizer
     ) :
         RecorderCameraSessionStrategy
-            (mediaRecorderInternal, torch, zoomer) {
+            (mediaRecorderInternal, torch, zoomer, recognizer) {
+
+        override fun onPreSetup(cameraConfig: CameraConfigurator.Config) {
+            super.onPreSetup(cameraConfig)
+            recognizer.isEnabled = false
+        }
+
         override fun onSessionConfigured(
             previewRequestBuilder: CaptureRequest.Builder,
             cameraCaptureSession: CameraCaptureSession

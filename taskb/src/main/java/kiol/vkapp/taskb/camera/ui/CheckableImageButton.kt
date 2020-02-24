@@ -1,4 +1,4 @@
-package kiol.vkapp.taskb.camera
+package kiol.vkapp.taskb.camera.ui
 
 import android.R
 import android.content.Context
@@ -6,7 +6,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.Checkable
 import androidx.appcompat.widget.AppCompatImageButton
-import androidx.appcompat.widget.AppCompatImageView
 
 class CheckableImageButton(context: Context?, attrs: AttributeSet?) :
     AppCompatImageButton(context, attrs), Checkable {
@@ -14,7 +13,9 @@ class CheckableImageButton(context: Context?, attrs: AttributeSet?) :
     private var mChecked = false
     override fun onCreateDrawableState(extraSpace: Int): IntArray {
         val drawableState = super.onCreateDrawableState(extraSpace + 1)
-        if (isChecked) View.mergeDrawableStates(drawableState, CHECKED_STATE_SET)
+        if (isChecked) View.mergeDrawableStates(drawableState,
+            CHECKED_STATE_SET
+        )
         return drawableState
     }
 

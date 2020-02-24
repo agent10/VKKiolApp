@@ -1,4 +1,4 @@
-package kiol.vkapp.taskb.camera
+package kiol.vkapp.taskb.camera.ui
 
 import android.graphics.Matrix
 import android.graphics.RectF

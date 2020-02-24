@@ -12,7 +12,7 @@
         android:fitsSystemWindows="false"
         android:keepScreenOn="true" />
 
-    <kiol.vkapp.taskb.camera.QrOverlay
+    <kiol.vkapp.taskb.camera.ui.QrOverlay
         android:id="@+id/qrOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

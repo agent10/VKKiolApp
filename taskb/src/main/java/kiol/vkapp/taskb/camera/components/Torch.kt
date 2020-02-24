@@ -1,4 +1,4 @@
-package kiol.vkapp.taskb.camera
+package kiol.vkapp.taskb.camera.components
 
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CaptureRequest

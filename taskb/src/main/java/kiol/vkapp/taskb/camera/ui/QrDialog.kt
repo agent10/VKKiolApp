@@ -1,5 +1,6 @@
-package kiol.vkapp.taskb.camera
+package kiol.vkapp.taskb.camera.ui
 
+import android.content.DialogInterface
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,10 +8,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.URLUtil
 import android.widget.TextView
-import androidx.fragment.app.DialogFragment
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.androidbrowserhelper.trusted.TwaLauncher
 import kiol.vkapp.taskb.R
+import kiol.vkapp.taskb.camera.CameraContainerFragment
 
 class QrDialog : BottomSheetDialogFragment() {
 
@@ -35,7 +36,6 @@ class QrDialog : BottomSheetDialogFragment() {
 
         val qrBody = arguments?.getString(QR_BODY, "Unknown").orEmpty()
 
-
         val qrTitleTv = view.findViewById<TextView>(R.id.title)
         val qrBodyTv = view.findViewById<TextView>(R.id.qrBody)
         val qrHttpBtn = view.findViewById<TextView>(R.id.httpOpenBtn)
@@ -49,8 +49,14 @@ class QrDialog : BottomSheetDialogFragment() {
         if (qrBody.isUrl()) {
             qrTitleTv.text = "Внешня ссыль"
         } else {
+            qrTitleTv.text = "QR код"
             qrHttpBtn.visibility = View.GONE
         }
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        (parentFragment as CameraContainerFragment).setEnableQrCallback(true)
     }
 
     private fun String.isUrl() = URLUtil.isHttpUrl(this) || URLUtil.isHttpsUrl(this)

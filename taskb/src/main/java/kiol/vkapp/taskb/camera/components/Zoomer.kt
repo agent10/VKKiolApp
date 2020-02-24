@@ -1,4 +1,4 @@
-package kiol.vkapp.taskb.camera
+package kiol.vkapp.taskb.camera.components
 
 import android.content.Context
 import android.graphics.Matrix
@@ -10,6 +10,7 @@ import android.hardware.camera2.CaptureRequest
 import android.os.Handler
 import android.view.ScaleGestureDetector
 import androidx.core.graphics.toRect
+import kiol.vkapp.taskb.camera.CameraConfigurator
 import kotlin.math.max
 import kotlin.math.min
 
