@@ -1,6 +1,7 @@
 package kiol.vkapp.commondata.domain
 
 import kiol.vkapp.commondata.data.VKDocItem
+import kiol.vkapp.commondata.data.VKImagePreview
 import kiol.vkapp.commondata.data.VKSizesPreview
 
 data class DocItem(
@@ -48,5 +49,7 @@ data class Place(
     val title: String,
     val address: String,
     val description: String,
-    val photo: String
+    val site: String,
+    val photo: String,
+    val sizes: List<VKImagePreview>? = null
 )

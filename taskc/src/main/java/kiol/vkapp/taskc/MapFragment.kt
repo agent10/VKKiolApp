@@ -110,7 +110,22 @@ class MapFragment : Fragment(R.layout.map_fragment_layout), ClusterListener, Map
             null
         )
         p0.userData?.let {
-            DescriptionDialog.create(it as Place).show(childFragmentManager, null)
+            val p = it as Place
+
+            if (p.placeType == PlaceType.Photos) {
+                childFragmentManager.beginTransaction()
+                    .setCustomAnimations(
+                        R.anim.viewer_fragment_open_enter,
+                        R.anim.viewer_fragment_open_enter,
+                        R.anim.viewer_fragment_open_exit,
+                        R.anim.viewer_fragment_open_exit
+                    ).replace(
+                        R.id.contentViewer, ImageViewerFragment.create(p)
+                    ).addToBackStack(null)
+                    .commitAllowingStateLoss()
+            } else {
+                DescriptionDialog.create(it).show(childFragmentManager, null)
+            }
         }
         return true
     }

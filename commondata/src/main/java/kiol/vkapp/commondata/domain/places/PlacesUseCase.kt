@@ -23,6 +23,7 @@ class PlacesUseCase {
                         p.title,
                         p.address.orEmpty(),
                         it.description.orEmpty(),
+                        it.site.orEmpty(),
                         p.group_photo.orEmpty()
                     )
                 }
@@ -36,6 +37,7 @@ class PlacesUseCase {
                         p.title,
                         p.address.orEmpty(),
                         it.description.orEmpty(),
+                        it.site.orEmpty(),
                         p.group_photo.orEmpty()
                     )
                 }
@@ -46,7 +48,7 @@ class PlacesUseCase {
                 it.filter {
                     it.lat > 0f && it.long > 0f
                 }.map {
-                    Place(placeType, it.lat, it.long, "", "", it.text, it.photo_130)
+                    Place(placeType, it.lat, it.long, "", "", "", it.text, it.sizes.getMSize(), it.sizes)
                 }
             }
         }
@@ -68,6 +70,7 @@ class PlacesUseCase {
     private fun getPhotos() = Flowable.fromCallable {
         val request = VKRequest<JSONObject>("photos.get")
             .addParam("count", 1000)
+            .addParam("photo_sizes", 1)
             .addParam("album_id", "wall")
             .addParam("offset", 0)
         VK.executeSync(request)

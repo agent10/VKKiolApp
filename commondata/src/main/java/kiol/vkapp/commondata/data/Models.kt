@@ -35,17 +35,30 @@ data class VKResponse<T>(val response: T)
 
 data class VKListContainerResponse<T>(val count: Int, val items: List<T>)
 
-data class VKImagePreview(val src: String, val width: Int, val height: Int)
+data class VKImagePreview(val src: String, val width: Int, val height: Int, val type: String)
 
 data class VKPhotoPreview(val photo: VKSizesPreview?)
 
 data class VKSizesPreview(val sizes: List<VKImagePreview>)
 
-data class VKPhoto(val text: String, val lat: Float = -1f, val long: Float = -1f, val photo_130: String = "")
+fun List<VKImagePreview>?.getXSize() = getSize("x")
+fun List<VKImagePreview>?.getMSize() = getSize("m")
+
+fun List<VKImagePreview>?.getSize(type: String): String {
+    this?.let {
+        return it.firstOrNull { it.type == type }?.src.orEmpty()
+    }
+    return ""
+}
+
+data class VKPhoto(
+    val text: String, val lat: Float = -1f, val long: Float = -1f, val photo_130: String = "", val sizes:
+    List<VKImagePreview>? = null
+)
 
 data class VKGroup(
     val name: String, val type: String,
-    val place: VKGroupPlace, val description: String?
+    val place: VKGroupPlace, val description: String?, val site: String
 )
 
 data class VKGroupPlace(

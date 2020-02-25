@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<kiol.vkapp.commonui.DragToDismissFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dismissLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground">
+
+    <com.github.chrisbanes.photoview.PhotoView
+        android:id="@+id/photo_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</kiol.vkapp.commonui.DragToDismissFrameLayout>
