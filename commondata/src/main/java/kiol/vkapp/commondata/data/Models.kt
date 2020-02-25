@@ -40,3 +40,7 @@ data class VKImagePreview(val src: String, val width: Int, val height: Int)
 data class VKPhotoPreview(val photo: VKSizesPreview?)
 
 data class VKSizesPreview(val sizes: List<VKImagePreview>)
+
+data class VKGroup(val name: String, val type: String, val place: VKGroupPlace)
+
+data class VKGroupPlace(val title: String, val latitude: Float, val longitude: Float, val group_photo: String)

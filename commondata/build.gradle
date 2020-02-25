@@ -28,6 +28,8 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
+
+
     implementation 'com.vk:androidsdk:2.1.1'
     implementation 'com.jakewharton.timber:timber:4.7.1'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.17'
