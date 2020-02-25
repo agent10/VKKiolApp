@@ -41,15 +41,12 @@ enum class PlaceType {
     Groups, Events, Photos
 }
 
-sealed class Place {
-    abstract val latitude: Float
-    abstract val longitude: Float
-
-    data class GroupPlace(
-        override val latitude: Float,
-        override val longitude: Float,
-        val address: String,
-        val description: String,
-        val groupPhoto: String
-    ) : Place()
-}
+data class Place(
+    val placeType: PlaceType,
+    val latitude: Float,
+    val longitude: Float,
+    val title: String,
+    val address: String,
+    val description: String,
+    val photo: String
+)

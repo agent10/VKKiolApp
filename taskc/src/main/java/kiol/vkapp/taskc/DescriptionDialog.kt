@@ -15,10 +15,10 @@ class DescriptionDialog : BottomSheetDialogFragment() {
         private const val PLACE_ADDRESSS = "place_address"
         private const val PLACE_DESCRIPTION = "place_description"
 
-        fun create(place: Place.GroupPlace): DescriptionDialog {
+        fun create(place: Place): DescriptionDialog {
             return DescriptionDialog().apply {
                 arguments = Bundle().apply {
-                    putString(PLACE_TITLE, "Temp")
+                    putString(PLACE_TITLE, place.title)
                     putString(PLACE_ADDRESSS, place.address)
                     putString(PLACE_DESCRIPTION, place.description)
                 }

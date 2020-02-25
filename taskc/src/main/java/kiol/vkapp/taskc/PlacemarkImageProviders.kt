@@ -16,22 +16,20 @@ import java.util.*
 
 
 fun loadPlacemarkImage(context: Context, place: Place, placemarkMapObject: PlacemarkMapObject) {
-    if (place is Place.GroupPlace) {
-        Glide.with(context).asBitmap().load(place.groupPhoto).into(object : SimpleTarget<Bitmap>() {
-            override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                placemarkMapObject.setIcon(object : ImageProvider() {
-                    override fun getId(): String {
-                        return "bitmap:" + UUID.randomUUID().toString()
-                    }
+    Glide.with(context).asBitmap().load(place.photo).into(object : SimpleTarget<Bitmap>() {
+        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+            placemarkMapObject.setIcon(object : ImageProvider() {
+                override fun getId(): String {
+                    return "bitmap:" + UUID.randomUUID().toString()
+                }
 
-                    override fun getImage(): Bitmap {
-                        return getCroppedBitmap(resource)
-                    }
+                override fun getImage(): Bitmap {
+                    return getCroppedBitmap(resource)
+                }
 
-                }, IconStyle())
-            }
-        })
-    }
+            }, IconStyle())
+        }
+    })
 }
 
 

@@ -17,11 +17,13 @@ class PlacesUseCase {
 
     fun getPlaces(placeType: PlaceType): Flowable<List<Place>> {
         return when (placeType) {
-            Groups -> getGroups().map {
+            Groups -> getGroupsOrEvents(false).map {
                 it.map {
                     val p = it.place
-                    Place.GroupPlace(
+                    Place(
+                        placeType,
                         p.latitude, p.longitude,
+                        p.title,
                         p.address.orEmpty(),
                         it.description.orEmpty(),
                         p.group_photo.orEmpty()
@@ -33,8 +35,9 @@ class PlacesUseCase {
         }
     }
 
-    private fun getGroups() = Flowable.fromCallable {
+    private fun getGroupsOrEvents(events: Boolean) = Flowable.fromCallable {
         val request = VKRequest<JSONObject>("groups.get")
+            .addParam("filter", if (events) "events" else "groups")
             .addParam("extended", 1)
             .addParam("fields", "place,description")
             .addParam("count", 100)
