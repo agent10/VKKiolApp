@@ -2,38 +2,33 @@ package kiol.vkapp.taskc
 
 import android.Manifest
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
-import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.SimpleTarget
-import com.bumptech.glide.request.transition.Transition
 import com.vk.api.sdk.VK
 import com.vk.api.sdk.VKApiConfig
 import com.vk.api.sdk.VKDefaultValidationHandler
 import com.vk.api.sdk.auth.VKAccessToken
 import com.vk.api.sdk.auth.VKAuthCallback
 import com.vk.api.sdk.auth.VKScope
+import com.yandex.mapkit.Animation
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
-import com.yandex.mapkit.map.Cluster
-import com.yandex.mapkit.map.ClusterListener
-import com.yandex.mapkit.map.ClusterizedPlacemarkCollection
-import com.yandex.mapkit.map.IconStyle
+import com.yandex.mapkit.map.*
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import kiol.vkapp.commondata.domain.photos.getGroups
+import kiol.vkapp.commondata.domain.Place
+import kiol.vkapp.commondata.domain.PlaceType
+import kiol.vkapp.commondata.domain.places.PlacesUseCase
 import timber.log.Timber
-import java.util.*
 
 
 operator fun CompositeDisposable.plusAssign(d: Disposable) {
@@ -43,7 +38,7 @@ operator fun CompositeDisposable.plusAssign(d: Disposable) {
 fun Fragment.getAppContext() = requireContext().applicationContext
 
 
-class MainActivity : AppCompatActivity(), ClusterListener {
+class MainActivity : AppCompatActivity(), ClusterListener, MapObjectTapListener {
 
     private lateinit var simpleRouter: SimpleRouter
 
@@ -103,37 +98,27 @@ class MainActivity : AppCompatActivity(), ClusterListener {
         )
 
 
+        clusterizedCollection.addTapListener(this)
+
         simpleRouter = SimpleRouter(supportFragmentManager)
 
     }
 
-
     private fun startMain() {
-        val d = getGroups().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
-            Timber.d("Groups: $it")
-            it.forEach {
-                val point = Point(it.place.latitude.toDouble(), it.place.longitude.toDouble())
-
-                Glide.with(this).asBitmap().load(it.place.group_photo).into(object : SimpleTarget<Bitmap>() {
-                    override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                        clusterizedCollection.addPlacemark(point, object : ImageProvider() {
-                            override fun getId(): String {
-                                return "bitmap:" + UUID.randomUUID().toString()
-                            }
-
-                            override fun getImage(): Bitmap {
-                                return resource
-                            }
-
-                        }, IconStyle())
+        val d = PlacesUseCase().getPlaces(PlaceType.Groups).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                Timber.d("Groups: $it")
+                it.forEach {
+                    if (it is Place.GroupPlace) {
+                        val point = Point(it.latitude.toDouble(), it.longitude.toDouble())
+                        val placemarkMapObject = clusterizedCollection.addEmptyPlacemark(point)
+                        loadPlacemarkImage(this, it, placemarkMapObject)
                         clusterizedCollection.clusterPlacemarks(60.0, 15)
                     }
-
-                })
-            }
-        }, {
-            Timber.e("Groups error: $it")
-        })
+                }
+            }, {
+                Timber.e("Groups error: $it")
+            })
     }
 
     override fun onStop() {
@@ -168,9 +153,18 @@ class MainActivity : AppCompatActivity(), ClusterListener {
     fun getRouter() = simpleRouter
 
     override fun onClusterAdded(cluster: Cluster) {
-        // We setup cluster appearance and tap handler in this method
         cluster.appearance.setIcon(
-            ImageProvider.fromResource(this, R.drawable.cluster)
+            TextImageProvider(this, Integer.toString(cluster.size))
         )
+    }
+
+    override fun onMapObjectTap(p0: MapObject, p1: Point): Boolean {
+        //        Toast.makeText(this, "ttt" + p0.toString(), Toast.LENGTH_SHORT).show()
+        mapview.map.move(
+            CameraPosition(p1, mapview.map.cameraPosition.zoom, 0f, 0f),
+            Animation(Animation.Type.SMOOTH, 0.5f),
+            null
+        )
+        return true
     }
 }

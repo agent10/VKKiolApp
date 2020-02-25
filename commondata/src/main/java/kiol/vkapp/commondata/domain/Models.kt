@@ -37,3 +37,17 @@ data class DocItem(
     }
 }
 
+enum class PlaceType {
+    Groups, Events, Photos
+}
+
+sealed class Place {
+    abstract val latitude: Float
+    abstract val longitude: Float
+
+    data class GroupPlace(
+        override val latitude: Float,
+        override val longitude: Float,
+        val groupPhoto: String
+    ) : Place()
+}
