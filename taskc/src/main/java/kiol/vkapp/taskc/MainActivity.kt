@@ -112,6 +112,7 @@ class MainActivity : AppCompatActivity(), ClusterListener, MapObjectTapListener 
                     if (it is Place.GroupPlace) {
                         val point = Point(it.latitude.toDouble(), it.longitude.toDouble())
                         val placemarkMapObject = clusterizedCollection.addEmptyPlacemark(point)
+                        placemarkMapObject.userData = it
                         loadPlacemarkImage(this, it, placemarkMapObject)
                         clusterizedCollection.clusterPlacemarks(60.0, 15)
                     }
@@ -159,12 +160,18 @@ class MainActivity : AppCompatActivity(), ClusterListener, MapObjectTapListener 
     }
 
     override fun onMapObjectTap(p0: MapObject, p1: Point): Boolean {
-        //        Toast.makeText(this, "ttt" + p0.toString(), Toast.LENGTH_SHORT).show()
         mapview.map.move(
             CameraPosition(p1, mapview.map.cameraPosition.zoom, 0f, 0f),
-            Animation(Animation.Type.SMOOTH, 0.5f),
+            Animation(Animation.Type.SMOOTH, 0.1f),
             null
         )
+        p0.userData?.let {
+            when (val place = it as Place) {
+                is Place.GroupPlace -> {
+                    DescriptionDialog.create(place).show(supportFragmentManager, null)
+                }
+            }
+        }
         return true
     }
 }

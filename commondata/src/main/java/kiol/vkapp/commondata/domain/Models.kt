@@ -48,6 +48,8 @@ sealed class Place {
     data class GroupPlace(
         override val latitude: Float,
         override val longitude: Float,
+        val address: String,
+        val description: String,
         val groupPhoto: String
     ) : Place()
 }

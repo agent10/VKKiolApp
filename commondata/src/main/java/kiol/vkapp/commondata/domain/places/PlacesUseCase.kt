@@ -20,7 +20,12 @@ class PlacesUseCase {
             Groups -> getGroups().map {
                 it.map {
                     val p = it.place
-                    Place.GroupPlace(p.latitude, p.longitude, p.group_photo)
+                    Place.GroupPlace(
+                        p.latitude, p.longitude,
+                        p.address.orEmpty(),
+                        it.description.orEmpty(),
+                        p.group_photo.orEmpty()
+                    )
                 }
             }
             Events -> TODO()
@@ -31,7 +36,7 @@ class PlacesUseCase {
     private fun getGroups() = Flowable.fromCallable {
         val request = VKRequest<JSONObject>("groups.get")
             .addParam("extended", 1)
-            .addParam("fields", "place")
+            .addParam("fields", "place,description")
             .addParam("count", 100)
             .addParam("offset", 0)
         VK.executeSync(request)
