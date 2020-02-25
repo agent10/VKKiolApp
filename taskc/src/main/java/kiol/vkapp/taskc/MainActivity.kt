@@ -3,7 +3,6 @@ package kiol.vkapp.taskc
 import android.Manifest
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
@@ -12,12 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.target.ImageViewTarget
 import com.bumptech.glide.request.target.SimpleTarget
-import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.request.transition.Transition
 import com.vk.api.sdk.VK
 import com.vk.api.sdk.VKApiConfig
@@ -25,11 +19,12 @@ import com.vk.api.sdk.VKDefaultValidationHandler
 import com.vk.api.sdk.auth.VKAccessToken
 import com.vk.api.sdk.auth.VKAuthCallback
 import com.vk.api.sdk.auth.VKScope
-import com.yandex.mapkit.Animation
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
-import com.yandex.mapkit.map.CameraPosition
-import com.yandex.mapkit.map.PlacemarkMapObject
+import com.yandex.mapkit.map.Cluster
+import com.yandex.mapkit.map.ClusterListener
+import com.yandex.mapkit.map.ClusterizedPlacemarkCollection
+import com.yandex.mapkit.map.IconStyle
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -38,6 +33,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.commondata.domain.photos.getGroups
 import timber.log.Timber
+import java.util.*
 
 
 operator fun CompositeDisposable.plusAssign(d: Disposable) {
@@ -46,13 +42,16 @@ operator fun CompositeDisposable.plusAssign(d: Disposable) {
 
 fun Fragment.getAppContext() = requireContext().applicationContext
 
-class MainActivity : AppCompatActivity() {
+
+class MainActivity : AppCompatActivity(), ClusterListener {
 
     private lateinit var simpleRouter: SimpleRouter
 
     private lateinit var mapview: MapView
 
-    private lateinit var image: ImageView
+    private lateinit var image: View
+
+    private lateinit var clusterizedCollection: ClusterizedPlacemarkCollection
 
     private val CAMERA_TARGET = Point(59.952, 30.318)
 
@@ -64,6 +63,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         image = findViewById(R.id.testImage)
+        image.setOnClickListener {
+            clusterizedCollection.clear()
+        }
+
+        mapview = findViewById<View>(R.id.mapview) as MapView
+
+        clusterizedCollection = mapview.getMap().getMapObjects().addClusterizedPlacemarkCollection(this)
+
 
         VK.setConfig(
             VKApiConfig(
@@ -81,6 +88,9 @@ class MainActivity : AppCompatActivity() {
             VK.login(this, arrayListOf(VKScope.PHOTOS, VKScope.OFFLINE))
         }
 
+
+
+
         ActivityCompat.requestPermissions(
             this, arrayOf(
                 Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION
@@ -92,31 +102,35 @@ class MainActivity : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         )
 
+
         simpleRouter = SimpleRouter(supportFragmentManager)
 
-        mapview = findViewById<View>(R.id.mapview) as MapView
     }
 
 
     private fun startMain() {
         val d = getGroups().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
             Timber.d("Groups: $it")
-            val mapObjects = mapview.getMap().getMapObjects().addCollection()
             it.forEach {
-                val placeMark = mapObjects.addPlacemark(Point(it.place.latitude.toDouble(), it.place.longitude.toDouble()))
+                val point = Point(it.place.latitude.toDouble(), it.place.longitude.toDouble())
+
                 Glide.with(this).asBitmap().load(it.place.group_photo).into(object : SimpleTarget<Bitmap>() {
                     override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                        placeMark.setIcon(ImageProvider.fromBitmap(resource))
+                        clusterizedCollection.addPlacemark(point, object : ImageProvider() {
+                            override fun getId(): String {
+                                return "bitmap:" + UUID.randomUUID().toString()
+                            }
+
+                            override fun getImage(): Bitmap {
+                                return resource
+                            }
+
+                        }, IconStyle())
+                        clusterizedCollection.clusterPlacemarks(60.0, 15)
                     }
 
                 })
-                Glide.with(this).load(it.place.group_photo).into(image)
             }
-            //            mapview.map.move(
-            //                    CameraPosition(Point(it.place.latitude.toDouble(), it.place.longitude.toDouble()), 15.0f, 0.0f, 0.0f),
-            //                    Animation(Animation.Type.SMOOTH, 0f),
-            //                    null
-            //                )
         }, {
             Timber.e("Groups error: $it")
         })
@@ -152,4 +166,11 @@ class MainActivity : AppCompatActivity() {
 
 
     fun getRouter() = simpleRouter
+
+    override fun onClusterAdded(cluster: Cluster) {
+        // We setup cluster appearance and tap handler in this method
+        cluster.appearance.setIcon(
+            ImageProvider.fromResource(this, R.drawable.cluster)
+        )
+    }
 }
