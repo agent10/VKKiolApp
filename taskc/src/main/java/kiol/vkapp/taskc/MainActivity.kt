@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
                 startMain()
             }
         } else {
-            VK.login(this, arrayListOf(VKScope.PHOTOS, VKScope.OFFLINE))
+            VK.login(this, arrayListOf(VKScope.PHOTOS, VKScope.GROUPS, VKScope.OFFLINE))
         }
 
         ActivityCompat.requestPermissions(

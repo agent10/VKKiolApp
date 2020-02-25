@@ -5,6 +5,7 @@ import android.graphics.*
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import androidx.core.graphics.toRectF
+import androidx.core.graphics.withScale
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
@@ -12,10 +13,22 @@ import com.yandex.mapkit.map.IconStyle
 import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.runtime.image.ImageProvider
 import kiol.vkapp.commondata.domain.Place
+import kiol.vkapp.commondata.domain.PlaceType
 import java.util.*
 
 
 fun loadPlacemarkImage(context: Context, place: Place, placemarkMapObject: PlacemarkMapObject) {
+    placemarkMapObject.setIcon(object : ImageProvider() {
+        override fun getId(): String {
+            return "bitmap:" + UUID.randomUUID().toString()
+        }
+
+        override fun getImage(): Bitmap {
+            return getStubBitmap()
+        }
+
+    }, IconStyle())
+
     Glide.with(context).asBitmap().load(place.photo).into(object : SimpleTarget<Bitmap>() {
         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
             placemarkMapObject.setIcon(object : ImageProvider() {
@@ -24,7 +37,11 @@ fun loadPlacemarkImage(context: Context, place: Place, placemarkMapObject: Place
                 }
 
                 override fun getImage(): Bitmap {
-                    return getCroppedBitmap(resource)
+                    if (place.placeType == PlaceType.Photos) {
+                        return getCroppedPhotoBitmap(resource)
+                    } else {
+                        return getCroppedBitmap(resource)
+                    }
                 }
 
             }, IconStyle())
@@ -48,7 +65,30 @@ private val placeRoundBoundPaint = Paint().apply {
     isAntiAlias = true
     style = Paint.Style.STROKE
     strokeWidth = 10f
+    setShadowLayer(2f, 0f, 0f, 0xAA000000.toInt())
     color = 0xFFFFFFFF.toInt()
+}
+
+private val placeRoundStubPaint = Paint().apply {
+    isAntiAlias = true
+    color = 0xFFFFFF00.toInt()
+}
+
+fun getStubBitmap(): Bitmap {
+    val outRect = Rect(0, 0, 100, 100)
+    val output = Bitmap.createBitmap(
+        100,
+        100, Bitmap.Config.ARGB_8888
+    )
+
+    val canvas = Canvas(output)
+    canvas.drawCircle(
+        output.width / 2f, output.height / 2f,
+        output.width / 2f, placeRoundStubPaint
+    )
+    outRect.inset(5, 5)
+    canvas.drawArc(outRect.toRectF(), 0f, 360f, false, placeRoundBoundPaint)
+    return output
 }
 
 fun getCroppedBitmap(bitmap: Bitmap): Bitmap {
@@ -59,18 +99,40 @@ fun getCroppedBitmap(bitmap: Bitmap): Bitmap {
         100, Bitmap.Config.ARGB_8888
     )
     val canvas = Canvas(output)
-    val rect = Rect(0, 0, bitmap.width, bitmap.height)
-    canvas.drawARGB(0, 0, 0, 0)
-    // canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
-    canvas.drawCircle(
-        output.width / 2f, output.height / 2f,
-        output.width / 2f, placeRoundPaint
+    canvas.withScale(0.95f, 0.95f, 50f, 50f) {
+        val rect = Rect(0, 0, bitmap.width, bitmap.height)
+        canvas.drawARGB(0, 0, 0, 0)
+        // canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
+        canvas.drawCircle(
+            output.width / 2f, output.height / 2f,
+            output.width / 2f, placeRoundPaint
+        )
+        canvas.drawBitmap(bitmap, rect, outRect, placeCropPaint)
+        outRect.inset(5, 5)
+        canvas.drawArc(outRect.toRectF(), 0f, 360f, false, placeRoundBoundPaint)
+    }
+
+    return output
+}
+
+fun getCroppedPhotoBitmap(bitmap: Bitmap): Bitmap {
+    val outRect = Rect(0, 0, 150, 150)
+
+    val output = Bitmap.createBitmap(
+        150,
+        150, Bitmap.Config.ARGB_8888
     )
-    canvas.drawBitmap(bitmap, rect, outRect, placeCropPaint)
-    outRect.inset(5, 5)
-    canvas.drawArc(outRect.toRectF(), 0f, 360f, false, placeRoundBoundPaint)
-    //Bitmap _bmp = Bitmap.createScaledBitmap(output, 60, 60, false);
-    //return _bmp;
+    val canvas = Canvas(output)
+    canvas.withScale(0.95f, 0.95f, 75f, 75f) {
+        val rect = Rect(0, 0, bitmap.width, bitmap.height)
+        canvas.drawARGB(0, 0, 0, 0)
+
+        canvas.drawRoundRect(outRect.toRectF(), 15f, 15f, placeRoundPaint)
+        canvas.drawBitmap(bitmap, rect, outRect, placeCropPaint)
+        outRect.inset(5, 5)
+        canvas.drawRoundRect(outRect.toRectF(), 15f, 15f, placeRoundBoundPaint)
+    }
+
     return output
 }
 

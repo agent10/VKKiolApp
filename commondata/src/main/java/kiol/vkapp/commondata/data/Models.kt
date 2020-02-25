@@ -41,6 +41,8 @@ data class VKPhotoPreview(val photo: VKSizesPreview?)
 
 data class VKSizesPreview(val sizes: List<VKImagePreview>)
 
+data class VKPhoto(val text: String, val lat: Float = -1f, val long: Float = -1f, val photo_130: String = "")
+
 data class VKGroup(
     val name: String, val type: String,
     val place: VKGroupPlace, val description: String?

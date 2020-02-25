@@ -8,6 +8,7 @@
         android:id="@+id/tabs"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:background="@android:color/white"
         android:elevation="4dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -16,17 +17,17 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="Test" />
+            android:text="@string/events_tab_title" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="Test2" />
+            android:text="@string/photos_tab_title" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="Test3" />
+            android:text="@string/groups_tab_title" />
     </com.google.android.material.tabs.TabLayout>
 
     <com.yandex.mapkit.mapview.MapView
