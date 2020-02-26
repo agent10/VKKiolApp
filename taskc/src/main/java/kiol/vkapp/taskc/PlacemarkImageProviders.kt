@@ -28,6 +28,7 @@ import kiol.vkapp.commonui.pxF
 import timber.log.Timber
 import java.security.MessageDigest
 import java.util.*
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 
@@ -258,10 +259,17 @@ fun getCroppedPhotoBitmap(bitmap: Bitmap): Bitmap {
 }
 
 fun getCroppedPhotoBitmapWithBadge(context: Context, bitmap: Bitmap, count: Int): Bitmap {
-    val nb = Bitmap.createBitmap(bitmap)
-    val canvas = Canvas(nb)
     val badgeBitmap = getBadge(context, count)
-    canvas.drawBitmap(badgeBitmap, (nb.width / 2f).toFloat(), 20f, null)
+
+    val nb = Bitmap.createBitmap(
+        bitmap.width + badgeBitmap.width / 5,
+        bitmap.height + badgeBitmap.height / 5,
+        Bitmap.Config.ARGB_8888
+    )
+
+    val canvas = Canvas(nb)
+    canvas.drawBitmap(bitmap, 0f, badgeBitmap.height / 5f, null)
+    canvas.drawBitmap(badgeBitmap, (nb.width - badgeBitmap.width).toFloat(), 0f, null)
     return nb
 }
 
@@ -282,25 +290,18 @@ private fun getBadge(context: Context, count: Int): Bitmap {
     val textMetrics = textPaint.fontMetrics
     val heightF = Math.abs(textMetrics.bottom) + Math.abs(textMetrics.top)
 
-    val textRadius = Math.sqrt(widthF * widthF + heightF * heightF.toDouble()).toFloat() / 2
-    val bitmap = Bitmap.createBitmap(widthF.roundToInt(), heightF.roundToInt(), Bitmap.Config.ARGB_8888)
+    val width = 1.2f * max(widthF, heightF)
+    val height = 1.2f * heightF
 
-    val internalRadius: Float = textRadius + 3 * metrics.density
-    val externalRadius: Float = internalRadius + 3 * metrics.density
-    val width = (2 * externalRadius + 0.5).toInt()
+    val bitmap = Bitmap.createBitmap(width.roundToInt(), height.roundToInt(), Bitmap.Config.ARGB_8888)
 
     val canvas = Canvas(bitmap)
     val backgroundPaint = Paint()
     backgroundPaint.isAntiAlias = true
-    backgroundPaint.color = Color.BLUE
+    backgroundPaint.color = 0xFF3F8AE0.toInt()
 
-    canvas.drawRoundRect(RectF(0f,0f,widthF,heightF), 10f, 10f, backgroundPaint)
-    canvas.drawText(
-        text,
-        widthF / 2,
-        widthF / 2f - (textMetrics.ascent + textMetrics.descent) / 2,
-        textPaint
-    )
+    canvas.drawRoundRect(RectF(0f, 0f, width, height), height, height, backgroundPaint)
+    canvas.drawText(text, width / 2f, height - (height - heightF / 2f) / 2f, textPaint)
 
     return bitmap
 }
