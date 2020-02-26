@@ -15,6 +15,9 @@ import com.google.android.material.tabs.TabLayout
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
+import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm
+import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
+import com.google.maps.android.clustering.algo.ScreenBasedAlgorithmAdapter
 import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.MapKitFactory
@@ -152,6 +155,9 @@ class PlaceClusterRenderer(
         minClusterSize = 2
     }
 
+    override fun shouldRenderAsCluster(cluster: Cluster<PlaceClusterItem>?): Boolean {
+        return super.shouldRenderAsCluster(cluster)
+    }
 
     override fun getColor(clusterSize: Int): Int {
         return Color.RED
@@ -159,38 +165,81 @@ class PlaceClusterRenderer(
 
     override fun onBeforeClusterRendered(cluster: Cluster<PlaceClusterItem>?, markerOptions: MarkerOptions?) {
         super.onBeforeClusterRendered(cluster, markerOptions)
+        markerOptions?.zIndex(Float.MAX_VALUE)
+        markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(getCroppedPhotoStubBitmap()))
+
+        cluster?.items?.forEach {
+            it.isFirstInCluster = false
+        }
+
+        val firstPlace = cluster?.items?.firstOrNull()
+        firstPlace?.let {
+            if (it.place.placeType == PlaceType.Photos) {
+                it.isFirstInCluster = true
+            }
+        }
         Timber.d("kiol onBeforeClusterRendered")
     }
 
-    override fun onClusterRendered(cluster: Cluster<PlaceClusterItem>?, marker: Marker?) {
+    override fun onClusterRendered(cluster: Cluster<PlaceClusterItem>?, marker: Marker) {
         super.onClusterRendered(cluster, marker)
+        val firstPlace = cluster?.items?.firstOrNull()
+        firstPlace?.let {
+            if (it.place.placeType == PlaceType.Photos) {
+                loadPlacemarkImageWithCount(context, it.place, marker, cluster.size)
+            }
+        }
         Timber.d("kiol onClusterRendered")
-
     }
 
     override fun onBeforeClusterItemRendered(item: PlaceClusterItem, markerOptions: MarkerOptions) {
         super.onBeforeClusterItemRendered(item, markerOptions)
-        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(getStubBitmap()))
+        if (item.isFirstInCluster) {
+            markerOptions.zIndex(Float.MAX_VALUE - 1)
+        }
+        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(getCroppedPhotoStubBitmap()))
         Timber.d("kiol onBeforeClusterItemRendered")
 
     }
 
     override fun onClusterItemRendered(clusterItem: PlaceClusterItem, marker: Marker) {
         super.onClusterItemRendered(clusterItem, marker)
-
+        if (clusterItem.isFirstInCluster) {
+            marker.zIndex = Float.MAX_VALUE - 1
+        }
         loadPlacemarkImage(context, clusterItem.place, marker)
         Timber.d("kiol onClusterItemRendered")
 
     }
 
+    override fun onClusterUpdated(cluster: Cluster<PlaceClusterItem>?, marker: Marker) {
+        marker.zIndex = Float.MAX_VALUE
+        //        super.onClusterUpdated(cluster, marker)
+        //        marker?.setIcon(BitmapDescriptorFactory.fromBitmap(getCroppedPhotoStubBitmap()))
+        //        val firstPlace = cluster?.items?.firstOrNull()
+        //        firstPlace?.let {
+        //            if (it.place.placeType == PlaceType.Photos) {
+        //                it.isFirstInCluster = true
+        //                loadPlacemarkImage(context, it.place, marker)
+        //            }
+        //        }
+    }
+
     override fun onClustersChanged(clusters: MutableSet<out Cluster<PlaceClusterItem>>?) {
         super.onClustersChanged(clusters)
+        clusters?.forEach {
+            it.items.forEach {
+                it.isFirstInCluster = false
+            }
+        }
         Timber.d("kiol onClustersChanged")
-
     }
 }
 
 class PlaceClusterItem(val place: Place) : ClusterItem {
+
+    var isFirstInCluster = false
+
     override fun getSnippet(): String {
         return "snippet"
     }

@@ -9,6 +9,7 @@ import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.PlaceType.*
 import org.json.JSONObject
+import kotlin.random.Random
 
 class PlacesUseCase {
 
@@ -45,14 +46,27 @@ class PlacesUseCase {
             Photos -> getPhotos().doOnNext {
                 val a = 10
             }.map {
-                it.filter {
-                    it.lat > 0f && it.long > 0f
-                }.map {
-                    Place(placeType, it.lat, it.long, "", "", "", it.text, it.sizes.getMSize(), it.sizes)
+                //                it.filter {
+                //                    it.lat > 0f && it.long > 0f
+                //                }.map {
+                //                    Place(placeType, it.lat, it.long, "", "", "", it.text, it.sizes.getMSize(), it.sizes)
+                //                }
+
+                it.map {
+                    var lat = it.lat
+                    var long = it.long
+                    if (lat <= 0f || long <= 0f) {
+                        lat = -50f + rnd.nextFloat() * 100f
+                        long = -50f + rnd.nextFloat() * 100f
+                    }
+                    Place(placeType, lat, long, "", "", "", it.text, it.sizes.getMSize(), it.sizes)
                 }
             }
         }
     }
+
+
+    val rnd = Random.Default
 
     private fun getGroupsOrEvents(events: Boolean) = Flowable.fromCallable {
         val request = VKRequest<JSONObject>("groups.get")
