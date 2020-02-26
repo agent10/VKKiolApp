@@ -65,7 +65,7 @@ fun loadPlacemarkImage(context: Context, place: Place, markerOptions: MarkerOpti
 }
 
 fun loadPlacemarkImage(context: Context, place: Place, marker: Marker) {
-    Glide.with(context).asBitmap().load(place.photo).into(object : SimpleTarget<Bitmap>() {
+    Glide.with(context).asBitmap().load(place.photo).transform().into(object : SimpleTarget<Bitmap>() {
         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
             marker.setIcon(BitmapDescriptorFactory.fromBitmap(getCroppedBitmap(resource)))
         }

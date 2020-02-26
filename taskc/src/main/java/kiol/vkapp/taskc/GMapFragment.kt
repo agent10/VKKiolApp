@@ -1,6 +1,7 @@
 package kiol.vkapp.taskc
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
@@ -40,6 +41,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     private lateinit var mapFragment: SupportMapFragment
 
     private lateinit var googleMap: GoogleMap
+    private var clusterManager: ClusterManager<PlaceClusterItem>? = null
 
     private val placesUseCase = PlacesUseCase()
 
@@ -79,6 +81,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     }
 
     private fun updateMap(placeType: PlaceType) {
+        clusterManager?.clearItems()
         disposable?.dispose()
 
         disposable = placesUseCase.getPlaces(placeType).subscribeOn(Schedulers.io())
@@ -89,23 +92,10 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
                     Toast.makeText(requireContext(), "Ничего не найдено", Toast.LENGTH_SHORT).show()
                 }
 
-                val clusterManager = ClusterManager<PlaceClusterItem>(requireContext(), googleMap)
-                clusterManager.renderer = PlaceClusterRenderer(requireContext(), googleMap, clusterManager)
-                googleMap.setOnCameraIdleListener(clusterManager)
-
                 it.forEach {
-                    clusterManager.addItem(PlaceClusterItem(it))
-                    //                    googleMap.addMarker(
-                    //                        MarkerOptions().position(LatLng(it.latitude.toDouble(), it.longitude.toDouble())).icon(
-                    //                            BitmapDescriptorFactory.fromBitmap(getStubBitmap())
-                    //                        )
-                    //                    )
-                    //val point = Point(it.latitude.toDouble(), it.longitude.toDouble())
-                    //val placemarkMapObject = clusterizedCollection.addEmptyPlacemark(point)
-                    //placemarkMapObject.userData = it
-                    //loadPlacemarkImage(requireContext(), it, placemarkMapObject)
-                    //clusterizedCollection.clusterPlacemarks(60.0, 15)
+                    clusterManager?.addItem(PlaceClusterItem(it))
                 }
+                clusterManager?.cluster()
             }, {
                 Timber.e("Groups error: $it")
             })
@@ -122,6 +112,33 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     override fun onMapReady(googleMap: GoogleMap?) {
         Timber.e("onMapReady: $googleMap")
         this.googleMap = googleMap!!
+
+        val clusterManager = ClusterManager<PlaceClusterItem>(requireContext(), googleMap)
+        clusterManager.renderer = PlaceClusterRenderer(requireContext(), googleMap, clusterManager)
+        clusterManager.setOnClusterClickListener {
+            true
+        }
+        clusterManager.setOnClusterItemClickListener {
+            val p = it.place
+
+            if (p.placeType == PlaceType.Photos) {
+                childFragmentManager.beginTransaction()
+                    .setCustomAnimations(
+                        R.anim.viewer_fragment_open_enter,
+                        R.anim.viewer_fragment_open_enter,
+                        R.anim.viewer_fragment_open_exit,
+                        R.anim.viewer_fragment_open_exit
+                    ).replace(
+                        R.id.contentViewer, ImageViewerFragment.create(p)
+                    ).addToBackStack(null)
+                    .commitAllowingStateLoss()
+            } else {
+                DescriptionDialog.create(p).show(childFragmentManager, null)
+            }
+            true
+        }
+        googleMap.setOnCameraIdleListener(clusterManager)
+        this.clusterManager = clusterManager
     }
 
 }
@@ -133,6 +150,11 @@ class PlaceClusterRenderer(
     DefaultClusterRenderer<PlaceClusterItem>(context, googleMap, clusterManager) {
     init {
         minClusterSize = 2
+    }
+
+
+    override fun getColor(clusterSize: Int): Int {
+        return Color.RED
     }
 
     override fun onBeforeClusterRendered(cluster: Cluster<PlaceClusterItem>?, markerOptions: MarkerOptions?) {
@@ -148,9 +170,7 @@ class PlaceClusterRenderer(
 
     override fun onBeforeClusterItemRendered(item: PlaceClusterItem, markerOptions: MarkerOptions) {
         super.onBeforeClusterItemRendered(item, markerOptions)
-        //        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(getStubBitmap()))
-        //        loadPlacemarkImage(context, item.place, markerOptions)
-
+        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(getStubBitmap()))
         Timber.d("kiol onBeforeClusterItemRendered")
 
     }
