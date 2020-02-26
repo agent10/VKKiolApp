@@ -19,6 +19,7 @@ class PlacesUseCase {
                 it.map {
                     val p = it.place
                     Place(
+                        it.id,
                         placeType,
                         p.latitude, p.longitude,
                         p.title,
@@ -33,6 +34,7 @@ class PlacesUseCase {
                 it.map {
                     val p = it.place
                     Place(
+                        it.id,
                         placeType,
                         p.latitude, p.longitude,
                         p.title,
@@ -59,7 +61,7 @@ class PlacesUseCase {
                         lat = -50f + rnd.nextFloat() * 100f
                         long = -50f + rnd.nextFloat() * 100f
                     }
-                    Place(placeType, lat, long, "", "", "", it.text, it.sizes.getMSize(), it.sizes)
+                    Place(-1, placeType, lat, long, "", "", "", it.text, it.sizes.getMSize(), it.sizes)
                 }
             }
         }

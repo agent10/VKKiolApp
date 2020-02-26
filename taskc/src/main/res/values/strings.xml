@@ -5,4 +5,7 @@
     <string name="events_tab_title">Events</string>
     <string name="photos_tab_title">Photos</string>
     <string name="groups_tab_title">Groups</string>
+
+    <string name="open">Open</string>
+
 </resources>

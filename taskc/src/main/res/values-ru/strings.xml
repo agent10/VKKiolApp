@@ -1,5 +1,10 @@
 <resources>
+    <string name="app_name">ЗадачаС</string>
+
+
     <string name="events_tab_title">События</string>
     <string name="photos_tab_title">Фото</string>
     <string name="groups_tab_title">Группы</string>
+
+    <string name="open">Открыть</string>
 </resources>

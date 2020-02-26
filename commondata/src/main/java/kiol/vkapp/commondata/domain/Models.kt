@@ -43,6 +43,7 @@ enum class PlaceType {
 }
 
 data class Place(
+    val id: Int,
     val placeType: PlaceType,
     val latitude: Float,
     val longitude: Float,

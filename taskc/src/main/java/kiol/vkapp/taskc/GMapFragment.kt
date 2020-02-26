@@ -166,7 +166,7 @@ class PlaceClusterRenderer(
     override fun onBeforeClusterRendered(cluster: Cluster<PlaceClusterItem>?, markerOptions: MarkerOptions?) {
         super.onBeforeClusterRendered(cluster, markerOptions)
         markerOptions?.zIndex(Float.MAX_VALUE)
-        markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(getCroppedPhotoStubBitmap()))
+        markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(getCroppedPhotoStubBitmapWithBadge(context, cluster?.size ?:0)))
 
         cluster?.items?.forEach {
             it.isFirstInCluster = false

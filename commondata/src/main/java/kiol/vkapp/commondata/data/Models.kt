@@ -57,6 +57,7 @@ data class VKPhoto(
 )
 
 data class VKGroup(
+    val id: Int,
     val name: String, val type: String,
     val place: VKGroupPlace, val description: String?, val site: String
 )

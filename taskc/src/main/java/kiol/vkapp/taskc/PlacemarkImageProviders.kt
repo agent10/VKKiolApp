@@ -258,6 +258,10 @@ fun getCroppedPhotoBitmap(bitmap: Bitmap): Bitmap {
     return output
 }
 
+fun getCroppedPhotoStubBitmapWithBadge(context: Context, count: Int): Bitmap {
+    return getCroppedPhotoBitmapWithBadge(context, getCroppedPhotoStubBitmap(), count)
+}
+
 fun getCroppedPhotoBitmapWithBadge(context: Context, bitmap: Bitmap, count: Int): Bitmap {
     val badgeBitmap = getBadge(context, count)
 
