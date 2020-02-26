@@ -150,13 +150,9 @@ class PlaceClusterRenderer(
     private val context: Context, googleMap: GoogleMap?, clusterManager:
     ClusterManager<PlaceClusterItem>
 ) :
-    DefaultClusterRenderer<PlaceClusterItem>(context, googleMap, clusterManager) {
+    CustomClusterRenderer<PlaceClusterItem>(context, googleMap, clusterManager) {
     init {
         minClusterSize = 2
-    }
-
-    override fun shouldRenderAsCluster(cluster: Cluster<PlaceClusterItem>?): Boolean {
-        return super.shouldRenderAsCluster(cluster)
     }
 
     override fun getColor(clusterSize: Int): Int {
@@ -166,7 +162,7 @@ class PlaceClusterRenderer(
     override fun onBeforeClusterRendered(cluster: Cluster<PlaceClusterItem>?, markerOptions: MarkerOptions?) {
         super.onBeforeClusterRendered(cluster, markerOptions)
         markerOptions?.zIndex(Float.MAX_VALUE)
-        markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(getCroppedPhotoStubBitmapWithBadge(context, cluster?.size ?:0)))
+        markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(getCroppedPhotoStubBitmapWithBadge(context, cluster?.size ?: 0)))
 
         cluster?.items?.forEach {
             it.isFirstInCluster = false
