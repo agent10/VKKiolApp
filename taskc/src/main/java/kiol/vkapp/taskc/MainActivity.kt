@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startMain() {
-        supportFragmentManager.beginTransaction().replace(R.id.contentViewer, MapFragment()).commitAllowingStateLoss()
+        supportFragmentManager.beginTransaction().replace(R.id.contentViewer, GMapFragment()).commitAllowingStateLoss()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

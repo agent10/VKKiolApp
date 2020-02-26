@@ -9,6 +9,7 @@ import com.yandex.mapkit.Animation
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.*
+import com.yandex.mapkit.map.Map
 import com.yandex.mapkit.mapview.MapView
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -19,7 +20,7 @@ import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.places.PlacesUseCase
 import timber.log.Timber
 
-class MapFragment : Fragment(R.layout.map_fragment_layout), ClusterListener, MapObjectTapListener {
+class MapFragment : Fragment(R.layout.map_fragment_layout), ClusterListener, MapObjectTapListener, CameraListener {
 
     private lateinit var mapview: MapView
 
@@ -31,6 +32,20 @@ class MapFragment : Fragment(R.layout.map_fragment_layout), ClusterListener, Map
 
     private var disposable: Disposable? = null
 
+    private val fff = object : MapObjectCollectionListener {
+        override fun onMapObjectRemoved(p0: MapObject) {
+            Timber.d("onMapObjectRemoved")
+        }
+
+        override fun onMapObjectAdded(p0: MapObject) {
+            Timber.d("onMapObjectAdded")
+        }
+
+        override fun onMapObjectUpdated(p0: MapObject) {
+            Timber.d("onMapObjectUpdated")
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -39,6 +54,8 @@ class MapFragment : Fragment(R.layout.map_fragment_layout), ClusterListener, Map
 
         clusterizedCollection = mapview.map.mapObjects.addClusterizedPlacemarkCollection(this)
         clusterizedCollection.addTapListener(this)
+
+        mapview.map.addCameraListener(this)
 
         tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabReselected(tab: TabLayout.Tab?) {
@@ -101,6 +118,8 @@ class MapFragment : Fragment(R.layout.map_fragment_layout), ClusterListener, Map
         cluster.appearance.setIcon(
             TextImageProvider(requireContext(), cluster.size.toString())
         )
+
+        Timber.d("onClusterAdded, count inside ${cluster.placemarks.size}")
     }
 
     override fun onMapObjectTap(p0: MapObject, p1: Point): Boolean {
@@ -127,6 +146,39 @@ class MapFragment : Fragment(R.layout.map_fragment_layout), ClusterListener, Map
                 DescriptionDialog.create(it).show(childFragmentManager, null)
             }
         }
+        return true
+    }
+
+    private val vis = Visitor()
+    override fun onCameraPositionChanged(p0: Map, p1: CameraPosition, p2: CameraUpdateSource, p3: Boolean) {
+//        p0.mapObjects.traverse(vis)
+    }
+}
+
+
+class Visitor : MapObjectVisitor {
+    override fun onPolygonVisited(p0: PolygonMapObject) {
+
+    }
+
+    override fun onCircleVisited(p0: CircleMapObject) {
+    }
+
+    override fun onPolylineVisited(p0: PolylineMapObject) {
+    }
+
+    override fun onColoredPolylineVisited(p0: ColoredPolylineMapObject) {
+    }
+
+    override fun onPlacemarkVisited(p0: PlacemarkMapObject) {
+        Timber.d("visit $p0")
+    }
+
+    override fun onCollectionVisitEnd(p0: MapObjectCollection) {
+    }
+
+    override fun onCollectionVisitStart(p0: MapObjectCollection): Boolean {
+        Timber.d("visit coll $p0")
         return true
     }
 }

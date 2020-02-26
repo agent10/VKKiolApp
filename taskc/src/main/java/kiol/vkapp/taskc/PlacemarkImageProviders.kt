@@ -9,11 +9,16 @@ import androidx.core.graphics.withScale
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 import com.yandex.mapkit.map.IconStyle
 import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.runtime.image.ImageProvider
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
+import timber.log.Timber
 import java.util.*
 
 
@@ -24,31 +29,48 @@ fun loadPlacemarkImage(context: Context, place: Place, placemarkMapObject: Place
         }
 
         override fun getImage(): Bitmap {
+
+            Timber.d("loadPlacemarkImage, getImage. v = ${placemarkMapObject.isVisible}")
             return getStubBitmap()
         }
 
     }, IconStyle())
 
+    //    Glide.with(context).asBitmap().load(place.photo).into(object : SimpleTarget<Bitmap>() {
+    //        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+    //            placemarkMapObject.setIcon(object : ImageProvider() {
+    //                override fun getId(): String {
+    //                    return "bitmap:" + UUID.randomUUID().toString()
+    //                }
+    //
+    //                override fun getImage(): Bitmap {
+    //                    if (place.placeType == PlaceType.Photos) {
+    //                        return getCroppedPhotoBitmap(resource)
+    //                    } else {
+    //                        return getCroppedBitmap(resource)
+    //                    }
+    //                }
+    //
+    //            }, IconStyle())
+    //        }
+    //    })
+}
+
+fun loadPlacemarkImage(context: Context, place: Place, markerOptions: MarkerOptions) {
     Glide.with(context).asBitmap().load(place.photo).into(object : SimpleTarget<Bitmap>() {
         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-            placemarkMapObject.setIcon(object : ImageProvider() {
-                override fun getId(): String {
-                    return "bitmap:" + UUID.randomUUID().toString()
-                }
-
-                override fun getImage(): Bitmap {
-                    if (place.placeType == PlaceType.Photos) {
-                        return getCroppedPhotoBitmap(resource)
-                    } else {
-                        return getCroppedBitmap(resource)
-                    }
-                }
-
-            }, IconStyle())
+            markerOptions.icon(BitmapDescriptorFactory.fromBitmap(resource))
         }
     })
 }
 
+fun loadPlacemarkImage(context: Context, place: Place, marker: Marker) {
+    Glide.with(context).asBitmap().load(place.photo).into(object : SimpleTarget<Bitmap>() {
+        override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+            marker.setIcon(BitmapDescriptorFactory.fromBitmap(getCroppedBitmap(resource)))
+        }
+    })
+}
 
 private val placeRoundPaint = Paint().apply {
     isAntiAlias = true
