@@ -50,7 +50,6 @@ data class Place(
     val title: String,
     val address: String,
     val description: String,
-    val site: String,
     val photo: String,
     val sizes: List<VKImagePreview>? = null
 )

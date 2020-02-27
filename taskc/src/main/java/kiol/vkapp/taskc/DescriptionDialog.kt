@@ -19,7 +19,6 @@ class DescriptionDialog : BottomSheetDialogFragment() {
         private const val PLACE_TITLE = "place_title"
         private const val PLACE_ADDRESSS = "place_address"
         private const val PLACE_DESCRIPTION = "place_description"
-        private const val PLACE_SITE = "place_site"
 
         fun create(place: Place): DescriptionDialog {
             return DescriptionDialog().apply {
@@ -35,7 +34,6 @@ class DescriptionDialog : BottomSheetDialogFragment() {
                     putString(PLACE_TITLE, place.title)
                     putString(PLACE_ADDRESSS, place.address)
                     putString(PLACE_DESCRIPTION, place.description)
-                    putString(PLACE_SITE, place.site)
                 }
             }
         }
@@ -51,7 +49,6 @@ class DescriptionDialog : BottomSheetDialogFragment() {
         val title = arguments?.getString(PLACE_TITLE, "Unknown").orEmpty()
         val address = arguments?.getString(PLACE_ADDRESSS, "Unknown").orEmpty()
         val desc = arguments?.getString(PLACE_DESCRIPTION, "Unknown").orEmpty()
-        val site = arguments?.getString(PLACE_SITE, "Empty").orEmpty()
         val link = arguments?.getString(PLACE_LINK, "").orEmpty()
 
         val addressLine = view.findViewById<ViewGroup>(R.id.addressLine)
@@ -64,6 +61,10 @@ class DescriptionDialog : BottomSheetDialogFragment() {
         val addressTv = view.findViewById<TextView>(R.id.address)
         val descTv = view.findViewById<TextView>(R.id.description)
         val btn = view.findViewById<Button>(R.id.httpOpenBtn)
+
+        view.findViewById<View>(R.id.close).setOnClickListener {
+            dismissAllowingStateLoss()
+        }
 
         titleTv.text = title
         addressTv.text = address

@@ -28,15 +28,22 @@ class MainActivity : VKKiolActivity() {
 
     override fun getVKScopes() = arrayListOf(VKScope.PHOTOS, VKScope.GROUPS, VKScope.OFFLINE)
 
+
+    //Need to override VK api version to use "place" field for groups.get
+    //It doesn't work in 5.103 for me
     override fun getCustomVKConfig() = VKApiConfig(
         context = this,
-        appId = 7334398,
+        appId = resources.getInteger(R.integer.com_vk_sdk_AppId),
         version = "5.61",
         validationHandler = VKDefaultValidationHandler(this)
     )
 
     override fun startMainFragment(containerId: Int) {
-        supportFragmentManager.beginTransaction().replace(containerId, GMapFragment()).commitAllowingStateLoss()
+        val f = GMapFragment()
+        supportFragmentManager.beginTransaction()
+            .setPrimaryNavigationFragment(f)
+            .replace(containerId, f)
+            .commitAllowingStateLoss()
     }
 
 

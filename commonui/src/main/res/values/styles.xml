@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools">
 
     <style name="VKKiolAppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -15,12 +15,17 @@
         <item name="popupMenuStyle">@style/PopupMenuStyle</item>
         <item name="dialogCornerRadius">@dimen/panelsCornersRadius</item>
         <item name="buttonStyle">@style/Button</item>
+        <item name="imageViewerBackgroundColor">#FF000000</item>
     </style>
 
     <style name="ToolBarStyle" parent="Widget.AppCompat.Toolbar">
         <item name="elevation">0dp</item>
         <item name="height">56dp</item>
         <item name="titleTextStyle">@style/ToolBarTextAppearence</item>
+    </style>
+
+    <style name="ImageViewerToolBarStyle" parent="ToolBarStyle">
+        <item name="titleTextColor">#FFFFFFFF</item>
     </style>
 
     <style name="ToolBarTextAppearence" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">

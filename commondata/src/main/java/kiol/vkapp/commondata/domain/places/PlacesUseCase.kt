@@ -25,7 +25,6 @@ class PlacesUseCase {
                         p.title,
                         p.address.orEmpty(),
                         it.description.orEmpty(),
-                        it.site.orEmpty(),
                         p.group_photo.orEmpty()
                     )
                 }
@@ -36,7 +35,7 @@ class PlacesUseCase {
                     var lat = -50f + rnd.nextFloat() * 100f
                     var long = -50f + rnd.nextFloat() * 100f
                     l += Place(
-                        10, Groups, lat, long, "", "", "", "",
+                        10, Groups, lat, long, "", "", "",
                         if (c % 2 == 0) it.random().photo else ""
                     )
                 }
@@ -52,7 +51,6 @@ class PlacesUseCase {
                         p.title,
                         p.address.orEmpty(),
                         it.description.orEmpty(),
-                        it.site.orEmpty(),
                         p.group_photo.orEmpty()
                     )
                 }
@@ -71,7 +69,7 @@ class PlacesUseCase {
                         lat = -50f + rnd.nextFloat() * 100f
                         long = -50f + rnd.nextFloat() * 100f
                     }
-                    Place(-1, placeType, lat, long, "", "", "", it.text, it.sizes.getMSize(), it.sizes)
+                    Place(-1, placeType, lat, long, "", "", it.text, it.sizes.getMSize(), it.sizes)
                 }
             }
         }
