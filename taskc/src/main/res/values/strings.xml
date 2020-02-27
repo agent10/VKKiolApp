@@ -1,10 +1,12 @@
 <resources>
     <string name="app_name">TaskC</string>
     <integer name="com_vk_sdk_AppId">7334398</integer>
-    
+
     <string name="events_tab_title">Events</string>
     <string name="photos_tab_title">Photos</string>
     <string name="groups_tab_title">Groups</string>
+
+    <string name="error">Error: </string>
 
     <string name="open">Open</string>
     <string name="photoTitle">Photo</string>

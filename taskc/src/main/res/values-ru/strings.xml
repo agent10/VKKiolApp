@@ -6,6 +6,8 @@
     <string name="photos_tab_title">Фото</string>
     <string name="groups_tab_title">Группы</string>
 
+    <string name="error">Ошибка: </string>
+
     <string name="open">Открыть</string>
     <string name="photoTitle">Фотография</string>
 

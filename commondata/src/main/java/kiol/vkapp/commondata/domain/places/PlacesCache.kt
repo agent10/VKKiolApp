@@ -11,8 +11,7 @@ import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.PlaceType.*
 import kiol.vkapp.commondata.domain.convert
 import org.json.JSONObject
-import java.lang.RuntimeException
-import java.net.ResponseCache
+import java.lang.Exception
 
 class PlacesCache : RxResponseCache<PlaceType, List<Place>>() {
 
@@ -23,7 +22,7 @@ class PlacesCache : RxResponseCache<PlaceType, List<Place>>() {
                 Events -> getGroupsOrEvents(true)
                 Photos -> getPhotos()
             }
-        } ?: throw RuntimeException("PlacesCache param must be set")
+        } ?: throw Exception("PlacesCache param must be set")
     }
 
     private fun List<VKGroup>.mapGroups(placeType: PlaceType): List<Place> {
@@ -33,7 +32,9 @@ class PlacesCache : RxResponseCache<PlaceType, List<Place>>() {
     }
 
     private fun List<VKPhoto>.mapPhotos(placeType: PlaceType): List<Place> {
-        return map {
+        return filter {
+            it.lat > Float.MIN_VALUE && it.long > Float.MIN_VALUE
+        }.map {
             it.convert(placeType)
         }
     }

@@ -26,10 +26,6 @@ import timber.log.Timber
 
 class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback {
 
-    companion object {
-        private const val MAX_DISTANCE = 200
-    }
-
     private lateinit var mapview: FrameLayout
 
     private lateinit var tabs: TabLayout
@@ -37,7 +33,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     private lateinit var mapFragment: SupportMapFragment
 
     private lateinit var googleMap: GoogleMap
-    private var clusterManager: ClusterManager<PlaceClusterItem>? = null
+    private var clusterManager: PlaceClusterManager? = null
 
     private val placesUseCase = PlacesUseCase2()
 
@@ -81,23 +77,32 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         updateMap(PlaceType.Events)
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        disposable?.dispose()
+        disposable = null
+    }
+
     private fun updateMap(placeType: PlaceType) {
         clusterManager?.clearItems()
         disposable?.dispose()
 
         disposable = placesUseCase.getPlaces(placeType).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                Timber.d("Groups: $it")
-                if (it.isEmpty()) {
+            .subscribe({ places ->
+                Timber.d("Groups: $places")
+                if (places.isEmpty()) {
                     Toast.makeText(requireContext(), R.string.nothing_found, Toast.LENGTH_SHORT).show()
                 }
 
-                it.forEach {
-                    clusterManager?.addItem(PlaceClusterItem(it))
+                clusterManager?.apply {
+                    places.forEach {
+                        addItem(PlaceClusterItem(it))
+                    }
+                    cluster()
                 }
-                clusterManager?.cluster()
             }, {
+                Toast.makeText(requireContext(), "${getString(R.string.error)} $it", Toast.LENGTH_SHORT).show()
                 Timber.e("Groups error: $it")
             })
     }
@@ -111,31 +116,20 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     }
 
     private fun initClusterManager(googleMap: GoogleMap) {
-        val clusterManager = ClusterManager<PlaceClusterItem>(requireContext(), googleMap)
-        clusterManager.renderer = PlaceClusterRenderer(
+        clusterManager = PlaceClusterManager(
             requireContext(),
-            googleMap,
-            clusterManager,
-            markerImageGenerator
-        )
-
-        val algo = NonHierarchicalDistanceBasedAlgorithm<PlaceClusterItem>()
-        algo.maxDistanceBetweenClusteredItems = MAX_DISTANCE
-        clusterManager.algorithm = ScreenBasedAlgorithmAdapter(PreCachingAlgorithmDecorator(algo))
-        clusterManager.setOnClusterClickListener {
-            true
-        }
-        clusterManager.setOnClusterItemClickListener {
-            val p = it.place
-            if (p.placeType == PlaceType.Photos) {
-                showImageViewer(p)
-            } else {
-                DescriptionDialog.create(p).show(childFragmentManager, null)
+            googleMap, markerImageGenerator
+        ).apply {
+            setOnClusterItemClickListener {
+                val p = it.place
+                if (p.placeType == PlaceType.Photos) {
+                    showImageViewer(p)
+                } else {
+                    DescriptionDialog.create(p).show(childFragmentManager, null)
+                }
+                true
             }
-            true
         }
-        googleMap.setOnCameraIdleListener(clusterManager)
-        this.clusterManager = clusterManager
     }
 
     private fun showImageViewer(place: Place) {
