@@ -280,9 +280,11 @@ class MarkerImageGenerator(private val context: Context) {
         val width = 1.8f * max(widthF, heightF)
         val height = 1.8f * heightF
 
+        val maxSize = max(width, height)
+
         val bitmap = Bitmap.createBitmap(
-            width.roundToInt(),
-            height.roundToInt(),
+            maxSize.roundToInt(),
+            maxSize.roundToInt(),
             Bitmap.Config.ARGB_8888
         )
 

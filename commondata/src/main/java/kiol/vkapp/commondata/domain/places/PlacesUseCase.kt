@@ -29,6 +29,18 @@ class PlacesUseCase {
                         p.group_photo.orEmpty()
                     )
                 }
+            }.map {
+                val l = it.toMutableList()
+                val r = 1600
+                repeat(r) { c ->
+                    var lat = -50f + rnd.nextFloat() * 100f
+                    var long = -50f + rnd.nextFloat() * 100f
+                    l += Place(
+                        10, Groups, lat, long, "", "", "", "",
+                        if (c % 2 == 0) it.random().photo else ""
+                    )
+                }
+                l
             }
             Events -> getGroupsOrEvents(true).map {
                 it.map {
@@ -45,9 +57,7 @@ class PlacesUseCase {
                     )
                 }
             }
-            Photos -> getPhotos().doOnNext {
-                val a = 10
-            }.map {
+            Photos -> getPhotos().map {
                 //                                                it.filter {
                 //                                                    it.lat > 0f && it.long > 0f
                 //                                                }.map {
