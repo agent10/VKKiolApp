@@ -6,13 +6,6 @@
         <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialog</item>
     </style>
 
-    <style name="PermissionRationalDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
-        <item name="android:textColor">#FFFFFFFF</item>
-        <item name="android:textColorPrimary">#FFFFFFFF</item>
-    </style>
-
-    <style name="ToolbarButtonStyle" parent="Widget.AppCompat.Toolbar.Button.Navigation" />
-
     <style name="CustomBottomSheetDialog" parent="@style/ThemeOverlay.MaterialComponents.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/CustomBottomSheet</item>
     </style>
@@ -56,7 +49,6 @@
         <item name="android:textColor">#FF000000</item>
         <item name="android:textSize">15sp</item>
     </style>
-
 
     <style name="TabLayoutTextAppearance" parent="TextAppearance.Design.Tab">
         <item name="android:textSize">16sp</item>

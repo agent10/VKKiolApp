@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:background="@android:color/white"
         android:elevation="4dp"
-        android:paddingBottom="4dp"
+        android:paddingBottom="@dimen/spacing_micro"
         app:tabTextAppearance="@style/TabLayoutTextAppearance"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -18,17 +18,17 @@
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="match_parent"
-            android:layout_height="36dp"
+            android:layout_height="@dimen/tab_item_height"
             android:text="@string/events_tab_title" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="match_parent"
-            android:layout_height="36dp"
+            android:layout_height="@dimen/tab_item_height"
             android:text="@string/photos_tab_title" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="match_parent"
-            android:layout_height="36dp"
+            android:layout_height="@dimen/tab_item_height"
             android:text="@string/groups_tab_title" />
     </com.google.android.material.tabs.TabLayout>
 

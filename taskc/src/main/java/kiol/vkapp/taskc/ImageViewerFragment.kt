@@ -32,7 +32,6 @@ class ImageViewerFragment : Fragment(R.layout.image_viewer_fragment_layout) {
         setDarkStatusBar(requireActivity())
 
         val dismissFrameLayout = view.findViewById<DragToDismissFrameLayout>(R.id.dismissLayout)
-
         val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
         val photoView = view.findViewById<PhotoView>(R.id.photo_view)
 

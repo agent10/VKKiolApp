@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="panelsCornersRadius" type="dimen">10dp</item>
+
+    <dimen name="spacing_micro">4dp</dimen>
+    <dimen name="spacing_mini">8dp</dimen>
+    <dimen name="spacing_normal">16dp</dimen>
+    <dimen name="spacing_large">32dp</dimen>
+    <dimen name="spacing_xlarge">48dp</dimen>
+    <dimen name="spacing_huge">64dp</dimen>
 </resources>

@@ -44,12 +44,8 @@ class DescriptionDialog : BottomSheetDialogFragment() {
         val desc = arguments?.getString(PLACE_DESCRIPTION, "").orEmpty()
         val link = arguments?.getString(PLACE_LINK, "").orEmpty()
 
+
         val addressLine = view.findViewById<ViewGroup>(R.id.addressLine)
-
-        if (address.isEmpty()) {
-            addressLine.visibility = View.GONE
-        }
-
         val titleTv = view.findViewById<TextView>(R.id.title)
         val addressTv = view.findViewById<TextView>(R.id.address)
         val descTv = view.findViewById<TextView>(R.id.description)
@@ -57,6 +53,10 @@ class DescriptionDialog : BottomSheetDialogFragment() {
 
         view.findViewById<View>(R.id.close).setOnClickListener {
             dismissAllowingStateLoss()
+        }
+
+        if (address.isEmpty()) {
+            addressLine.visibility = View.GONE
         }
 
         titleTv.text = title
