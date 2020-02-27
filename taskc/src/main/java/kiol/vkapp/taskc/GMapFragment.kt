@@ -19,11 +19,16 @@ import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.places.PlacesUseCase
+import kiol.vkapp.commondata.domain.places.PlacesUseCase2
 import kiol.vkapp.taskc.renderers.MarkerImageGenerator
 import kiol.vkapp.taskc.renderers.PlaceClusterRenderer
 import timber.log.Timber
 
 class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback {
+
+    companion object {
+        private const val MAX_DISTANCE = 200
+    }
 
     private lateinit var mapview: FrameLayout
 
@@ -34,7 +39,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     private lateinit var googleMap: GoogleMap
     private var clusterManager: ClusterManager<PlaceClusterItem>? = null
 
-    private val placesUseCase = PlacesUseCase()
+    private val placesUseCase = PlacesUseCase2()
 
     private var disposable: Disposable? = null
 
@@ -85,7 +90,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
             .subscribe({
                 Timber.d("Groups: $it")
                 if (it.isEmpty()) {
-                    Toast.makeText(requireContext(), "Ничего не найдено", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), R.string.nothing_found, Toast.LENGTH_SHORT).show()
                 }
 
                 it.forEach {
@@ -115,7 +120,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         )
 
         val algo = NonHierarchicalDistanceBasedAlgorithm<PlaceClusterItem>()
-        algo.maxDistanceBetweenClusteredItems = 200
+        algo.maxDistanceBetweenClusteredItems = MAX_DISTANCE
         clusterManager.algorithm = ScreenBasedAlgorithmAdapter(PreCachingAlgorithmDecorator(algo))
         clusterManager.setOnClusterClickListener {
             true

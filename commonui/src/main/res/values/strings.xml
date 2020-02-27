@@ -1,2 +1,4 @@
 <resources>
+    <string name="vk_login_btn">Login</string>
+
 </resources>

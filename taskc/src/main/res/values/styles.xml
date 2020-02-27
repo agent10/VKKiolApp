@@ -20,6 +20,8 @@
     <style name="ThemeMaterial" parent="Theme.MaterialComponents.Bridge" />
 
     <style name="VKKiolButton" parent="Widget.MaterialComponents.Button.UnelevatedButton">
+        <item name="android:layout_marginLeft">16dp</item>
+        <item name="android:layout_marginRight">16dp</item>
         <item name="cornerRadius">8dp</item>
         <item name="android:elevation">0dp</item>
         <item name="android:textSize">16sp</item>

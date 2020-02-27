@@ -9,4 +9,6 @@
     <string name="open">Открыть</string>
     <string name="photoTitle">Фотография</string>
 
+    <string name="nothing_found">Ничего не найдено</string>
+
 </resources>

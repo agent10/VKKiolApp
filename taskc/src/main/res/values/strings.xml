@@ -8,5 +8,6 @@
 
     <string name="open">Open</string>
     <string name="photoTitle">Photo</string>
+    <string name="nothing_found">Nothing found</string>
 
 </resources>

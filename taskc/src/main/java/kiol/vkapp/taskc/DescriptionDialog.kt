@@ -23,14 +23,7 @@ class DescriptionDialog : BottomSheetDialogFragment() {
         fun create(place: Place): DescriptionDialog {
             return DescriptionDialog().apply {
                 arguments = Bundle().apply {
-                    var link = "https://www.vk.com/"
-                    link += if (place.placeType == PlaceType.Groups) {
-                        "club${place.id}"
-                    } else {
-                        "event${place.id}"
-                    }
-
-                    putString(PLACE_LINK, link)
+                    putString(PLACE_LINK, place.createLink())
                     putString(PLACE_TITLE, place.title)
                     putString(PLACE_ADDRESSS, place.address)
                     putString(PLACE_DESCRIPTION, place.description)
@@ -46,9 +39,9 @@ class DescriptionDialog : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val title = arguments?.getString(PLACE_TITLE, "Unknown").orEmpty()
-        val address = arguments?.getString(PLACE_ADDRESSS, "Unknown").orEmpty()
-        val desc = arguments?.getString(PLACE_DESCRIPTION, "Unknown").orEmpty()
+        val title = arguments?.getString(PLACE_TITLE, "").orEmpty()
+        val address = arguments?.getString(PLACE_ADDRESSS, "").orEmpty()
+        val desc = arguments?.getString(PLACE_DESCRIPTION, "").orEmpty()
         val link = arguments?.getString(PLACE_LINK, "").orEmpty()
 
         val addressLine = view.findViewById<ViewGroup>(R.id.addressLine)

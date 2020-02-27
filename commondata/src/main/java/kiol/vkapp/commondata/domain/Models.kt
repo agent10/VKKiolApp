@@ -1,8 +1,6 @@
 package kiol.vkapp.commondata.domain
 
-import kiol.vkapp.commondata.data.VKDocItem
-import kiol.vkapp.commondata.data.VKImagePreview
-import kiol.vkapp.commondata.data.VKSizesPreview
+import kiol.vkapp.commondata.data.*
 
 data class DocItem(
     val id: Int,
@@ -52,4 +50,30 @@ data class Place(
     val description: String,
     val photo: String,
     val sizes: List<VKImagePreview>? = null
-)
+) {
+    fun createLink(): String {
+        var link = "https://www.vk.com/"
+        link += if (placeType == PlaceType.Groups) {
+            "club$id"
+        } else {
+            "event$id"
+        }
+        return link
+    }
+}
+
+fun VKGroup.convert(placeType: PlaceType): Place {
+    return Place(
+        id,
+        placeType,
+        place.latitude, place.longitude,
+        place.title,
+        place.address.orEmpty(),
+        description.orEmpty(),
+        place.group_photo.orEmpty()
+    )
+}
+
+fun VKPhoto.convert(placeType: PlaceType): Place {
+    return Place(-1, placeType, lat, long, "", "", text, sizes.getMSize(), sizes)
+}

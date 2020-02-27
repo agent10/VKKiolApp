@@ -3,6 +3,7 @@ package kiol.vkapp.taskc
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.vk.api.sdk.VK
@@ -25,9 +26,10 @@ abstract class VKKiolActivity : AppCompatActivity() {
 
         checkIsVKLoggedIn(savedInstanceState)
 
+        findViewById<TextView>(R.id.vkinfo).text = getTaskDescription()
+
         findViewById<Button>(R.id.vklogin).setOnClickListener {
             VK.login(this, getVKScopes())
-
         }
     }
 
@@ -54,6 +56,8 @@ abstract class VKKiolActivity : AppCompatActivity() {
             super.onActivityResult(requestCode, resultCode, data)
         }
     }
+
+    open fun getTaskDescription() = ""
 
     abstract fun getVKScopes(): Collection<VKScope>
 
