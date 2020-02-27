@@ -48,11 +48,11 @@ class PlacesUseCase {
             Photos -> getPhotos().doOnNext {
                 val a = 10
             }.map {
-                //                it.filter {
-                //                    it.lat > 0f && it.long > 0f
-                //                }.map {
-                //                    Place(placeType, it.lat, it.long, "", "", "", it.text, it.sizes.getMSize(), it.sizes)
-                //                }
+                //                                                it.filter {
+                //                                                    it.lat > 0f && it.long > 0f
+                //                                                }.map {
+                //                                                    Place(0, placeType, it.lat, it.long, "", "", "", it.text, it.sizes.getMSize(), it.sizes)
+                //                                                }
 
                 it.map {
                     var lat = it.lat

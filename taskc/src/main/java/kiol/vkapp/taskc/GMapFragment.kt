@@ -118,6 +118,10 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
 
         val clusterManager = ClusterManager<PlaceClusterItem>(requireContext(), googleMap)
         clusterManager.renderer = PlaceClusterRenderer(requireContext(), googleMap, clusterManager)
+
+        val algo = NonHierarchicalDistanceBasedAlgorithm<PlaceClusterItem>()
+        algo.maxDistanceBetweenClusteredItems = 200
+        clusterManager.algorithm = ScreenBasedAlgorithmAdapter(PreCachingAlgorithmDecorator(algo))
         clusterManager.setOnClusterClickListener {
             true
         }
@@ -152,7 +156,7 @@ class PlaceClusterRenderer(
 ) :
     CustomClusterRenderer<PlaceClusterItem>(context, googleMap, clusterManager) {
     init {
-        minClusterSize = 2
+        minClusterSize = 1
     }
 
     override fun getColor(clusterSize: Int): Int {
@@ -160,7 +164,6 @@ class PlaceClusterRenderer(
     }
 
     override fun onBeforeClusterRendered(cluster: Cluster<PlaceClusterItem>?, markerOptions: MarkerOptions?) {
-        super.onBeforeClusterRendered(cluster, markerOptions)
         markerOptions?.zIndex(Float.MAX_VALUE)
         markerOptions?.icon(BitmapDescriptorFactory.fromBitmap(getCroppedPhotoStubBitmapWithBadge(context, cluster?.size ?: 0)))
 
@@ -179,6 +182,7 @@ class PlaceClusterRenderer(
 
     override fun onClusterRendered(cluster: Cluster<PlaceClusterItem>?, marker: Marker) {
         super.onClusterRendered(cluster, marker)
+        marker.tag = "tag"
         val firstPlace = cluster?.items?.firstOrNull()
         firstPlace?.let {
             if (it.place.placeType == PlaceType.Photos) {
@@ -189,7 +193,6 @@ class PlaceClusterRenderer(
     }
 
     override fun onBeforeClusterItemRendered(item: PlaceClusterItem, markerOptions: MarkerOptions) {
-        super.onBeforeClusterItemRendered(item, markerOptions)
         if (item.isFirstInCluster) {
             markerOptions.zIndex(Float.MAX_VALUE - 1)
         }
@@ -200,6 +203,7 @@ class PlaceClusterRenderer(
 
     override fun onClusterItemRendered(clusterItem: PlaceClusterItem, marker: Marker) {
         super.onClusterItemRendered(clusterItem, marker)
+        marker.tag = "tag"
         if (clusterItem.isFirstInCluster) {
             marker.zIndex = Float.MAX_VALUE - 1
         }
@@ -209,6 +213,7 @@ class PlaceClusterRenderer(
     }
 
     override fun onClusterUpdated(cluster: Cluster<PlaceClusterItem>?, marker: Marker) {
+        marker.tag = "tag"
         marker.zIndex = Float.MAX_VALUE
         //        super.onClusterUpdated(cluster, marker)
         //        marker?.setIcon(BitmapDescriptorFactory.fromBitmap(getCroppedPhotoStubBitmap()))
@@ -219,6 +224,10 @@ class PlaceClusterRenderer(
         //                loadPlacemarkImage(context, it.place, marker)
         //            }
         //        }
+    }
+
+    override fun onClusterItemUpdated(item: PlaceClusterItem?, marker: Marker?) {
+//        super.onClusterItemUpdated(item, marker)
     }
 
     override fun onClustersChanged(clusters: MutableSet<out Cluster<PlaceClusterItem>>?) {

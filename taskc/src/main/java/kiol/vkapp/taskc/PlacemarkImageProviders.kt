@@ -28,6 +28,7 @@ import kiol.vkapp.commonui.pxF
 import timber.log.Timber
 import java.security.MessageDigest
 import java.util.*
+import kotlin.collections.HashMap
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -90,7 +91,9 @@ fun loadPlacemarkImageWithCount(context: Context, place: Place, marker: Marker, 
         SimpleTarget<Bitmap>() {
         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
             val withBadge = getCroppedPhotoBitmapWithBadge(context, resource, count)
-            marker.setIcon(BitmapDescriptorFactory.fromBitmap(withBadge))
+            if (marker.tag != null) {
+                marker.setIcon(BitmapDescriptorFactory.fromBitmap(withBadge))
+            }
         }
     })
 }
@@ -104,7 +107,9 @@ fun loadPlacemarkImage(context: Context, place: Place, marker: Marker) {
     Glide.with(context).asBitmap().load(place.photo).transform(transform).into(object :
         SimpleTarget<Bitmap>() {
         override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-            marker.setIcon(BitmapDescriptorFactory.fromBitmap(resource))
+            if (marker.tag != null) {
+                marker.setIcon(BitmapDescriptorFactory.fromBitmap(resource))
+            }
         }
     })
 }
@@ -214,7 +219,15 @@ fun getCroppedBitmap(bitmap: Bitmap): Bitmap {
     return output
 }
 
+
+private var croppedStubBitmap: Bitmap? = null
+private val croppedStubWithBadgeCache = HashMap<String, Bitmap>()
+
 fun getCroppedPhotoStubBitmap(): Bitmap {
+    if (croppedStubBitmap != null) {
+        return croppedStubBitmap!!
+    }
+
     val outRect = Rect(0, 0, 150, 150)
 
     val output = Bitmap.createBitmap(
@@ -232,6 +245,8 @@ fun getCroppedPhotoStubBitmap(): Bitmap {
     //    canvas.drawRoundRect(outRect.toRectF(), 15f, 15f, placeRoundPaint)
     //canvas.drawBitmap(square, rect, outRect, placeCropPaint)
     canvas.drawRoundRect(outRect.toRectF(), 15f, 15f, placeRoundBoundPaint)
+
+    croppedStubBitmap = output
 
     return output
 }
@@ -259,7 +274,17 @@ fun getCroppedPhotoBitmap(bitmap: Bitmap): Bitmap {
 }
 
 fun getCroppedPhotoStubBitmapWithBadge(context: Context, count: Int): Bitmap {
-    return getCroppedPhotoBitmapWithBadge(context, getCroppedPhotoStubBitmap(), count)
+    val text = if (count > 10) "10+" else count.toString()
+
+    val cachedBadge = croppedStubWithBadgeCache[text]
+    if (cachedBadge != null) {
+        return cachedBadge
+    }
+
+    val nb = getCroppedPhotoBitmapWithBadge(context, getCroppedPhotoStubBitmap(), count)
+    croppedStubWithBadgeCache[text] = nb
+
+    return nb
 }
 
 fun getCroppedPhotoBitmapWithBadge(context: Context, bitmap: Bitmap, count: Int): Bitmap {
@@ -274,11 +299,21 @@ fun getCroppedPhotoBitmapWithBadge(context: Context, bitmap: Bitmap, count: Int)
     val canvas = Canvas(nb)
     canvas.drawBitmap(bitmap, 0f, badgeBitmap.height / 5f, null)
     canvas.drawBitmap(badgeBitmap, (nb.width - badgeBitmap.width).toFloat(), 0f, null)
+
     return nb
 }
 
+private val badgeCache = HashMap<String, Bitmap>()
+
 private fun getBadge(context: Context, count: Int): Bitmap {
     val text = if (count > 10) "10+" else count.toString()
+
+    val cachedBadge = badgeCache[text]
+    if (cachedBadge != null) {
+        return cachedBadge
+    }
+
+    Timber.d("kiol badge cache create for $text")
 
     val metrics = DisplayMetrics()
     val manager =
@@ -306,6 +341,8 @@ private fun getBadge(context: Context, count: Int): Bitmap {
 
     canvas.drawRoundRect(RectF(0f, 0f, width, height), height, height, backgroundPaint)
     canvas.drawText(text, width / 2f, height - (height - heightF / 2f) / 2f, textPaint)
+
+    badgeCache[text] = bitmap
 
     return bitmap
 }

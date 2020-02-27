@@ -384,7 +384,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
 
             // Create the new markers and animate them to their new positions.
             final Set<MarkerWithPosition> newMarkers = Collections.newSetFromMap(
-                    new ConcurrentHashMap<MarkerWithPosition, Boolean>());
+                    new ConcurrentHashMap<>());
             for (Cluster<T> c : clusters) {
                 boolean onScreen = visibleBounds.contains(c.getPosition());
                 if (zoomingIn && onScreen && mAnimate) {
@@ -392,12 +392,12 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
                     Point closest = findClosestCluster(existingClustersOnScreen, point);
                     if (closest != null) {
                         LatLng animateTo = mSphericalMercatorProjection.toLatLng(closest);
-                        markerModifier.add(true, new CreateMarkerTask(c, newMarkers, animateTo));
+                        markerModifier.add(true, new CreateMarkerTask(c, newMarkers, animateTo, true));
                     } else {
-                        markerModifier.add(true, new CreateMarkerTask(c, newMarkers, null));
+                        markerModifier.add(true, new CreateMarkerTask(c, newMarkers, null, true));
                     }
                 } else {
-                    markerModifier.add(onScreen, new CreateMarkerTask(c, newMarkers, null));
+                    markerModifier.add(onScreen, new CreateMarkerTask(c, newMarkers, null, false));
                 }
             }
 
@@ -424,19 +424,31 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
             // Remove the old markers, animating them into clusters if zooming out.
             for (final MarkerWithPosition marker : markersToRemove) {
                 boolean onScreen = visibleBounds.contains(marker.position);
-                // Don't animate when zooming out more than 3 zoom levels.
-                // TODO: drop animation based on speed of device & number of markers to animate.
-                if (!zoomingIn && zoomDelta > -3 && onScreen && mAnimate) {
-                    final Point point = mSphericalMercatorProjection.toPoint(marker.position);
-                    final Point closest = findClosestCluster(newClustersOnScreen, point);
-                    if (closest != null) {
-                        LatLng animateTo = mSphericalMercatorProjection.toLatLng(closest);
-                        markerModifier.animateThenRemove(marker, marker.position, animateTo);
-                    } else {
-                        markerModifier.remove(true, marker.marker);
-                    }
+
+
+                if (zoomingIn && onScreen) {
+                    markerModifier.fadeAnimateThenRemove(marker.marker, true);
                 } else {
-                    markerModifier.remove(onScreen, marker.marker);
+
+
+                    // Don't animate when zooming out more than 3 zoom levels.
+                    // TODO: drop animation based on speed of device & number of markers to animate.
+                    if (!zoomingIn && zoomDelta > -2 && onScreen && mAnimate) {
+                        final Point point = mSphericalMercatorProjection.toPoint(marker.position);
+//                    markerModifier.fadeAnimateThenRemove(marker.marker, true);
+                        final Point closest = findClosestCluster(newClustersOnScreen, point);
+
+                        markerModifier.fadeAnimateThenRemove(marker.marker, true);
+
+                        if (closest != null) {
+                            LatLng animateTo = mSphericalMercatorProjection.toLatLng(closest);
+//                        markerModifier.animateThenRemove(marker, marker.position, animateTo);
+                        } else {
+//                        markerModifier.remove(true, marker.marker);
+                        }
+                    } else {
+                        markerModifier.remove(onScreen, marker.marker);
+                    }
                 }
             }
 
@@ -517,6 +529,8 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
         private Queue<Marker> mRemoveMarkerTasks = new LinkedList<>();
         private Queue<Marker> mOnScreenRemoveMarkerTasks = new LinkedList<>();
         private Queue<AnimationTask> mAnimationTasks = new LinkedList<>();
+        private Queue<FadeAnimation> mFadeAnimationTasks = new LinkedList<>();
+        private List<FadeAnimation> mFadeAnimationCurrentTasks = new ArrayList<>();
 
         /**
          * Whether the idle listener has been added to the UI thread's MessageQueue.
@@ -573,6 +587,13 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
             lock.unlock();
         }
 
+        public void animateFade(Marker marker, Boolean show) {
+            lock.lock();
+            clearFadeAnimationsByMarker(marker);
+            mFadeAnimationTasks.add(new FadeAnimation(marker, show));
+            lock.unlock();
+        }
+
         /**
          * Animates a markerWithPosition some time in the future, and removes it when the animation
          * is complete.
@@ -590,6 +611,41 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
             lock.unlock();
         }
 
+        public void fadeAnimateThenRemove(Marker marker, Boolean show) {
+            lock.lock();
+            clearFadeAnimationsByMarker(marker);
+            FadeAnimation animationTask = new FadeAnimation(marker, show);
+            animationTask.removeOnAnimationComplete(mClusterManager.getMarkerManager());
+            mFadeAnimationTasks.add(animationTask);
+            lock.unlock();
+        }
+
+        private void clearFadeAnimationsByMarker(Marker marker) {
+            final List<FadeAnimation> toRemove = new ArrayList<>();
+            for (FadeAnimation anim : mFadeAnimationTasks) {
+                if (anim.marker == marker) {
+                    toRemove.add(anim);
+                    anim.clearAnimation();
+                }
+            }
+
+            mFadeAnimationTasks.removeAll(toRemove);
+
+            toRemove.clear();
+
+            for (FadeAnimation anim : mFadeAnimationCurrentTasks) {
+                if (anim.marker == marker) {
+                    anim.clearAnimation();
+                }
+
+                if (!anim.isValid()) {
+                    toRemove.add(anim);
+                }
+            }
+
+            mFadeAnimationCurrentTasks.removeAll(toRemove);
+        }
+
         @Override
         public void handleMessage(Message msg) {
             if (!mListenerAdded) {
@@ -604,7 +660,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
                 // Perform up to 10 tasks at once.
                 // Consider only performing 10 remove tasks, not adds and animations.
                 // Removes are relatively slow and are much better when batched.
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < 15; i++) {
                     performNextTask();
                 }
 
@@ -617,7 +673,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
                     // Sometimes the idle queue may not be called - schedule up some work regardless
                     // of whether the UI thread is busy or not.
                     // TODO: try to remove this.
-                    sendEmptyMessageDelayed(BLANK, 10);
+                    sendEmptyMessageDelayed(BLANK, 550);
                 }
             } finally {
                 lock.unlock();
@@ -633,6 +689,8 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
                 removeMarker(mOnScreenRemoveMarkerTasks.poll());
             } else if (!mAnimationTasks.isEmpty()) {
                 mAnimationTasks.poll().perform();
+            } else if (!mFadeAnimationTasks.isEmpty()) {
+                mFadeAnimationCurrentTasks.add(mFadeAnimationTasks.poll().perform());
             } else if (!mOnScreenCreateMarkerTasks.isEmpty()) {
                 mOnScreenCreateMarkerTasks.poll().perform(this);
             } else if (!mCreateMarkerTasks.isEmpty()) {
@@ -656,7 +714,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
                 lock.lock();
                 return !(mCreateMarkerTasks.isEmpty() && mOnScreenCreateMarkerTasks.isEmpty() &&
                         mOnScreenRemoveMarkerTasks.isEmpty() && mRemoveMarkerTasks.isEmpty() &&
-                        mAnimationTasks.isEmpty()
+                        mAnimationTasks.isEmpty() && mFadeAnimationTasks.isEmpty()
                 );
             } finally {
                 lock.unlock();
@@ -725,7 +783,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
      * sets the marker and snippet text based on the respective item text if they are both
      * available, otherwise it will set the title if available, and if not it will set the marker
      * title to the item snippet text if that is available.
-     *
+     * <p>
      * The first time {@link ClusterManager#cluster()} is invoked on a set of items
      * {@link #onBeforeClusterItemRendered(ClusterItem, MarkerOptions)} will be called and
      * {@link #onClusterItemUpdated(ClusterItem, Marker)} will not be called.
@@ -733,7 +791,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
      * invoked again, then {@link #onClusterItemUpdated(ClusterItem, Marker)} will be called and
      * {@link #onBeforeClusterItemRendered(ClusterItem, MarkerOptions)} will not be called.
      *
-     * @param item item to be rendered
+     * @param item          item to be rendered
      * @param markerOptions the markerOptions representing the provided item
      */
     protected void onBeforeClusterItemRendered(T item, MarkerOptions markerOptions) {
@@ -754,7 +812,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
      * Note that the contents of the item may not have changed since the cached marker was created -
      * implementations of this method are responsible for checking if something changed (if that
      * matters to the implementation).
-     *
+     * <p>
      * The first time {@link ClusterManager#cluster()} is invoked on a set of items
      * {@link #onBeforeClusterItemRendered(ClusterItem, MarkerOptions)} will be called and
      * {@link #onClusterItemUpdated(ClusterItem, Marker)} will not be called.
@@ -762,7 +820,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
      * invoked again, then {@link #onClusterItemUpdated(ClusterItem, Marker)} will be called and
      * {@link #onBeforeClusterItemRendered(ClusterItem, MarkerOptions)} will not be called.
      *
-     * @param item item being updated
+     * @param item   item being updated
      * @param marker cached marker that contains a potentially previous state of the item.
      */
     protected void onClusterItemUpdated(T item, Marker marker) {
@@ -798,7 +856,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
     /**
      * Called before the marker for a Cluster is added to the map.
      * The default implementation draws a circle with a rough count of the number of items.
-     *
+     * <p>
      * The first time {@link ClusterManager#cluster()} is invoked on a set of items
      * {@link #onBeforeClusterRendered(Cluster, MarkerOptions)} will be called and
      * {@link #onClusterUpdated(Cluster, Marker)} will not be called. If an item is removed and
@@ -806,7 +864,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
      * again, then {@link #onClusterUpdated(Cluster, Marker)} will be called and
      * {@link #onBeforeClusterRendered(Cluster, MarkerOptions)} will not be called.
      *
-     * @param cluster cluster to be rendered
+     * @param cluster       cluster to be rendered
      * @param markerOptions markerOptions representing the provided cluster
      */
     protected void onBeforeClusterRendered(Cluster<T> cluster, MarkerOptions markerOptions) {
@@ -839,7 +897,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
      * Called after the marker for a Cluster has been added to the map.
      *
      * @param cluster the cluster that was just added to the map
-     * @param marker the marker representing the cluster that was just added to the map
+     * @param marker  the marker representing the cluster that was just added to the map
      */
     protected void onClusterRendered(Cluster<T> cluster, Marker marker) {
     }
@@ -850,7 +908,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
      * circle with a rough count of the number of items. Note that the contents of the cluster may
      * not have changed since the cached marker was created - implementations of this method are
      * responsible for checking if something changed (if that matters to the implementation).
-     *
+     * <p>
      * The first time {@link ClusterManager#cluster()} is invoked on a set of items
      * {@link #onBeforeClusterRendered(Cluster, MarkerOptions)} will be called and
      * {@link #onClusterUpdated(Cluster, Marker)} will not be called. If an item is removed and
@@ -859,7 +917,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
      * {@link #onBeforeClusterRendered(Cluster, MarkerOptions)} will not be called.
      *
      * @param cluster cluster being updated
-     * @param marker cached marker that contains a potentially previous state of the cluster
+     * @param marker  cached marker that contains a potentially previous state of the cluster
      */
     protected void onClusterUpdated(Cluster<T> cluster, Marker marker) {
         // TODO: consider adding anchor(.5, .5) (Individual markers will overlap more often)
@@ -870,7 +928,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
      * Called after the marker for a ClusterItem has been added to the map.
      *
      * @param clusterItem the item that was just added to the map
-     * @param marker the marker representing the item that was just added to the map
+     * @param marker      the marker representing the item that was just added to the map
      */
     protected void onClusterItemRendered(T clusterItem, Marker marker) {
     }
@@ -922,6 +980,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
         private final Cluster<T> cluster;
         private final Set<MarkerWithPosition> newMarkers;
         private final LatLng animateFrom;
+        private final Boolean shouldAnimate;
 
         /**
          * @param c            the cluster to render.
@@ -929,10 +988,11 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
          * @param animateFrom  the location to animate the markerWithPosition from, or null if no
          *                     animation is required.
          */
-        public CreateMarkerTask(Cluster<T> c, Set<MarkerWithPosition> markersAdded, LatLng animateFrom) {
+        public CreateMarkerTask(Cluster<T> c, Set<MarkerWithPosition> markersAdded, LatLng animateFrom, Boolean shouldAnimate) {
             this.cluster = c;
             this.newMarkers = markersAdded;
             this.animateFrom = animateFrom;
+            this.shouldAnimate = shouldAnimate;
         }
 
         private void perform(MarkerModifier markerModifier) {
@@ -944,7 +1004,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
                     if (marker == null) {
                         MarkerOptions markerOptions = new MarkerOptions();
                         if (animateFrom != null) {
-                            markerOptions.position(animateFrom);
+                            markerOptions.position(item.getPosition());
                         } else {
                             markerOptions.position(item.getPosition());
                         }
@@ -952,9 +1012,12 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
                         marker = mClusterManager.getMarkerCollection().addMarker(markerOptions);
                         markerWithPosition = new MarkerWithPosition(marker);
                         mMarkerCache.put(item, marker);
-                        if (animateFrom != null) {
-                            markerModifier.animate(markerWithPosition, animateFrom, item.getPosition());
+                        if(shouldAnimate) {
+                            markerModifier.animateFade(marker, false);
                         }
+//                        if (animateFrom != null) {
+//                            markerModifier.animate(markerWithPosition, animateFrom, item.getPosition());
+//                        }
                     } else {
                         markerWithPosition = new MarkerWithPosition(marker);
                         onClusterItemUpdated(item, marker);
@@ -969,14 +1032,17 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
             MarkerWithPosition markerWithPosition;
             if (marker == null) {
                 MarkerOptions markerOptions = new MarkerOptions().
-                        position(animateFrom == null ? cluster.getPosition() : animateFrom);
+                        position(cluster.getPosition());
                 onBeforeClusterRendered(cluster, markerOptions);
                 marker = mClusterManager.getClusterMarkerCollection().addMarker(markerOptions);
                 mClusterMarkerCache.put(cluster, marker);
                 markerWithPosition = new MarkerWithPosition(marker);
-                if (animateFrom != null) {
-                    markerModifier.animate(markerWithPosition, animateFrom, cluster.getPosition());
-                }
+                //if(shouldAnimate) {
+                    markerModifier.animateFade(marker, false);
+                //}
+//                if (animateFrom != null) {
+//                    markerModifier.animate(markerWithPosition, animateFrom, cluster.getPosition());
+//                }
             } else {
                 markerWithPosition = new MarkerWithPosition(marker);
                 onClusterUpdated(cluster, marker);
@@ -1050,7 +1116,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
                 mClusterMarkerCache.remove(marker);
                 mMarkerManager.remove(marker);
             }
-            markerWithPosition.position = to;
+//            markerWithPosition.position = to;
         }
 
         public void removeOnAnimationComplete(MarkerManager markerManager) {
@@ -1070,7 +1136,69 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
             }
             double lng = lngDelta * fraction + from.longitude;
             LatLng position = new LatLng(lat, lng);
-            marker.setPosition(position);
+//            marker.setPosition(position);
+        }
+    }
+
+    private class FadeAnimation extends AnimatorListenerAdapter implements ValueAnimator.AnimatorUpdateListener {
+        public final Marker marker;
+        private final Boolean show;
+        private boolean mRemoveOnComplete;
+        private MarkerManager mMarkerManager;
+        private ValueAnimator valueAnimator;
+        private boolean isValid = true;
+
+        private FadeAnimation(Marker marker, Boolean show) {
+            this.marker = marker;
+            this.show = show;
+        }
+
+        public FadeAnimation perform() {
+            valueAnimator = ValueAnimator.ofFloat(0.0f, 1.0f);
+            valueAnimator.setInterpolator(ANIMATION_INTERP);
+            valueAnimator.setDuration(200);
+            valueAnimator.addUpdateListener(this);
+            valueAnimator.addListener(this);
+            valueAnimator.start();
+            return this;
+        }
+
+        public void clearAnimation() {
+            isValid = false;
+            if (valueAnimator != null) {
+                valueAnimator.cancel();
+                valueAnimator = null;
+            }
+        }
+
+        public boolean isValid() {
+            return isValid;
+        }
+
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            if (mRemoveOnComplete) {
+                mMarkerCache.remove(marker);
+                mClusterMarkerCache.remove(marker);
+                mMarkerManager.remove(marker);
+            }
+        }
+
+        public void removeOnAnimationComplete(MarkerManager markerManager) {
+            mMarkerManager = markerManager;
+            mRemoveOnComplete = true;
+        }
+
+        @Override
+        public void onAnimationUpdate(ValueAnimator valueAnimator) {
+            float fraction = valueAnimator.getAnimatedFraction();
+            if (show) {
+                marker.setAnchor(0.5f, 0.5f + fraction / 3f);
+                marker.setAlpha(1.0f - fraction);
+            } else {
+                marker.setAnchor(0.5f, 0.83f - fraction / 3f);
+                marker.setAlpha(fraction);
+            }
         }
     }
 }
