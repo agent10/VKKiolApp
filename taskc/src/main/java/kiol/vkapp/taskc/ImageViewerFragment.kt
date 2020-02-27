@@ -7,7 +7,6 @@ import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.bumptech.glide.Glide
 import com.github.chrisbanes.photoview.PhotoView
 import kiol.vkapp.commondata.data.getXSize
-import kiol.vkapp.commondata.domain.DocItem
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commonui.DragToDismissFrameLayout
 

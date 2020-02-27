@@ -1,4 +1,4 @@
-package kiol.vkapp.taskc
+package kiol.vkapp.taskc.renderers
 
 import android.content.Context
 import android.graphics.*
@@ -19,6 +19,7 @@ import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commonui.px
 import kiol.vkapp.commonui.pxF
+import kiol.vkapp.taskc.PlaceClusterItem
 import timber.log.Timber
 import java.security.MessageDigest
 import java.util.concurrent.Executors
@@ -79,13 +80,19 @@ class MarkerImageGenerator(private val context: Context) {
         }
 
         private fun getCroppedPhotoBitmap(bitmap: Bitmap): Bitmap {
-            val outRect = Rect(0, 0, PHOTO_SIZE, PHOTO_SIZE)
+            val outRect = Rect(0, 0,
+                PHOTO_SIZE,
+                PHOTO_SIZE
+            )
 
             val output = Bitmap.createBitmap(
                 PHOTO_SIZE,
                 PHOTO_SIZE, Bitmap.Config.ARGB_8888
             )
-            val square = ThumbnailUtils.extractThumbnail(bitmap, PHOTO_SIZE, PHOTO_SIZE)
+            val square = ThumbnailUtils.extractThumbnail(bitmap,
+                PHOTO_SIZE,
+                PHOTO_SIZE
+            )
             val canvas = Canvas(output)
 
             outRect.inset(BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS, BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS)
@@ -93,9 +100,13 @@ class MarkerImageGenerator(private val context: Context) {
             val rect = Rect(0, 0, square.width, square.height)
             canvas.drawARGB(0, 0, 0, 0)
 
-            canvas.drawRoundRect(outRect.toRectF(), PHOTO_RADIUS, PHOTO_RADIUS, placeRoundPaint)
+            canvas.drawRoundRect(outRect.toRectF(),
+                PHOTO_RADIUS,
+                PHOTO_RADIUS, placeRoundPaint)
             canvas.drawBitmap(square, rect, outRect, placeCropPaint)
-            canvas.drawRoundRect(outRect.toRectF(), PHOTO_RADIUS, PHOTO_RADIUS, placeRoundBoundPaint)
+            canvas.drawRoundRect(outRect.toRectF(),
+                PHOTO_RADIUS,
+                PHOTO_RADIUS, placeRoundBoundPaint)
 
             return output
         }
@@ -121,10 +132,15 @@ class MarkerImageGenerator(private val context: Context) {
         }
 
         private fun getCroppedBitmap(bitmap: Bitmap): Bitmap {
-            val outRect = Rect(0, 0, PLACE_SIZE, PLACE_SIZE)
+            val outRect = Rect(0, 0,
+                PLACE_SIZE,
+                PLACE_SIZE
+            )
             outRect.inset(BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS, BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS)
 
-            val output = Bitmap.createBitmap(PLACE_SIZE, PLACE_SIZE, Bitmap.Config.ARGB_8888)
+            val output = Bitmap.createBitmap(
+                PLACE_SIZE,
+                PLACE_SIZE, Bitmap.Config.ARGB_8888)
 
             val canvas = Canvas(output)
             val rect = Rect(0, 0, bitmap.width, bitmap.height)
@@ -232,7 +248,10 @@ class MarkerImageGenerator(private val context: Context) {
     }
 
     private fun createPhotoStubBitmap() {
-        val outRect = Rect(0, 0, PHOTO_SIZE, PHOTO_SIZE)
+        val outRect = Rect(0, 0,
+            PHOTO_SIZE,
+            PHOTO_SIZE
+        )
 
         val output = Bitmap.createBitmap(
             PHOTO_SIZE,
@@ -243,13 +262,18 @@ class MarkerImageGenerator(private val context: Context) {
         outRect.inset(BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS, BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS)
 
         canvas.drawARGB(0, 0, 0, 0)
-        canvas.drawRoundRect(outRect.toRectF(), PHOTO_RADIUS, PHOTO_RADIUS, placeRoundBoundPaint)
+        canvas.drawRoundRect(outRect.toRectF(),
+            PHOTO_RADIUS,
+            PHOTO_RADIUS, placeRoundBoundPaint)
 
         photoStubBitmap = output
     }
 
     private fun createPlaceStubBitmap() {
-        val outRect = Rect(0, 0, PLACE_SIZE, PLACE_SIZE)
+        val outRect = Rect(0, 0,
+            PLACE_SIZE,
+            PLACE_SIZE
+        )
 
         val output = Bitmap.createBitmap(
             PLACE_SIZE,

@@ -1,1 +1,0 @@
-package kiol.vkapp.taskc

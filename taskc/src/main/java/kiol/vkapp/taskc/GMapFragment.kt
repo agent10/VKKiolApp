@@ -1,7 +1,5 @@
 package kiol.vkapp.taskc
 
-import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
@@ -10,22 +8,19 @@ import androidx.fragment.app.Fragment
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
 import com.google.android.material.tabs.TabLayout
-import com.google.maps.android.clustering.Cluster
-import com.google.maps.android.clustering.ClusterItem
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.google.maps.android.clustering.algo.ScreenBasedAlgorithmAdapter
-import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.places.PlacesUseCase
+import kiol.vkapp.taskc.renderers.MarkerImageGenerator
+import kiol.vkapp.taskc.renderers.PlaceClusterRenderer
 import timber.log.Timber
 
 class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback {
@@ -63,7 +58,6 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
 
         tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabReselected(tab: TabLayout.Tab?) {
-
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {
@@ -76,7 +70,6 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
                     2 -> updateMap(PlaceType.Groups)
                     else -> Timber.e("Unknown tab")
                 }
-
             }
         })
 
@@ -104,20 +97,22 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
             })
     }
 
-    override fun onStart() {
-        super.onStart()
-    }
-
-    override fun onStop() {
-        super.onStop()
-    }
-
     override fun onMapReady(googleMap: GoogleMap?) {
         Timber.e("onMapReady: $googleMap")
-        this.googleMap = googleMap!!
+        googleMap?.let {
+            this.googleMap = googleMap
+            initClusterManager(googleMap)
+        }
+    }
 
+    private fun initClusterManager(googleMap: GoogleMap) {
         val clusterManager = ClusterManager<PlaceClusterItem>(requireContext(), googleMap)
-        clusterManager.renderer = PlaceClusterRenderer(requireContext(), googleMap, clusterManager, markerImageGenerator)
+        clusterManager.renderer = PlaceClusterRenderer(
+            requireContext(),
+            googleMap,
+            clusterManager,
+            markerImageGenerator
+        )
 
         val algo = NonHierarchicalDistanceBasedAlgorithm<PlaceClusterItem>()
         algo.maxDistanceBetweenClusteredItems = 200
@@ -127,18 +122,8 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         }
         clusterManager.setOnClusterItemClickListener {
             val p = it.place
-
             if (p.placeType == PlaceType.Photos) {
-                childFragmentManager.beginTransaction()
-                    .setCustomAnimations(
-                        R.anim.viewer_fragment_open_enter,
-                        R.anim.viewer_fragment_open_enter,
-                        R.anim.viewer_fragment_open_exit,
-                        R.anim.viewer_fragment_open_exit
-                    ).replace(
-                        R.id.contentViewer, ImageViewerFragment.create(p)
-                    ).addToBackStack(null)
-                    .commitAllowingStateLoss()
+                showImageViewer(p)
             } else {
                 DescriptionDialog.create(p).show(childFragmentManager, null)
             }
@@ -148,77 +133,17 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         this.clusterManager = clusterManager
     }
 
-}
-
-class PlaceClusterRenderer(
-    private val context: Context, googleMap: GoogleMap?, clusterManager:
-    ClusterManager<PlaceClusterItem>, private val markerImageGenerator: MarkerImageGenerator
-) :
-    CustomClusterRenderer<PlaceClusterItem>(context, googleMap, clusterManager) {
-    init {
-        minClusterSize = 1
-    }
-
-    override fun getColor(clusterSize: Int): Int {
-        return Color.RED
-    }
-
-    override fun onBeforeClusterRendered(cluster: Cluster<PlaceClusterItem>?, markerOptions: MarkerOptions?) {
-        markerOptions?.zIndex(Float.MAX_VALUE)
-        cluster?.let {
-            markerOptions?.icon(markerImageGenerator.getClusterBitmapDescriptor(cluster))
-        }
-        Timber.d("kiol onBeforeClusterRendered")
-    }
-
-    override fun onClusterRendered(cluster: Cluster<PlaceClusterItem>?, marker: Marker) {
-        super.onClusterRendered(cluster, marker)
-        marker.tag = "tag"
-        cluster?.let {
-            val place = it.getPlace()
-            place?.let {
-                if (it.placeType == PlaceType.Photos) {
-                    markerImageGenerator.loadPlacemarkImageWithCount(context, it, marker, cluster.size)
-
-                }
-            }
-        }
-        Timber.d("kiol onClusterRendered")
-    }
-
-    override fun onBeforeClusterItemRendered(item: PlaceClusterItem, markerOptions: MarkerOptions) {
-        markerOptions.icon(markerImageGenerator.getStubBimapDescriptor(item.place))
-        Timber.d("kiol onBeforeClusterItemRendered")
-
-    }
-
-    override fun onClusterItemRendered(clusterItem: PlaceClusterItem, marker: Marker) {
-        super.onClusterItemRendered(clusterItem, marker)
-        marker.tag = "tag"
-        markerImageGenerator.loadPlacemarkImage(context, clusterItem.place, marker)
-        Timber.d("kiol onClusterItemRendered")
-
-    }
-
-    override fun onClusterUpdated(cluster: Cluster<PlaceClusterItem>?, marker: Marker) {
-        marker.tag = "tag"
-    }
-
-    override fun onClusterItemUpdated(item: PlaceClusterItem?, marker: Marker?) {}
-}
-
-class PlaceClusterItem(val place: Place) : ClusterItem {
-
-    override fun getSnippet(): String {
-        return "snippet"
-    }
-
-    override fun getTitle(): String {
-        return "title"
-    }
-
-    override fun getPosition(): LatLng {
-        return LatLng(place.latitude.toDouble(), place.longitude.toDouble())
+    private fun showImageViewer(place: Place) {
+        childFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.viewer_fragment_open_enter,
+                R.anim.viewer_fragment_open_enter,
+                R.anim.viewer_fragment_open_exit,
+                R.anim.viewer_fragment_open_exit
+            ).replace(
+                R.id.contentViewer, ImageViewerFragment.create(place)
+            ).addToBackStack(null)
+            .commitAllowingStateLoss()
     }
 
 }

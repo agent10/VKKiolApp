@@ -1,23 +1,4 @@
-package kiol.vkapp.taskc;
-
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.Projection;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.maps.android.R;
-import com.google.maps.android.clustering.Cluster;
-import com.google.maps.android.clustering.ClusterItem;
-import com.google.maps.android.clustering.ClusterManager;
-import com.google.maps.android.clustering.view.ClusterRenderer;
-import com.google.maps.android.collections.MarkerManager;
-import com.google.maps.android.geometry.Point;
-import com.google.maps.android.projection.SphericalMercatorProjection;
-import com.google.maps.android.ui.IconGenerator;
-import com.google.maps.android.ui.SquareTextView;
+package kiol.vkapp.taskc.renderers;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -40,6 +21,25 @@ import android.util.SparseArray;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.Projection;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.maps.android.R;
+import com.google.maps.android.clustering.Cluster;
+import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.ClusterManager;
+import com.google.maps.android.clustering.view.ClusterRenderer;
+import com.google.maps.android.collections.MarkerManager;
+import com.google.maps.android.geometry.Point;
+import com.google.maps.android.projection.SphericalMercatorProjection;
+import com.google.maps.android.ui.IconGenerator;
+import com.google.maps.android.ui.SquareTextView;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,7 +56,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * The default view for a ClusterManager. Markers are animated in and out of clusters.
+ * kiol. Animation changed for DefaultClusterRenderer
  */
 public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRenderer<T> {
     private final GoogleMap mMap;
@@ -1012,7 +1012,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
                         marker = mClusterManager.getMarkerCollection().addMarker(markerOptions);
                         markerWithPosition = new MarkerWithPosition(marker);
                         mMarkerCache.put(item, marker);
-                        if(shouldAnimate) {
+                        if (shouldAnimate) {
                             markerModifier.animateFade(marker, false);
                         }
 //                        if (animateFrom != null) {
@@ -1038,7 +1038,7 @@ public class CustomClusterRenderer<T extends ClusterItem> implements ClusterRend
                 mClusterMarkerCache.put(cluster, marker);
                 markerWithPosition = new MarkerWithPosition(marker);
                 //if(shouldAnimate) {
-                    markerModifier.animateFade(marker, false);
+                markerModifier.animateFade(marker, false);
                 //}
 //                if (animateFrom != null) {
 //                    markerModifier.animate(markerWithPosition, animateFrom, cluster.getPosition());
