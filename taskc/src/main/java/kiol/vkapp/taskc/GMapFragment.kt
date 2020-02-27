@@ -165,24 +165,29 @@ class PlaceClusterRenderer(
 
     override fun onBeforeClusterRendered(cluster: Cluster<PlaceClusterItem>?, markerOptions: MarkerOptions?) {
         markerOptions?.zIndex(Float.MAX_VALUE)
-        markerOptions?.icon(markerImageGenerator.getPhotoStubWithBadgeBimapDescriptor(cluster?.size ?: 0))
+        cluster?.let {
+            markerOptions?.icon(markerImageGenerator.getClusterBitmapDescriptor(cluster))
+        }
         Timber.d("kiol onBeforeClusterRendered")
     }
 
     override fun onClusterRendered(cluster: Cluster<PlaceClusterItem>?, marker: Marker) {
         super.onClusterRendered(cluster, marker)
         marker.tag = "tag"
-        val firstPlace = cluster?.items?.firstOrNull()
-        firstPlace?.let {
-            if (it.place.placeType == PlaceType.Photos) {
-                markerImageGenerator.loadPlacemarkImageWithCount(context, it.place, marker, cluster.size)
+        cluster?.let {
+            val place = it.getPlace()
+            place?.let {
+                if (it.placeType == PlaceType.Photos) {
+                    markerImageGenerator.loadPlacemarkImageWithCount(context, it, marker, cluster.size)
+
+                }
             }
         }
         Timber.d("kiol onClusterRendered")
     }
 
     override fun onBeforeClusterItemRendered(item: PlaceClusterItem, markerOptions: MarkerOptions) {
-        markerOptions.icon(markerImageGenerator.getPhotoStubBimapDescriptor())
+        markerOptions.icon(markerImageGenerator.getStubBimapDescriptor(item.place))
         Timber.d("kiol onBeforeClusterItemRendered")
 
     }

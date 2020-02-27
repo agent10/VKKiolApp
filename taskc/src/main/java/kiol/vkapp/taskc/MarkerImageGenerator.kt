@@ -6,9 +6,7 @@ import android.media.ThumbnailUtils
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import androidx.core.graphics.toRectF
-import androidx.core.graphics.withScale
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.Transformation
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.request.target.SimpleTarget
@@ -16,27 +14,50 @@ import com.bumptech.glide.request.transition.Transition
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Marker
+import com.google.maps.android.clustering.Cluster
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
+import kiol.vkapp.commonui.px
 import kiol.vkapp.commonui.pxF
 import timber.log.Timber
 import java.security.MessageDigest
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import kotlin.math.max
 import kotlin.math.roundToInt
 
+fun Cluster<PlaceClusterItem>.getPlaceType(): PlaceType {
+    return items.firstOrNull()?.place?.placeType ?: PlaceType.Groups
+}
+
+fun Cluster<PlaceClusterItem>.getPlace(): Place? {
+    return items.firstOrNull()?.place
+}
+
 class MarkerImageGenerator(private val context: Context) {
+
+    companion object {
+
+        private val PLACE_SIZE = 40.px
+
+        private val PHOTO_SIZE = 60.px
+        private val PHOTO_RADIUS = 6.pxF
+        private val BOUND_STOKER_WIDTH = 3.px
+        private val BOUND_SHADOW_RADIUS = 1.px
+    }
 
     private val executorService = Executors.newSingleThreadExecutor()
 
     private val metrics = DisplayMetrics()
-    private val badgeCache = HashMap<String, Bitmap>()
+    private val photoBadgeCache = HashMap<String, Bitmap>()
 
     private lateinit var photoStubBitmap: Bitmap
+    private lateinit var placeStubBitmap: Bitmap
     private val photoStubWithBadgeCache = HashMap<String, Bitmap>()
+    private val placeStubWithBadgeCache = HashMap<String, Bitmap>()
 
     private var photoStubBitmapDescriptor: BitmapDescriptor? = null
+
+    private val rndColors = listOf(Color.BLUE, Color.RED, Color.GRAY, Color.MAGENTA, Color.BLACK)
 
     private inner class PlacePhotoBitmapTransformation : BitmapTransformation() {
         private val ID = "KIOL.PlacePhotoBitmapTransformation2"
@@ -58,23 +79,23 @@ class MarkerImageGenerator(private val context: Context) {
         }
 
         private fun getCroppedPhotoBitmap(bitmap: Bitmap): Bitmap {
-            val outRect = Rect(0, 0, 150, 150)
+            val outRect = Rect(0, 0, PHOTO_SIZE, PHOTO_SIZE)
 
             val output = Bitmap.createBitmap(
-                150,
-                150, Bitmap.Config.ARGB_8888
+                PHOTO_SIZE,
+                PHOTO_SIZE, Bitmap.Config.ARGB_8888
             )
-            val square = ThumbnailUtils.extractThumbnail(bitmap, 150, 150)
+            val square = ThumbnailUtils.extractThumbnail(bitmap, PHOTO_SIZE, PHOTO_SIZE)
             val canvas = Canvas(output)
 
-            outRect.inset(10 + 3, 10 + 3)
+            outRect.inset(BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS, BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS)
 
             val rect = Rect(0, 0, square.width, square.height)
             canvas.drawARGB(0, 0, 0, 0)
 
-            canvas.drawRoundRect(outRect.toRectF(), 15f, 15f, placeRoundPaint)
+            canvas.drawRoundRect(outRect.toRectF(), PHOTO_RADIUS, PHOTO_RADIUS, placeRoundPaint)
             canvas.drawBitmap(square, rect, outRect, placeCropPaint)
-            canvas.drawRoundRect(outRect.toRectF(), 15f, 15f, placeRoundBoundPaint)
+            canvas.drawRoundRect(outRect.toRectF(), PHOTO_RADIUS, PHOTO_RADIUS, placeRoundBoundPaint)
 
             return output
         }
@@ -100,26 +121,20 @@ class MarkerImageGenerator(private val context: Context) {
         }
 
         private fun getCroppedBitmap(bitmap: Bitmap): Bitmap {
-            val outRect = Rect(0, 0, 100, 100)
+            val outRect = Rect(0, 0, PLACE_SIZE, PLACE_SIZE)
+            outRect.inset(BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS, BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS)
 
-            val output = Bitmap.createBitmap(
-                100,
-                100, Bitmap.Config.ARGB_8888
-            )
+            val output = Bitmap.createBitmap(PLACE_SIZE, PLACE_SIZE, Bitmap.Config.ARGB_8888)
+
             val canvas = Canvas(output)
-            canvas.withScale(0.95f, 0.95f, 50f, 50f) {
-                val rect = Rect(0, 0, bitmap.width, bitmap.height)
-                canvas.drawARGB(0, 0, 0, 0)
-                // canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
-                canvas.drawCircle(
-                    output.width / 2f, output.height / 2f,
-                    output.width / 2f, placeRoundPaint
-                )
-                canvas.drawBitmap(bitmap, rect, outRect, placeCropPaint)
-                outRect.inset(5, 5)
-                canvas.drawArc(outRect.toRectF(), 0f, 360f, false, placeRoundBoundPaint)
-            }
-
+            val rect = Rect(0, 0, bitmap.width, bitmap.height)
+            canvas.drawARGB(0, 0, 0, 0)
+            canvas.drawCircle(
+                output.width / 2f, output.height / 2f,
+                PLACE_SIZE / 2f - (BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS), placeRoundPaint
+            )
+            canvas.drawBitmap(bitmap, rect, outRect, placeCropPaint)
+            canvas.drawArc(outRect.toRectF(), 0f, 360f, false, placeRoundBoundPaint)
             return output
         }
     }
@@ -136,8 +151,8 @@ class MarkerImageGenerator(private val context: Context) {
     private val placeRoundBoundPaint = Paint().apply {
         isAntiAlias = true
         style = Paint.Style.STROKE
-        strokeWidth = 10f
-        setShadowLayer(3f, 0f, 0f, 0xAA000000.toInt())
+        strokeWidth = BOUND_STOKER_WIDTH.toFloat()
+        setShadowLayer(BOUND_SHADOW_RADIUS.toFloat(), 0f, 0f, 0xAA000000.toInt())
         color = 0xFFFFFFFF.toInt()
     }
 
@@ -149,6 +164,11 @@ class MarkerImageGenerator(private val context: Context) {
     private val placeRoundPaint = Paint().apply {
         isAntiAlias = true
         color = -0xbdbdbe
+    }
+
+    private val placeCirclePaint = Paint().apply {
+        isAntiAlias = true
+        color = 0xFFFF0000.toInt()
     }
 
     private val placeCropPaint = Paint().apply {
@@ -169,10 +189,12 @@ class MarkerImageGenerator(private val context: Context) {
         executorService.execute {
             val t = System.currentTimeMillis()
             createPhotoStubBitmap()
+            createPlaceStubBitmap()
 
             repeat(25) {
-                getBadge(it)
+                getPhotoBadge(it)
                 createPhotoStubBitmapWithBadge(it)
+                createPlaceWithCountBitmap(it)
             }
 
             val time = System.currentTimeMillis() - t
@@ -181,47 +203,118 @@ class MarkerImageGenerator(private val context: Context) {
         }
     }
 
-    fun getPhotoStubBimapDescriptor(): BitmapDescriptor {
+    private fun getPhotoStubBimapDescriptor(): BitmapDescriptor {
         val b = photoStubBitmap
-        if(photoStubBitmapDescriptor == null) {
+        if (photoStubBitmapDescriptor == null) {
             photoStubBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(b)
         }
         return photoStubBitmapDescriptor!!
     }
 
-    fun getPhotoStubWithBadgeBimapDescriptor(count: Int): BitmapDescriptor {
-        val text = getCountText(count)
+    fun getStubBimapDescriptor(place: Place): BitmapDescriptor {
+        return if (place.placeType == PlaceType.Photos) {
+            getPhotoStubBimapDescriptor()
+        } else {
+            BitmapDescriptorFactory.fromBitmap(placeStubBitmap)
+        }
+    }
 
-        val b = photoStubWithBadgeCache[text]
-        return BitmapDescriptorFactory.fromBitmap(b)
+    fun getClusterBitmapDescriptor(cluster: Cluster<PlaceClusterItem>): BitmapDescriptor {
+        val text = getCountText(cluster.size)
+
+        return if (cluster.getPlaceType() == PlaceType.Photos) {
+            val b = photoStubWithBadgeCache[text]
+            BitmapDescriptorFactory.fromBitmap(b)
+        } else {
+            val b = placeStubWithBadgeCache[text]
+            BitmapDescriptorFactory.fromBitmap(b)
+        }
     }
 
     private fun createPhotoStubBitmap() {
-        val outRect = Rect(0, 0, 150, 150)
+        val outRect = Rect(0, 0, PHOTO_SIZE, PHOTO_SIZE)
 
         val output = Bitmap.createBitmap(
-            150,
-            150, Bitmap.Config.ARGB_8888
+            PHOTO_SIZE,
+            PHOTO_SIZE, Bitmap.Config.ARGB_8888
         )
         val canvas = Canvas(output)
 
-        outRect.inset(10 + 3, 10 + 3)
+        outRect.inset(BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS, BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS)
 
         canvas.drawARGB(0, 0, 0, 0)
-        canvas.drawRoundRect(outRect.toRectF(), 15f, 15f, placeRoundBoundPaint)
+        canvas.drawRoundRect(outRect.toRectF(), PHOTO_RADIUS, PHOTO_RADIUS, placeRoundBoundPaint)
 
         photoStubBitmap = output
+    }
+
+    private fun createPlaceStubBitmap() {
+        val outRect = Rect(0, 0, PLACE_SIZE, PLACE_SIZE)
+
+        val output = Bitmap.createBitmap(
+            PLACE_SIZE,
+            PLACE_SIZE, Bitmap.Config.ARGB_8888
+        )
+
+        outRect.inset(BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS, BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS)
+
+        val canvas = Canvas(output)
+
+        placeCirclePaint.color = rndColors.random()
+        canvas.drawCircle(
+            output.width / 2f, output.height / 2f,
+            PLACE_SIZE / 2f - (BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS), placeCirclePaint
+        )
+        canvas.drawArc(outRect.toRectF(), 0f, 360f, false, placeRoundBoundPaint)
+
+        placeStubBitmap = output
+    }
+
+    private fun createPlaceWithCountBitmap(count: Int) {
+        val text = getCountText(count)
+
+        val widthF = textPaint.measureText(text)
+        val textMetrics = textPaint.fontMetrics
+        val heightF = Math.abs(textMetrics.bottom) + Math.abs(textMetrics.top)
+
+        val width = 1.8f * max(widthF, heightF)
+        val height = 1.8f * heightF
+
+        val bitmap = Bitmap.createBitmap(
+            width.roundToInt(),
+            height.roundToInt(),
+            Bitmap.Config.ARGB_8888
+        )
+
+        val canvas = Canvas(bitmap)
+
+        val rect = Rect(0, 0, bitmap.width, bitmap.height)
+        rect.inset(BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS, BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS)
+        val radius = max(rect.width().toFloat(), rect.height().toFloat()) - BOUND_SHADOW_RADIUS
+
+        placeCirclePaint.color = rndColors.random()
+        canvas.drawCircle(bitmap.width / 2f, bitmap.height / 2f, radius / 2f, placeCirclePaint)
+        canvas.drawText(text, bitmap.width / 2f, bitmap.height - (bitmap.height - heightF / 2f) / 2f, textPaint)
+        canvas.drawArc(
+            rect.toRectF(),
+            0f,
+            360f,
+            false,
+            placeRoundBoundPaint
+        )
+
+        placeStubWithBadgeCache[text] = bitmap
     }
 
     private fun createPhotoStubBitmapWithBadge(count: Int) {
         val text = getCountText(count)
 
-        val nb = getBitmapWithBadge(photoStubBitmap, count)
+        val nb = getPhotoBitmapWithBadge(photoStubBitmap, count)
         photoStubWithBadgeCache[text] = nb
     }
 
-    private fun getBitmapWithBadge(bitmap: Bitmap, count: Int): Bitmap {
-        val badgeBitmap = getBadge(count)
+    private fun getPhotoBitmapWithBadge(bitmap: Bitmap, count: Int): Bitmap {
+        val badgeBitmap = getPhotoBadge(count)
 
         val nb = Bitmap.createBitmap(
             bitmap.width + badgeBitmap.width / 5,
@@ -236,10 +329,10 @@ class MarkerImageGenerator(private val context: Context) {
         return nb
     }
 
-    private fun getBadge(count: Int): Bitmap {
+    private fun getPhotoBadge(count: Int): Bitmap {
         val text = getCountText(count)
 
-        val cachedBadge = badgeCache[text]
+        val cachedBadge = photoBadgeCache[text]
         if (cachedBadge != null) {
             return cachedBadge
         }
@@ -258,7 +351,7 @@ class MarkerImageGenerator(private val context: Context) {
         canvas.drawRoundRect(RectF(0f, 0f, width, height), height, height, badgePaint)
         canvas.drawText(text, width / 2f, height - (height - heightF / 2f) / 2f, textPaint)
 
-        badgeCache[text] = bitmap
+        photoBadgeCache[text] = bitmap
 
         return bitmap
     }
@@ -278,8 +371,9 @@ class MarkerImageGenerator(private val context: Context) {
         Glide.with(context).asBitmap().load(place.photo).transform(transform).into(object :
             SimpleTarget<Bitmap>() {
             override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                val withBadge = getBitmapWithBadge(resource, count)
                 if (marker.tag != null) {
+
+                    val withBadge = getPhotoBitmapWithBadge(resource, count)
                     marker.setIcon(BitmapDescriptorFactory.fromBitmap(withBadge))
                 }
             }
