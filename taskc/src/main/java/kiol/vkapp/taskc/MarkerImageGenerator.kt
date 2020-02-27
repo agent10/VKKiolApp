@@ -21,6 +21,7 @@ import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commonui.pxF
 import timber.log.Timber
 import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -34,7 +35,9 @@ class MarkerImageGenerator(private val context: Context) {
 
     private lateinit var photoStubBitmap: Bitmap
     private val photoStubWithBadgeCache = HashMap<String, Bitmap>()
-    
+
+    private var photoStubBitmapDescriptor: BitmapDescriptor? = null
+
     private inner class PlacePhotoBitmapTransformation : BitmapTransformation() {
         private val ID = "KIOL.PlacePhotoBitmapTransformation2"
 
@@ -167,7 +170,7 @@ class MarkerImageGenerator(private val context: Context) {
             val t = System.currentTimeMillis()
             createPhotoStubBitmap()
 
-            repeat(12) {
+            repeat(25) {
                 getBadge(it)
                 createPhotoStubBitmapWithBadge(it)
             }
@@ -180,11 +183,14 @@ class MarkerImageGenerator(private val context: Context) {
 
     fun getPhotoStubBimapDescriptor(): BitmapDescriptor {
         val b = photoStubBitmap
-        return BitmapDescriptorFactory.fromBitmap(b)
+        if(photoStubBitmapDescriptor == null) {
+            photoStubBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(b)
+        }
+        return photoStubBitmapDescriptor!!
     }
 
     fun getPhotoStubWithBadgeBimapDescriptor(count: Int): BitmapDescriptor {
-        val text = if (count > 10) "10+" else count.toString()
+        val text = getCountText(count)
 
         val b = photoStubWithBadgeCache[text]
         return BitmapDescriptorFactory.fromBitmap(b)
@@ -257,7 +263,7 @@ class MarkerImageGenerator(private val context: Context) {
         return bitmap
     }
 
-    private fun getCountText(count: Int) = if (count > 10) "10+" else count.toString()
+    private fun getCountText(count: Int) = if (count > 19) "19+" else count.toString()
 
     private fun getTransformation(place: Place): BitmapTransformation {
         return when (place.placeType) {
