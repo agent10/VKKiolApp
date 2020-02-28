@@ -11,10 +11,10 @@
         android:background="@android:color/white"
         android:elevation="4dp"
         android:paddingBottom="@dimen/spacing_micro"
-        app:tabTextAppearance="@style/TabLayoutTextAppearance"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:tabTextAppearance="@style/TabLayoutTextAppearance">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="match_parent"
@@ -31,6 +31,19 @@
             android:layout_height="@dimen/tab_item_height"
             android:text="@string/groups_tab_title" />
     </com.google.android.material.tabs.TabLayout>
+
+    <ProgressBar
+        android:id="@+id/progressbar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="0dp"
+        android:layout_height="10dp"
+        android:visibility="gone"
+        android:elevation="4dp"
+        android:indeterminate="true"
+        android:indeterminateOnly="true"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tabs" />
 
     <FrameLayout
         android:id="@+id/mapview"

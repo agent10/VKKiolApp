@@ -3,11 +3,14 @@ package kiol.vkapp.taskc
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.tabs.TabLayout
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -20,11 +23,17 @@ import timber.log.Timber
 
 class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback {
 
+    companion object {
+        private val SPB_LAT_LONG = LatLng(59.9343, 30.3351)
+    }
+
     private lateinit var mapview: FrameLayout
 
     private lateinit var tabs: TabLayout
 
     private lateinit var mapFragment: SupportMapFragment
+
+    private lateinit var progressBar: ProgressBar
 
     private lateinit var googleMap: GoogleMap
     private var clusterManager: PlaceClusterManager? = null
@@ -45,6 +54,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
 
         tabs = view.findViewById(R.id.tabs)
         mapview = view.findViewById(R.id.mapview)
+        progressBar = view.findViewById(R.id.progressbar)
 
         mapFragment = SupportMapFragment()
         childFragmentManager.beginTransaction().replace(R.id.mapview, mapFragment).commitAllowingStateLoss()
@@ -81,9 +91,12 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         clusterManager?.clearItems()
         disposable?.dispose()
 
+        progressBar.visibility = View.VISIBLE
         disposable = placesUseCase.getPlaces(placeType).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ places ->
+            .doOnEach {
+                progressBar.visibility = View.GONE
+            }.subscribe({ places ->
                 Timber.d("Groups: $places")
                 if (places.isEmpty()) {
                     Toast.makeText(requireContext(), R.string.nothing_found, Toast.LENGTH_SHORT).show()
@@ -105,6 +118,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         Timber.e("onMapReady: $googleMap")
         googleMap?.let {
             this.googleMap = googleMap
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(SPB_LAT_LONG, 4f))
             initClusterManager(googleMap)
         }
     }
