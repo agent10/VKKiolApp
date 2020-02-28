@@ -13,93 +13,9 @@ import kotlin.random.Random
 
 class PlacesUseCase {
 
+    private val placesCache = PlacesCache()
+
     fun getPlaces(placeType: PlaceType): Flowable<List<Place>> {
-        return when (placeType) {
-            Groups -> getGroupsOrEvents(false).map {
-                it.map {
-                    val p = it.place
-                    Place(
-                        it.id,
-                        placeType,
-                        p.latitude, p.longitude,
-                        p.title,
-                        p.address.orEmpty(),
-                        it.description.orEmpty(),
-                        p.group_photo.orEmpty()
-                    )
-                }
-            }.map {
-                val l = it.toMutableList()
-                val r = 1600
-                repeat(r) { c ->
-                    var lat = -50f + rnd.nextFloat() * 100f
-                    var long = -50f + rnd.nextFloat() * 100f
-                    l += Place(
-                        10, Groups, lat, long, "", "", "",
-                        if (c % 2 == 0) it.random().photo else ""
-                    )
-                }
-                l
-            }
-            Events -> getGroupsOrEvents(true).map {
-                it.map {
-                    val p = it.place
-                    Place(
-                        it.id,
-                        placeType,
-                        p.latitude, p.longitude,
-                        p.title,
-                        p.address.orEmpty(),
-                        it.description.orEmpty(),
-                        p.group_photo.orEmpty()
-                    )
-                }
-            }
-            Photos -> getPhotos().map {
-                //                                                it.filter {
-                //                                                    it.lat > 0f && it.long > 0f
-                //                                                }.map {
-                //                                                    Place(0, placeType, it.lat, it.long, "", "", "", it.text, it.sizes.getMSize(), it.sizes)
-                //                                                }
-
-                it.map {
-                    var lat = it.lat
-                    var long = it.long
-                    if (lat <= 0f || long <= 0f) {
-                        lat = -50f + rnd.nextFloat() * 100f
-                        long = -50f + rnd.nextFloat() * 100f
-                    }
-                    Place(-1, placeType, lat, long, "", "", it.text, it.sizes.getMSize(), it.sizes)
-                }
-            }
-        }
-    }
-
-
-    val rnd = Random.Default
-
-    private fun getGroupsOrEvents(events: Boolean) = Flowable.fromCallable {
-        val request = VKRequest<JSONObject>("groups.get")
-            .addParam("filter", if (events) "events" else "groups")
-            .addParam("extended", 1)
-            .addParam("fields", "place,description")
-            .addParam("count", 100)
-            .addParam("offset", 0)
-        VK.executeSync(request)
-    }.map {
-        val groups: VKResponse<VKListContainerResponse<VKGroup>> = Gson().fromJson(it.toString())
-        groups.response.items
-    }
-
-    private fun getPhotos() = Flowable.fromCallable {
-        val request = VKRequest<JSONObject>("photos.get")
-            .addParam("count", 1000)
-            .addParam("photo_sizes", 1)
-            .addParam("album_id", "wall")
-            .addParam("offset", 0)
-        VK.executeSync(request)
-    }.map {
-        val groups: VKResponse<VKListContainerResponse<VKPhoto>> = Gson().fromJson(it.toString())
-        groups.response.items
+        return placesCache.getValue(placeType)
     }
 }

@@ -9,19 +9,14 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.material.tabs.TabLayout
-import com.google.maps.android.clustering.ClusterManager
-import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm
-import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
-import com.google.maps.android.clustering.algo.ScreenBasedAlgorithmAdapter
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
+import kiol.vkapp.commondata.domain.places.MockPlacesUseCase
 import kiol.vkapp.commondata.domain.places.PlacesUseCase
-import kiol.vkapp.commondata.domain.places.PlacesUseCase2
 import kiol.vkapp.taskc.renderers.MarkerImageGenerator
-import kiol.vkapp.taskc.renderers.PlaceClusterRenderer
 import timber.log.Timber
 
 class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback {
@@ -35,7 +30,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     private lateinit var googleMap: GoogleMap
     private var clusterManager: PlaceClusterManager? = null
 
-    private val placesUseCase = PlacesUseCase2()
+    private val placesUseCase = MockPlacesUseCase()
 
     private var disposable: Disposable? = null
 

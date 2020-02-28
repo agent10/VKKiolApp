@@ -34,7 +34,7 @@ class PlaceClusterRenderer(
             val place = it.getPlace()
             place?.let {
                 if (it.placeType == PlaceType.Photos) {
-                    markerImageGenerator.loadPlacemarkImageWithCount(context, it, marker, cluster.size)
+                    markerImageGenerator.loadPhotoClusterImageWithCount(context, it, marker, cluster.size)
 
                 }
             }
