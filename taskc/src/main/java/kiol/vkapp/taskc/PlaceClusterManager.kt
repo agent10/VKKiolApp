@@ -1,6 +1,7 @@
 package kiol.vkapp.taskc
 
 import android.content.Context
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm
@@ -16,7 +17,7 @@ class PlaceClusterManager(
 ) : ClusterManager<PlaceClusterItem>(context, googleMap) {
 
     companion object {
-        private const val MAX_DISTANCE = 175
+        private const val MAX_DISTANCE = 165
     }
 
     init {
@@ -31,6 +32,10 @@ class PlaceClusterManager(
         algo.maxDistanceBetweenClusteredItems = MAX_DISTANCE
         algorithm = ScreenBasedAlgorithmAdapter(PreCachingAlgorithmDecorator(algo))
         setOnClusterClickListener {
+            googleMap.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(it.position, googleMap.cameraPosition.zoom + 1.0f), 300,
+                null
+            )
             true
         }
 

@@ -118,6 +118,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         Timber.e("onMapReady: $googleMap")
         googleMap?.let {
             this.googleMap = googleMap
+            googleMap.setMinZoomPreference(1.0f)
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(SPB_LAT_LONG, 4f))
             initClusterManager(googleMap)
         }
