@@ -33,12 +33,12 @@ class CaptureSessionCreator(
     ) :
         SessionStrategy {
         override fun onPreSetup(cameraConfig: CameraConfigurator.Config) {
-            mediaRecorderInternal.setup(cameraConfig)
+            //mediaRecorderInternal.setup(cameraConfig)
             zoomer.setConfg(cameraConfig)
         }
 
         override fun onSurfaces(surfaces: MutableList<Surface>) {
-            surfaces += mediaRecorderInternal.getSurface()
+            //surfaces += mediaRecorderInternal.getSurface()
         }
 
         override fun onSessionConfigured(

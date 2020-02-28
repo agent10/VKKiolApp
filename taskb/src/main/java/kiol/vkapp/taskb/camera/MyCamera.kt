@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
 class MyCamera(private val context: Context, file: String) {
 
     enum class CameraState {
-        Idle, Initializing, Ready, Closing
+        Idle, Initializing, Ready, Closing, Closed, Error
     }
 
     enum class CameraType {
@@ -44,17 +44,32 @@ class MyCamera(private val context: Context, file: String) {
     companion object {
         private const val QR_WINDOW_MS = 5000L
         const val MIN_VALID_RECORD_TIME_MS = 1000L
+
+        private var CAM_GLOBAL_ID = 0
+        private fun getGlobalCamId(): String {
+            return ("MyCamId$CAM_GLOBAL_ID").also { CAM_GLOBAL_ID++ }
+        }
     }
+
+    private val camGlobalId = getGlobalCamId()
 
     @Volatile
     var cameraState: CameraState = CameraState.Idle
+        private set(value) {
+            Timber.d("Change camera($camGlobalId) state from $cameraState to $value")
+            field = value
+            uiHandler.post {
+                onCamStateChanged(value)
+            }
+        }
 
     var cameraType = Back
-        private set
 
     var camSwitchFinished: (cameraType: CameraType) -> Unit = {}
 
     var onCamRecord: (isRecord: Record) -> Unit = { }
+
+    var onCamStateChanged: (CameraState) -> Unit = {}
 
     private var qrListenerEnabled = true
     private val _qrListener: PublishProcessor<String> = PublishProcessor.create()
@@ -95,19 +110,22 @@ class MyCamera(private val context: Context, file: String) {
     private val torch = Torch(backgroundHandler)
 
     private var cameraDevice: CameraDevice? = null
-    private var cameraCaptureSession: CameraCaptureSession? = null
 
     private val zoomer = Zoomer(context, backgroundHandler)
 
+    init {
+        Timber.d("Camera($camGlobalId) constructed with $cameraState state")
+    }
+
     private fun changeCamera(cameraType: CameraType) {
         if (this.cameraType != cameraType) {
-            this.cameraType = cameraType
-
-            stopCamera {
-                uiHandler.post {
-                    checkTextureView()
-                }
-            }
+            //            this.cameraType = cameraType
+            //
+            //            stopCamera {
+            //                uiHandler.post {
+            //                    checkTextureView()
+            //                }
+            //            }
         }
     }
 
@@ -149,36 +167,36 @@ class MyCamera(private val context: Context, file: String) {
 
     fun startRecord() {
         if (cameraState == CameraState.Ready) {
-            if (!isCamHardWorking) {
-                backgroundHandler.post {
-                    isCamHardWorking = true
-                    recordStartTimestampMs = System.currentTimeMillis()
-                    mediaRecorder.record()
-                    onCamRecord(Record.Start)
-                    isCamHardWorking = false
-
-                }
-            }
+            //            if (!isCamHardWorking) {
+            //                backgroundHandler.post {
+            //                    isCamHardWorking = true
+            //                    recordStartTimestampMs = System.currentTimeMillis()
+            //                    mediaRecorder.record()
+            //                    onCamRecord(Record.Start)
+            //                    isCamHardWorking = false
+            //
+            //                }
+            //            }
         }
     }
 
     fun stopRecord() {
         if (cameraState == CameraState.Ready) {
-            if (!isCamHardWorking) {
-                backgroundHandler.post {
-                    isCamHardWorking = true
-                    val time = System.currentTimeMillis() - recordStartTimestampMs
-                    uiHandler.post {
-                        onCamRecord(Record.End(time, false))
-                    }
-                    stopCamera {
-                        uiHandler.post {
-                            checkTextureView()
-                        }
-                        isCamHardWorking = false
-                    }
-                }
-            }
+            //            if (!isCamHardWorking) {
+            //                backgroundHandler.post {
+            //                    isCamHardWorking = true
+            //                    val time = System.currentTimeMillis() - recordStartTimestampMs
+            //                    uiHandler.post {
+            //                        onCamRecord(Record.End(time, false))
+            //                    }
+            //                    stopCamera {
+            //                        uiHandler.post {
+            //                            checkTextureView()
+            //                        }
+            //                        isCamHardWorking = false
+            //                    }
+            //                }
+            //            }
         }
     }
 
@@ -193,37 +211,103 @@ class MyCamera(private val context: Context, file: String) {
             override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?) = true
 
             override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
-                checkTextureView()
+                textureAvailableCallback(surface)
             }
         }
         this.textureView.setOnTouchListener { v, event ->
             if (cameraState == CameraState.Ready) {
                 zoomer.scaleGestureDetector.onTouchEvent(event)
+                return@setOnTouchListener true
             }
             false
         }
-        checkTextureView()
     }
 
     fun setQROverlay(qrOverlay: QrOverlay) {
         recognizer.setViews(qrOverlay)
     }
 
+    private var textureAvailableCallback: (SurfaceTexture?) -> Unit = {}
+    private fun waitForSurface() {
+        cameraState = CameraState.Initializing
+        textureAvailableCallback = {}
+        if (textureView.isAvailable) {
+            val st = textureView.surfaceTexture
+            if (st != null) {
+                setupCamera()
+            } else {
+                cameraState = CameraState.Error
+            }
+        } else {
+            textureAvailableCallback = { st ->
+                if (st != null) {
+                    setupCamera()
+                } else {
+                    cameraState = CameraState.Error
+                }
+                textureAvailableCallback = {}
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun setupCamera() {
+        val cameraConfig = cameraConfigurator.createConfig(
+            null,
+            textureView.width,
+            textureView.height,
+            cameraType == Front
+        )
+
+        textureView.configureTransform(Surface.ROTATION_0, cameraConfig.previewSize)
+
+        val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        manager.openCamera(cameraConfig.cameraId, object : CameraDevice.StateCallback() {
+            override fun onOpened(camera: CameraDevice) {
+                Timber.d("onOpened")
+                cameraDevice = camera
+                startCameraSession(camera, cameraConfig) {
+                    cameraState = CameraState.Ready
+                }
+            }
+
+            override fun onClosed(camera: CameraDevice) {
+                super.onClosed(camera)
+                cameraState = CameraState.Closed
+                Timber.d("onClosed")
+            }
+
+            override fun onDisconnected(camera: CameraDevice) {
+                Timber.d("onDisconnected")
+            }
+
+            override fun onError(camera: CameraDevice, error: Int) {
+                Timber.d("onError, e: $error")
+                cameraState = CameraState.Error
+            }
+        }, backgroundHandler)
+    }
+
     fun startCamera() {
-        Timber.d("onStart")
-        checkTextureView()
+        if (cameraState == CameraState.Idle) {
+            Timber.d("onStart")
+            waitForSurface()
+        }
     }
 
     @Synchronized
     fun stopCamera() {
         Timber.d("onStop")
         recognizer.release()
-        stopCamera()
+        if (cameraState == CameraState.Ready) {
+            stopCameraInternal()
+        }
     }
 
     @Synchronized
-    private fun stopCamera(onClosed: () -> Unit = {}) {
+    private fun stopCameraInternal(onClosed: () -> Unit = {}) {
         Timber.d("stopCamera")
+        cameraState = CameraState.Closing
         backgroundHandler.post {
             mediaRecorder.stop()
             torch.reset()
@@ -240,56 +324,12 @@ class MyCamera(private val context: Context, file: String) {
         }
     }
 
-    @SuppressLint("MissingPermission")
     @Synchronized
-    private fun checkTextureView() {
-        if (textureView.isAvailable) {
-            val cameraConfig = cameraConfigurator.createConfig(
-                null,
-                textureView.width,
-                textureView.height,
-                cameraType == Front
-            )
-
-            textureView.configureTransform(Surface.ROTATION_0, cameraConfig.previewSize)
-
-            val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-            if (camSemaphore.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
-                manager.openCamera(cameraConfig.cameraId, object : CameraDevice.StateCallback() {
-                    override fun onOpened(camera: CameraDevice) {
-                        Timber.d("onOpened")
-                        cameraDevice = camera
-                        startCameraSession(camera, cameraConfig)
-                        camSemaphore.release()
-                    }
-
-                    override fun onClosed(camera: CameraDevice) {
-                        Timber.d("onClosed")
-
-                        super.onClosed(camera)
-                        camSemaphore.release()
-                    }
-
-                    override fun onDisconnected(camera: CameraDevice) {
-                        Timber.d("onDisconnected")
-                        camSemaphore.release()
-                    }
-
-                    override fun onError(camera: CameraDevice, error: Int) {
-                        Timber.d("onError, e: $error")
-                        camSemaphore.release()
-                    }
-
-                }, backgroundHandler)
-            } else {
-                Timber.e("Can't open camera, still waiting for close...")
-                Toast.makeText(context, R.string.camera_open_failed, Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
-    @Synchronized
-    private fun startCameraSession(camera: CameraDevice, cameraConfig: CameraConfigurator.Config) {
+    private fun startCameraSession(
+        camera: CameraDevice,
+        cameraConfig: CameraConfigurator.Config,
+        onCameraSession: (CameraCaptureSession) -> Unit = {}
+    ) {
         val sessionStrategy = when (cameraType) {
             Back -> CaptureSessionCreator.BackCameraSessionStrategy(
                 zoomer,
@@ -300,9 +340,7 @@ class MyCamera(private val context: Context, file: String) {
             )
             Front -> CaptureSessionCreator.FrontCameraSessionStrategy(zoomer, mediaRecorder, torch, recognizer)
         }
-        captureSessionCreator.create(sessionStrategy, camera, textureView, cameraConfig, backgroundHandler) {
-            cameraCaptureSession = it
-        }
+        captureSessionCreator.create(sessionStrategy, camera, textureView, cameraConfig, backgroundHandler, onCameraSession)
     }
 
     fun setZoom(zoomLevel: Float) {

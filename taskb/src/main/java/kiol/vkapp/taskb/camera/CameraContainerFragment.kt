@@ -31,7 +31,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         private const val PermissionRequestCode = 42
     }
 
-    private lateinit var myCamera: MyCamera
+    private lateinit var myCamerasManager: MyCamerasManager
     private lateinit var torch: CheckableImageButton
     private lateinit var camSwithcProgress: ProgressBar
     private lateinit var camSwitcher: ImageButton
@@ -42,6 +42,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.d("onCreate")
+        myCamerasManager = MyCamerasManager(requireContext(), getTempVideoFile())
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -49,49 +50,48 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         super.onViewCreated(view, savedInstanceState)
         Timber.d("onViewCreated")
 
-        myCamera = MyCamera(requireContext(), getTempVideoFile())
+        //        myCamera = MyCamera(requireContext(), getTempVideoFile())
 
         view.findViewById<TextureView>(R.id.cameraView).apply {
-            myCamera.setTextureView(this)
+            myCamerasManager.setTextureView(this)
         }
 
         view.findViewById<QrOverlay>(R.id.qrOverlay).apply {
-            myCamera.setQROverlay(this)
+            //            myCamera.setQROverlay(this)
         }
 
         camSwithcProgress = view.findViewById(R.id.camSwitchProgress)
 
         camSwitcher = view.findViewById(R.id.camSwitcher)
         camSwitcher.setOnClickListener {
-            if (!myCamera.isCamHardWorking) {
-                changeCamSwithcProgress(true).withEndAction {
-                    myCamera.switchCamera()
-                }
+            changeCamSwithcProgress(true).withEndAction {
+                myCamerasManager.switchCameraFace()
+
             }
         }
 
         torch = view.findViewById(R.id.torchSwitcher)
         torch.setOnClickListener {
-            myCamera.setTorch(!myCamera.isTorchEnabled())
+            //            myCamera.setTorch(!myCamera.isTorchEnabled())
         }
 
         val recordBtn = view.findViewById<RecordButton>(R.id.recordBtn)
         recordBtn.callback = object : RecordButton.Callback {
             override fun onZoomLevel(zoomLevel: Float) {
-                myCamera.setZoom(zoomLevel)
+                //                myCamera.setZoom(zoomLevel)
             }
 
             override fun onRecord(started: Boolean) {
                 if (started) {
-                    myCamera.startRecord()
+                    //                    myCamera.startRecord()
                     changeCamSwitchButton(false)
                     changeTorchButton(false)
                 } else {
-                    myCamera.stopRecord()
+                    //                    myCamera.stopRecord()
                     changeCamSwitchButton(true)
-                    if (myCamera.cameraType == Back) {
-                        changeTorchButton(true)
-                    }
+                    //                    if (myCamera.cameraType == Back) {
+                    //                        changeTorchButton(true)
+                    //                    }
                 }
             }
         }
@@ -107,35 +107,52 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
             recordBtn.zoomHeight = it.measuredHeight.toFloat()
         }
 
-        myCamera.onCamRecord = {
-            if (it is MyCamera.Record.End) {
-                if (it.timeMs >= MIN_VALID_RECORD_TIME_MS) {
-                    getSimpleRouter().routeToEditor()
-                } else {
-                    Toast.makeText(requireContext(), "The video is too short", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-
-        myCamera.camSwitchFinished = {
-            changeCamSwithcProgress(false)
+        myCamerasManager.onCameraTypeChanged = {
             when (it) {
                 Back -> changeTorchButton(true)
                 Front -> changeTorchButton(false)
             }
-            torch.isChecked = myCamera.isTorchEnabled()
         }
 
-        val d = myCamera.getQrListener().subscribe({
-            setEnableQrCallback(false)
-            QrDialog.create(it).show(childFragmentManager, null)
-        }, {
-            Timber.e(it)
-        })
+        myCamerasManager.onCameraSwitchingFinished = {
+            changeCamSwithcProgress(false)
+
+        }
+
+        //        myCamera.onCamRecord = {
+        //            if (it is MyCamera.Record.End) {
+        //                if (it.timeMs >= MIN_VALID_RECORD_TIME_MS) {
+        //                    getSimpleRouter().routeToEditor()
+        //                } else {
+        //                    Toast.makeText(requireContext(), "The video is too short", Toast.LENGTH_SHORT).show()
+        //                }
+        //            }
+        //        }
+        //
+        //        myCamera.camSwitchFinished = {
+        //            changeCamSwithcProgress(false)
+        //            when (it) {
+        //                Back -> changeTorchButton(true)
+        //                Front -> changeTorchButton(false)
+        //            }
+        //            torch.isChecked = myCamera.isTorchEnabled()
+        //        }
+
+        //        val d = myCamera.getQrListener().subscribe({
+        //            setEnableQrCallback(false)
+        //            QrDialog.create(it).show(childFragmentManager, null)
+        //        }, {
+        //            Timber.e(it)
+        //        })
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        Timber.d("onDestroyView")
     }
 
     fun setEnableQrCallback(value: Boolean) {
-        myCamera.setEnableQrCallback(value)
+        //        myCamera.setEnableQrCallback(value)
     }
 
     private fun changeTorchButton(show: Boolean): ViewPropertyAnimator {
@@ -171,14 +188,15 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         super.onStart()
         Timber.d("onStart")
         if (isCameraPermissionGranted()) {
-            myCamera.startCamera()
+            myCamerasManager.createCamera()
+            //            myCamera.startCamera()
         } else {
             requestPermissions(arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO), PermissionRequestCode)
         }
     }
 
     override fun onStop() {
-        myCamera.stopCamera()
+        myCamerasManager.stopCamera()
         super.onStop()
         Timber.d("onStop")
     }
@@ -192,7 +210,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         if (requestCode == PermissionRequestCode) {
             Timber.d("perms, onRequestPermissionsResult, grantResults: $grantResults, permissions: $permissions")
             if (grantResults.all { it == 1 }) {
-                myCamera.startCamera()
+                myCamerasManager.createCamera()
             } else {
 
             }

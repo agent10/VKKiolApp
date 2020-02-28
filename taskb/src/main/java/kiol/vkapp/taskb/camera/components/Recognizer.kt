@@ -57,7 +57,7 @@ class Recognizer(context: Context,
         set(value) {
             field = value
             uiHandler.post {
-                qrOverlay.drawQr(QrOverlay.EmptyQrDrawModel)
+                //qrOverlay.drawQr(QrOverlay.EmptyQrDrawModel)
             }
         }
 
