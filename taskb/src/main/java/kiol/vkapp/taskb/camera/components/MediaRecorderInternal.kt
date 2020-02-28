@@ -52,8 +52,6 @@ class MediaRecorderInternal(private val file: String) {
             configured = false
         }
 
-        Timber.d("Start setup")
-
         val profile = chooseCamcorderProfile(cameraConfig)
         mediaRecorder.setOnInfoListener { mr, what, extra ->
             Timber.d("MediaRecorder mr = $mr, what = $what, $extra = $extra")
@@ -76,16 +74,21 @@ class MediaRecorderInternal(private val file: String) {
         mediaRecorder.setOrientationHint(if (cameraConfig.isFaceCamera) 270 else 90)
         mediaRecorder.prepare()
         configured = true
-        Timber.d("Finish setup")
     }
 
     private fun chooseCamcorderProfile(cameraConfig: CameraConfigurator.Config): CamcorderProfile {
+        val camId = cameraConfig.cameraId.toInt()
         var quality = CamcorderProfile.QUALITY_LOW
         if (cameraConfig.mediaRecorderSize.contains(Size(1280, 720))) {
             quality = CamcorderProfile.QUALITY_720P
         } else if (cameraConfig.mediaRecorderSize.contains(Size(720, 480))) {
             quality = CamcorderProfile.QUALITY_480P
         }
-        return CamcorderProfile.get(quality)
+        return try {
+            CamcorderProfile.get(camId, quality)
+        } catch (e: Exception) {
+            Timber.e("Can't set CamcorderProfile, fallback to lowest quality")
+            CamcorderProfile.get(camId, CamcorderProfile.QUALITY_LOW)
+        }
     }
 }

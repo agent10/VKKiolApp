@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.ClippingMediaSource
@@ -175,6 +176,12 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
         playerView.isEnabled = false
         exoPlayer?.playWhenReady = true
         exoPlayer?.repeatMode = Player.REPEAT_MODE_ALL
+        exoPlayer?.addListener(object : Player.EventListener {
+            override fun onPlayerError(error: ExoPlaybackException) {
+                Timber.e("Playback error: $error")
+                Toast.makeText(requireContext(), R.string.internal_error, Toast.LENGTH_SHORT).show()
+            }
+        })
 
         compositeDisposable += Flowable.interval(100, TimeUnit.MILLISECONDS)
             .observeOn(AndroidSchedulers.mainThread())
