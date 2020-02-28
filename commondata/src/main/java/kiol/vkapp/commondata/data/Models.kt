@@ -52,17 +52,22 @@ fun List<VKImagePreview>?.getSize(type: String): String {
 }
 
 data class VKPhoto(
-    val text: String, val lat: Float = Float.MIN_VALUE, val long: Float = Float.MIN_VALUE, val photo_130: String = "", val sizes:
+    val text: String,
+    val lat: Float = Float.MIN_VALUE,
+    val long: Float = Float.MIN_VALUE,
+    val photo_130: String = "",
+    val sizes:
     List<VKImagePreview>? = null
 )
 
 data class VKGroup(
     val id: Int,
     val name: String, val type: String,
-    val place: VKGroupPlace, val description: String?, val site: String
+    val place: VKGroupPlace?, val description: String?, val site: String
 )
 
 data class VKGroupPlace(
-    val title: String, val latitude: Float, val longitude: Float,
+    val title: String, val latitude: Float = Float.MIN_VALUE, val longitude: Float = Float.MIN_VALUE,
     val group_photo: String?, val address: String?
 )
+

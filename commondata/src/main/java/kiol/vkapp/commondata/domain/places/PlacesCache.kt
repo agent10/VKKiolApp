@@ -26,7 +26,11 @@ class PlacesCache : RxResponseCache<PlaceType, List<Place>>() {
     }
 
     private fun List<VKGroup>.mapGroups(placeType: PlaceType): List<Place> {
-        return map {
+        return filter {
+            it.place != null &&
+                    it.place.latitude > Float.MIN_VALUE &&
+                    it.place.longitude > Float.MIN_VALUE
+        }.map {
             it.convert(placeType)
         }
     }

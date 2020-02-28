@@ -8,6 +8,7 @@ import kiol.vkapp.commondata.data.*
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.PlaceType.*
+import kiol.vkapp.commondata.domain.convert
 import org.json.JSONObject
 import kotlin.random.Random
 
@@ -17,16 +18,7 @@ class MockPlacesUseCase {
         return when (placeType) {
             Groups -> getGroupsOrEvents(false).map {
                 it.map {
-                    val p = it.place
-                    Place(
-                        it.id,
-                        placeType,
-                        p.latitude, p.longitude,
-                        p.title,
-                        p.address.orEmpty(),
-                        it.description.orEmpty(),
-                        p.group_photo.orEmpty()
-                    )
+                    it.convert(Groups)
                 }
             }.map {
                 val l = it.toMutableList()
@@ -43,16 +35,7 @@ class MockPlacesUseCase {
             }
             Events -> getGroupsOrEvents(true).map {
                 it.map {
-                    val p = it.place
-                    Place(
-                        it.id,
-                        placeType,
-                        p.latitude, p.longitude,
-                        p.title,
-                        p.address.orEmpty(),
-                        it.description.orEmpty(),
-                        p.group_photo.orEmpty()
-                    )
+                    it.convert(Events)
                 }
             }
             Photos -> getPhotos().map {

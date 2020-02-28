@@ -66,11 +66,12 @@ fun VKGroup.convert(placeType: PlaceType): Place {
     return Place(
         id,
         placeType,
-        place.latitude, place.longitude,
-        place.title,
-        place.address.orEmpty(),
+        place?.latitude ?: Float.MIN_VALUE,
+        place?.longitude ?: Float.MIN_VALUE,
+        place?.title.orEmpty(),
+        place?.address.orEmpty(),
         description.orEmpty(),
-        place.group_photo.orEmpty()
+        place?.group_photo.orEmpty()
     )
 }
 

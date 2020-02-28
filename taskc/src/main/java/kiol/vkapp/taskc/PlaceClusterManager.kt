@@ -16,7 +16,7 @@ class PlaceClusterManager(
 ) : ClusterManager<PlaceClusterItem>(context, googleMap) {
 
     companion object {
-        private const val MAX_DISTANCE = 200
+        private const val MAX_DISTANCE = 175
     }
 
     init {

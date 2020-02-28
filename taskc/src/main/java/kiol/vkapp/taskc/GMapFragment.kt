@@ -14,7 +14,6 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
-import kiol.vkapp.commondata.domain.places.MockPlacesUseCase
 import kiol.vkapp.commondata.domain.places.PlacesUseCase
 import kiol.vkapp.taskc.renderers.MarkerImageGenerator
 import timber.log.Timber
@@ -30,7 +29,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     private lateinit var googleMap: GoogleMap
     private var clusterManager: PlaceClusterManager? = null
 
-    private val placesUseCase = MockPlacesUseCase()
+    private val placesUseCase = PlacesUseCase()
 
     private var disposable: Disposable? = null
 
