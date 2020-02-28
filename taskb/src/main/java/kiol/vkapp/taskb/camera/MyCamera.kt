@@ -8,10 +8,12 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.view.Surface
 import android.view.TextureView
+import android.widget.Toast
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
+import kiol.vkapp.taskb.R
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.Back
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.Front
 import kiol.vkapp.taskb.camera.components.MediaRecorderInternal
@@ -21,9 +23,14 @@ import kiol.vkapp.taskb.camera.components.Zoomer
 import kiol.vkapp.taskb.camera.ui.QrOverlay
 import kiol.vkapp.taskb.camera.ui.configureTransform
 import timber.log.Timber
+import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
 class MyCamera(private val context: Context, file: String) {
+
+    enum class CameraState {
+        Idle, Initializing, Ready, Closing
+    }
 
     enum class CameraType {
         Back, Front
@@ -39,7 +46,11 @@ class MyCamera(private val context: Context, file: String) {
         const val MIN_VALID_RECORD_TIME_MS = 1000L
     }
 
-    private var cameraType = Back
+    @Volatile
+    var cameraState: CameraState = CameraState.Idle
+
+    var cameraType = Back
+        private set
 
     var camSwitchFinished: (cameraType: CameraType) -> Unit = {}
 
@@ -70,6 +81,8 @@ class MyCamera(private val context: Context, file: String) {
     @Volatile
     var isCamHardWorking = false
 
+    private val camSemaphore = Semaphore(1)
+
     private var recordStartTimestampMs = 0L
 
     private val recognizer = Recognizer(context, backgroundHandler, uiHandler) {
@@ -82,6 +95,7 @@ class MyCamera(private val context: Context, file: String) {
     private val torch = Torch(backgroundHandler)
 
     private var cameraDevice: CameraDevice? = null
+    private var cameraCaptureSession: CameraCaptureSession? = null
 
     private val zoomer = Zoomer(context, backgroundHandler)
 
@@ -98,24 +112,30 @@ class MyCamera(private val context: Context, file: String) {
     }
 
     fun switchCamera() {
-        backgroundHandler.post {
-            isCamHardWorking = true
-            when (cameraType) {
-                Back -> {
-                    setEnableQrCallback(false)
-                    changeCamera(Front)
-                }
-                Front -> {
-                    setEnableQrCallback(true)
-                    changeCamera(Back)
+        if (cameraState == CameraState.Ready) {
+            this.cameraType = cameraType
+
+            backgroundHandler.post {
+                isCamHardWorking = true
+                when (cameraType) {
+                    Back -> {
+                        setEnableQrCallback(false)
+                        changeCamera(Front)
+                    }
+                    Front -> {
+                        setEnableQrCallback(true)
+                        changeCamera(Back)
+                    }
                 }
             }
         }
     }
 
     fun setTorch(on: Boolean) {
-        if (!isCamHardWorking) {
-            torch.setEnabled(on)
+        if (cameraState == CameraState.Ready) {
+            if (!isCamHardWorking) {
+                torch.setEnabled(on)
+            }
         }
     }
 
@@ -128,31 +148,35 @@ class MyCamera(private val context: Context, file: String) {
     fun isTorchEnabled() = torch.isTorchEnabled
 
     fun startRecord() {
-        if (!isCamHardWorking) {
-            backgroundHandler.post {
-                isCamHardWorking = true
-                recordStartTimestampMs = System.currentTimeMillis()
-                mediaRecorder.record()
-                onCamRecord(Record.Start)
-                isCamHardWorking = false
+        if (cameraState == CameraState.Ready) {
+            if (!isCamHardWorking) {
+                backgroundHandler.post {
+                    isCamHardWorking = true
+                    recordStartTimestampMs = System.currentTimeMillis()
+                    mediaRecorder.record()
+                    onCamRecord(Record.Start)
+                    isCamHardWorking = false
 
+                }
             }
         }
     }
 
     fun stopRecord() {
-        if (!isCamHardWorking) {
-            backgroundHandler.post {
-                isCamHardWorking = true
-                val time = System.currentTimeMillis() - recordStartTimestampMs
-                uiHandler.post {
-                    onCamRecord(Record.End(time, false))
-                }
-                stopCamera {
+        if (cameraState == CameraState.Ready) {
+            if (!isCamHardWorking) {
+                backgroundHandler.post {
+                    isCamHardWorking = true
+                    val time = System.currentTimeMillis() - recordStartTimestampMs
                     uiHandler.post {
-                        checkTextureView()
+                        onCamRecord(Record.End(time, false))
                     }
-                    isCamHardWorking = false
+                    stopCamera {
+                        uiHandler.post {
+                            checkTextureView()
+                        }
+                        isCamHardWorking = false
+                    }
                 }
             }
         }
@@ -173,7 +197,10 @@ class MyCamera(private val context: Context, file: String) {
             }
         }
         this.textureView.setOnTouchListener { v, event ->
-            zoomer.scaleGestureDetector.onTouchEvent(event)
+            if (cameraState == CameraState.Ready) {
+                zoomer.scaleGestureDetector.onTouchEvent(event)
+            }
+            false
         }
         checkTextureView()
     }
@@ -182,13 +209,13 @@ class MyCamera(private val context: Context, file: String) {
         recognizer.setViews(qrOverlay)
     }
 
-    fun onStart() {
+    fun startCamera() {
         Timber.d("onStart")
         checkTextureView()
     }
 
     @Synchronized
-    fun onStop() {
+    fun stopCamera() {
         Timber.d("onStop")
         recognizer.release()
         stopCamera()
@@ -201,8 +228,14 @@ class MyCamera(private val context: Context, file: String) {
             mediaRecorder.stop()
             torch.reset()
 
-            cameraDevice?.close()
-            cameraDevice = null
+            Timber.d("try close camera device")
+            cameraDevice?.let {
+                cameraDevice?.close()
+                cameraDevice = null
+
+                camSemaphore.acquire()
+            }
+
             onClosed()
         }
     }
@@ -221,25 +254,41 @@ class MyCamera(private val context: Context, file: String) {
             textureView.configureTransform(Surface.ROTATION_0, cameraConfig.previewSize)
 
             val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-            manager.openCamera(cameraConfig.cameraId, object : CameraDevice.StateCallback() {
-                override fun onOpened(camera: CameraDevice) {
-                    Timber.d("onOpened")
-                    cameraDevice = camera
-                    startCameraSession(camera, cameraConfig)
-                }
+            if (camSemaphore.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
+                manager.openCamera(cameraConfig.cameraId, object : CameraDevice.StateCallback() {
+                    override fun onOpened(camera: CameraDevice) {
+                        Timber.d("onOpened")
+                        cameraDevice = camera
+                        startCameraSession(camera, cameraConfig)
+                        camSemaphore.release()
+                    }
 
-                override fun onDisconnected(camera: CameraDevice) {
-                    Timber.d("onDisconnected")
-                }
+                    override fun onClosed(camera: CameraDevice) {
+                        Timber.d("onClosed")
 
-                override fun onError(camera: CameraDevice, error: Int) {
-                    Timber.d("onError, e: $error")
-                }
+                        super.onClosed(camera)
+                        camSemaphore.release()
+                    }
 
-            }, backgroundHandler)
+                    override fun onDisconnected(camera: CameraDevice) {
+                        Timber.d("onDisconnected")
+                        camSemaphore.release()
+                    }
+
+                    override fun onError(camera: CameraDevice, error: Int) {
+                        Timber.d("onError, e: $error")
+                        camSemaphore.release()
+                    }
+
+                }, backgroundHandler)
+            } else {
+                Timber.e("Can't open camera, still waiting for close...")
+                Toast.makeText(context, R.string.camera_open_failed, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
+    @Synchronized
     private fun startCameraSession(camera: CameraDevice, cameraConfig: CameraConfigurator.Config) {
         val sessionStrategy = when (cameraType) {
             Back -> CaptureSessionCreator.BackCameraSessionStrategy(
@@ -251,19 +300,23 @@ class MyCamera(private val context: Context, file: String) {
             )
             Front -> CaptureSessionCreator.FrontCameraSessionStrategy(zoomer, mediaRecorder, torch, recognizer)
         }
-        captureSessionCreator.create(sessionStrategy, camera, textureView, cameraConfig, backgroundHandler)
+        captureSessionCreator.create(sessionStrategy, camera, textureView, cameraConfig, backgroundHandler) {
+            cameraCaptureSession = it
+        }
     }
 
     fun setZoom(zoomLevel: Float) {
-        try {
-            zoomer.setZoom(zoomLevel)
-        } catch (e: Exception) {
-            Timber.e("Zoom failed: $e")
+        if (cameraState == CameraState.Ready) {
+            try {
+                zoomer.setZoom(zoomLevel)
+            } catch (e: Exception) {
+                Timber.e("Zoom failed: $e")
+            }
         }
     }
 
     fun setEnableQrCallback(value: Boolean) {
         qrListenerEnabled = value
-        Timber.e("setEnableQrCallback: $value")
+        Timber.d("setEnableQrCallback: $value")
     }
 }

@@ -65,7 +65,7 @@ class CaptureSessionCreator(
 
         override fun onSurfaces(surfaces: MutableList<Surface>) {
             super.onSurfaces(surfaces)
-            surfaces += imageReader.surface
+            //            surfaces += imageReader.surface
         }
 
         override fun onSessionConfigured(
@@ -104,7 +104,7 @@ class CaptureSessionCreator(
         camera: CameraDevice,
         textureView: TextureView,
         cameraConfig: CameraConfigurator.Config,
-        backgroundHandler: Handler
+        backgroundHandler: Handler, onCameraSession: (CameraCaptureSession)->Unit = {}
     ) {
         try {
             sessionStrategy.onPreSetup(cameraConfig)
@@ -131,6 +131,7 @@ class CaptureSessionCreator(
                 object : CameraCaptureSession.StateCallback() {
                     override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
                         Timber.d("onConfigured started")
+                        onCameraSession(cameraCaptureSession)
                         sessionStrategy.onSessionConfigured(previewRequestBuilder, cameraCaptureSession)
                         try {
                             previewRequestBuilder.let { builder ->
@@ -151,7 +152,7 @@ class CaptureSessionCreator(
 
                     override fun onClosed(session: CameraCaptureSession) {
                         super.onClosed(session)
-                        Timber.d("onConfigureFailed")
+                        Timber.d("onConfigureClosed")
                     }
 
                     override fun onConfigureFailed(session: CameraCaptureSession) {

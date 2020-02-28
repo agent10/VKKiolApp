@@ -41,14 +41,16 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        myCamera = MyCamera(requireContext(), getTempVideoFile())
+        Timber.d("onCreate")
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Timber.d("MyCamera fragment onViewCreated")
+        Timber.d("onViewCreated")
+
+        myCamera = MyCamera(requireContext(), getTempVideoFile())
+
         view.findViewById<TextureView>(R.id.cameraView).apply {
             myCamera.setTextureView(this)
         }
@@ -87,7 +89,9 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
                 } else {
                     myCamera.stopRecord()
                     changeCamSwitchButton(true)
-                    changeTorchButton(true)
+                    if (myCamera.cameraType == Back) {
+                        changeTorchButton(true)
+                    }
                 }
             }
         }
@@ -165,18 +169,18 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
 
     override fun onStart() {
         super.onStart()
-        Timber.d("MyCamera fragment onStart")
+        Timber.d("onStart")
         if (isCameraPermissionGranted()) {
-            myCamera.onStart()
+            myCamera.startCamera()
         } else {
             requestPermissions(arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO), PermissionRequestCode)
         }
     }
 
     override fun onStop() {
+        myCamera.stopCamera()
         super.onStop()
-        Timber.d("MyCamera fragment onStop")
-        myCamera.onStop()
+        Timber.d("onStop")
     }
 
     override fun onRequestPermissionsResult(
@@ -188,7 +192,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         if (requestCode == PermissionRequestCode) {
             Timber.d("perms, onRequestPermissionsResult, grantResults: $grantResults, permissions: $permissions")
             if (grantResults.all { it == 1 }) {
-                myCamera.onStart()
+                myCamera.startCamera()
             } else {
 
             }
