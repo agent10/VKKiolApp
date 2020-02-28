@@ -18,7 +18,7 @@ import timber.log.Timber
 
 class CaptureSessionCreator(
     private val context: Context,
-    private val configFinished: (session: CameraCaptureSession) -> Unit
+    private val configFinished: (session: CameraCaptureSession) -> Unit = {}
 ) {
 
     interface SessionStrategy {
@@ -33,12 +33,12 @@ class CaptureSessionCreator(
     ) :
         SessionStrategy {
         override fun onPreSetup(cameraConfig: CameraConfigurator.Config) {
-            //mediaRecorderInternal.setup(cameraConfig)
+            mediaRecorderInternal.setup(cameraConfig)
             zoomer.setConfg(cameraConfig)
         }
 
         override fun onSurfaces(surfaces: MutableList<Surface>) {
-            //surfaces += mediaRecorderInternal.getSurface()
+            surfaces += mediaRecorderInternal.getSurface()
         }
 
         override fun onSessionConfigured(
@@ -104,7 +104,7 @@ class CaptureSessionCreator(
         camera: CameraDevice,
         textureView: TextureView,
         cameraConfig: CameraConfigurator.Config,
-        backgroundHandler: Handler, onCameraSession: (CameraCaptureSession)->Unit = {}
+        backgroundHandler: Handler, onCameraSession: (CameraCaptureSession) -> Unit = {}
     ) {
         try {
             sessionStrategy.onPreSetup(cameraConfig)

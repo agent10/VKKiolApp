@@ -2,6 +2,8 @@ package kiol.vkapp.taskb.camera
 
 import android.content.Context
 import android.view.TextureView
+import android.widget.Toast
+import kiol.vkapp.taskb.camera.MyCamera.Companion.MIN_VALID_RECORD_TIME_MS
 
 class MyCamerasManager(private val context: Context, private val tempFile: String) {
 
@@ -13,10 +15,13 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
     private var isSwitching = false
     private var lastSwitchCamera = MyCamera.CameraType.Back
 
-    var onCameraChanged: (MyCamera) -> Unit = {}
+    var onCameraChanged: (MyCamera?) -> Unit = {}
     var onCameraSwitchingFinished: () -> Unit = {}
     var onCameraTypeChanged: (MyCamera.CameraType) -> Unit = {}
     var onCurrentCameraStateChanged: (MyCamera, MyCamera.CameraState) -> Unit = { _, _ -> }
+
+    var onCamRecordEnd: () -> Unit = { }
+
 
     fun setTextureView(textureView: TextureView) {
         this.textureView = textureView
@@ -51,12 +56,38 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
         createCamera(nextType)
     }
 
+    fun getCurrentCameraType() = currentCamera?.cameraType ?: MyCamera.CameraType.Back
+
+    fun switchTorch(): Boolean {
+        return currentCamera?.switchTorch() ?: false
+    }
+
+    fun isTorchEnabled(): Boolean {
+        return currentCamera?.isTorchEnabled() ?: false
+    }
+
+    fun setZoom(zoomLevel: Float) {
+        currentCamera?.setZoom(zoomLevel)
+    }
+
     private fun setNewCam(camera: MyCamera) {
         currentCamera = camera
         onCameraChanged(camera)
         onCameraTypeChanged(camera.cameraType)
 
         currentCamera?.apply {
+            onCamRecord = {
+                if (it is MyCamera.Record.End) {
+                    if (it.timeMs >= MIN_VALID_RECORD_TIME_MS) {
+                        this@MyCamerasManager.onCamRecordEnd()
+
+                    } else {
+                        Toast.makeText(context, "The video is too short", Toast.LENGTH_SHORT).show()
+                        createCamera()
+                    }
+                }
+            }
+
             onCamStateChanged = {
                 onCurrentCameraStateChanged(this, it)
                 if (it == MyCamera.CameraState.Ready) {
@@ -76,8 +107,17 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
         }
     }
 
+    fun startRecord() {
+        currentCamera?.startRecord()
+    }
+
+    fun stopRecord() {
+        currentCamera?.stopRecord()
+    }
+
     private fun handleCurrentFinishedState() {
         currentCamera = null
+        onCameraChanged(null)
 
         nextCamera?.let {
             setNewCam(it)
