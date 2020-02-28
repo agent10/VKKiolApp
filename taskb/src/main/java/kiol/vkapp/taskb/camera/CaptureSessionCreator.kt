@@ -18,13 +18,16 @@ import timber.log.Timber
 
 class CaptureSessionCreator(
     private val context: Context,
-    private val configFinished: (session: CameraCaptureSession) -> Unit
+    private val configFinished: (session: CameraCaptureSession) -> Unit = {}
 ) {
 
     interface SessionStrategy {
         fun onPreSetup(cameraConfig: CameraConfigurator.Config)
         fun onSurfaces(surfaces: MutableList<Surface>)
-        fun onSessionConfigured(previewRequestBuilder: CaptureRequest.Builder, cameraCaptureSession: CameraCaptureSession)
+        fun onSessionConfigured(
+            previewRequestBuilder: CaptureRequest.Builder,
+            cameraCaptureSession: CameraCaptureSession
+        )
     }
 
     abstract class RecorderCameraSessionStrategy(
@@ -104,76 +107,72 @@ class CaptureSessionCreator(
         camera: CameraDevice,
         textureView: TextureView,
         cameraConfig: CameraConfigurator.Config,
-        backgroundHandler: Handler
+        backgroundHandler: Handler, onCameraSession: (CameraCaptureSession) -> Unit = {}
     ) {
-        try {
-            sessionStrategy.onPreSetup(cameraConfig)
+        sessionStrategy.onPreSetup(cameraConfig)
 
-            val texture = textureView.surfaceTexture
-            texture.setDefaultBufferSize(cameraConfig.previewSize.width, cameraConfig.previewSize.height)
+        val texture = textureView.surfaceTexture
+        texture.setDefaultBufferSize(cameraConfig.previewSize.width, cameraConfig.previewSize.height)
 
-            val surface = Surface(texture)
-            val surfaces = arrayListOf<Surface>()
-            surfaces += surface
+        val surface = Surface(texture)
+        val surfaces = arrayListOf<Surface>()
+        surfaces += surface
 
-            sessionStrategy.onSurfaces(surfaces)
+        sessionStrategy.onSurfaces(surfaces)
 
-            val previewRequestBuilder = camera.createCaptureRequest(
-                CameraDevice.TEMPLATE_RECORD
-            )
+        val previewRequestBuilder = camera.createCaptureRequest(
+            CameraDevice.TEMPLATE_RECORD
+        )
 
-            surfaces.forEach {
-                previewRequestBuilder.addTarget(it)
-            }
-
-            camera.createCaptureSession(
-                surfaces,
-                object : CameraCaptureSession.StateCallback() {
-                    override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
-                        Timber.d("onConfigured started")
-                        sessionStrategy.onSessionConfigured(previewRequestBuilder, cameraCaptureSession)
-                        try {
-                            previewRequestBuilder.let { builder ->
-                                builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                                builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON)
-
-                                val previewRequest = builder.build()
-                                cameraCaptureSession.setRepeatingRequest(
-                                    previewRequest,
-                                    null, backgroundHandler
-                                )
-                                Timber.d("onConfigured finished")
-                            }
-                        } catch (e: Exception) {
-                            Timber.e(e)
-                        }
-                    }
-
-                    override fun onClosed(session: CameraCaptureSession) {
-                        super.onClosed(session)
-                        Timber.d("onConfigureFailed")
-                    }
-
-                    override fun onConfigureFailed(session: CameraCaptureSession) {
-                        Timber.e("onConfigureFailed")
-                    }
-
-                    override fun onReady(session: CameraCaptureSession) {
-                        super.onReady(session)
-                        configFinished(session)
-                        Timber.d("onReady, cid = ${session.device.id}")
-
-                    }
-
-                    override fun onActive(session: CameraCaptureSession) {
-                        super.onActive(session)
-                        Timber.d("onActive, cid = ${session.device.id}")
-                    }
-                }, backgroundHandler
-            )
-        } catch (e: Exception) {
-            Timber.e(e)
-            Toast.makeText(context, R.string.camera_open_failed, Toast.LENGTH_LONG).show()
+        surfaces.forEach {
+            previewRequestBuilder.addTarget(it)
         }
+
+        camera.createCaptureSession(
+            surfaces,
+            object : CameraCaptureSession.StateCallback() {
+                override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
+                    Timber.d("onConfigured started")
+                    onCameraSession(cameraCaptureSession)
+                    sessionStrategy.onSessionConfigured(previewRequestBuilder, cameraCaptureSession)
+                    try {
+                        previewRequestBuilder.let { builder ->
+                            builder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                            builder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON)
+
+                            val previewRequest = builder.build()
+                            cameraCaptureSession.setRepeatingRequest(
+                                previewRequest,
+                                null, backgroundHandler
+                            )
+                            Timber.d("onConfigured finished")
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e)
+                    }
+                }
+
+                override fun onClosed(session: CameraCaptureSession) {
+                    super.onClosed(session)
+                    Timber.d("onConfigureClosed")
+                }
+
+                override fun onConfigureFailed(session: CameraCaptureSession) {
+                    Timber.e("onConfigureFailed")
+                }
+
+                override fun onReady(session: CameraCaptureSession) {
+                    super.onReady(session)
+                    configFinished(session)
+                    Timber.d("onReady, cid = ${session.device.id}")
+
+                }
+
+                override fun onActive(session: CameraCaptureSession) {
+                    super.onActive(session)
+                    Timber.d("onActive, cid = ${session.device.id}")
+                }
+            }, backgroundHandler
+        )
     }
 }

@@ -1,6 +1,11 @@
 <resources>
     <string name="app_name">Task_Kiol_Cam</string>
     <string name="permission_rational">Camera is required for QR scanning</string>
-    <string name="camera_open_failed">Camera failed, try restart app</string>
+    <string name="camera_open_failed">Camera failed and restarted</string>
     <string name="internal_error">Something went wrong:(</string>
+    <string name="video_too_short">Recording is too short</string>
+    <string name="file_saved">Video saved</string>
+    <string name="file_save_error">Error with saving</string>
+    <string name="qr_link">External link</string>
+    <string name="qr_text">QR code</string>
 </resources>

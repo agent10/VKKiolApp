@@ -18,6 +18,11 @@ class RecordButton @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
+    companion object {
+        private const val ScaleDuration = 100L
+        private const val MaxRecordDuration = 15000L
+    }
+
     interface Callback {
         fun onZoomLevel(zoomLevel: Float)
         fun onRecord(started: Boolean)
@@ -45,7 +50,7 @@ class RecordButton @JvmOverloads constructor(
 
     private var scaleValue = 1.0f
     private val scaleAnimator = ValueAnimator.ofFloat().apply {
-        duration = 100
+        duration = ScaleDuration
         addUpdateListener {
             scaleValue = it.animatedValue as Float
             invalidate()
@@ -54,7 +59,7 @@ class RecordButton @JvmOverloads constructor(
 
     private var progressValue = 0f
     private val progressAnimator = ValueAnimator.ofFloat(0f, 360f).apply {
-        duration = 1000 * 15
+        duration = MaxRecordDuration
         addUpdateListener {
             progressValue = it.animatedValue as Float
             invalidate()
@@ -107,7 +112,6 @@ class RecordButton @JvmOverloads constructor(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 progressAnimator.cancel()
                 progressValue = 0.0f
-                handleStopRecording()
                 return true
             }
         }

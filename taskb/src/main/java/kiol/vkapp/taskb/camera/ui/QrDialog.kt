@@ -47,9 +47,9 @@ class QrDialog : BottomSheetDialogFragment() {
         qrBodyTv.text = qrBody
 
         if (qrBody.isUrl()) {
-            qrTitleTv.text = "Внешня ссыль"
+            qrTitleTv.text = getText(R.string.qr_link)
         } else {
-            qrTitleTv.text = "QR код"
+            qrTitleTv.text = getText(R.string.qr_text)
             qrHttpBtn.visibility = View.GONE
         }
     }

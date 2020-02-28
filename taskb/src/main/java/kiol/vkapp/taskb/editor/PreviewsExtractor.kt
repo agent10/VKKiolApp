@@ -50,7 +50,10 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
                                 extractor.seekTo(currSeek, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
                                 val size = extractor.readSampleData(buffer, 0)
                                 if (size < 0) {
-                                    decoder.queueInputBuffer(inIndex, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                                    decoder.queueInputBuffer(
+                                        inIndex,
+                                        0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM
+                                    )
                                     stop = true
                                 } else {
                                     Timber.d("queueInput index: $inIndex")

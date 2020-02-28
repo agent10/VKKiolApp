@@ -16,6 +16,10 @@ import kotlin.math.min
 
 class Zoomer(private val context: Context, private val backgroundHandler: Handler) {
 
+    companion object {
+        const val MaxZoom = 0.75f
+    }
+
     private var previewRequestBuilder: CaptureRequest.Builder? = null
     private var captureSession: CameraCaptureSession? = null
 
@@ -29,7 +33,7 @@ class Zoomer(private val context: Context, private val backgroundHandler: Handle
             val scaleFactor = detector?.scaleFactor
             scaleFactor?.let {
                 zLevel -= (1.0f - scaleFactor)
-                zLevel = max(min(zLevel, 0.75f), 0f)
+                zLevel = max(min(zLevel, MaxZoom), 0f)
                 setZoom(zLevel)
             }
             return true
@@ -46,7 +50,7 @@ class Zoomer(private val context: Context, private val backgroundHandler: Handle
     }
 
     fun setZoom(level: Float) {
-        val li = max(min(level, 0.75f), 0f)
+        val li = max(min(level, MaxZoom), 0f)
         cameraConfig?.let {
             val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
             val characteristics = manager.getCameraCharacteristics(it.cameraId)
