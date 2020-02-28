@@ -207,8 +207,13 @@ class MyCamera(private val context: Context, file: String) {
             override fun onOpened(camera: CameraDevice) {
                 Timber.d("onOpened")
                 cameraDevice = camera
-                startCameraSession(camera, cameraConfig) {
-                    cameraState = CameraState.Ready
+                try {
+                    startCameraSession(camera, cameraConfig) {
+                        cameraState = CameraState.Ready
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e)
+                    cameraState = CameraState.Error
                 }
             }
 

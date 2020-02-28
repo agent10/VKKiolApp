@@ -87,6 +87,8 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
                     changeCamSwitchButton(false)
                     changeTorchButton(false)
                 } else {
+                    Timber.d("rectest1")
+
                     myCamerasManager.stopRecord()
 
                     changeCamSwitchButton(true)

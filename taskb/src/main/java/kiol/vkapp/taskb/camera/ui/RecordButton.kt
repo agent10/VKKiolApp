@@ -107,7 +107,6 @@ class RecordButton @JvmOverloads constructor(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 progressAnimator.cancel()
                 progressValue = 0.0f
-                handleStopRecording()
                 return true
             }
         }

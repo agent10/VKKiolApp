@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.TextureView
 import android.widget.Toast
 import kiol.vkapp.taskb.camera.MyCamera.Companion.MIN_VALID_RECORD_TIME_MS
+import timber.log.Timber
 
 class MyCamerasManager(private val context: Context, private val tempFile: String) {
 
@@ -99,7 +100,7 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
 
                 if (it == MyCamera.CameraState.Closed || it == MyCamera.CameraState.Error) {
                     currentCamera?.onCamStateChanged = {}
-                    handleCurrentFinishedState()
+                    handleCurrentFinishedState(it == MyCamera.CameraState.Error)
                 }
             }
 
@@ -115,13 +116,19 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
         currentCamera?.stopRecord()
     }
 
-    private fun handleCurrentFinishedState() {
+    private fun handleCurrentFinishedState(isError: Boolean) {
         currentCamera = null
         onCameraChanged(null)
 
-        nextCamera?.let {
-            setNewCam(it)
+        if (nextCamera != null) {
+            nextCamera?.let {
+                setNewCam(it)
+            }
             nextCamera = null
+        } else {
+            if (isError) {
+                createCamera()
+            }
         }
     }
 
