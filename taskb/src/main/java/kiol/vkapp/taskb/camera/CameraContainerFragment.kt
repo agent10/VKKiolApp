@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import io.reactivex.disposables.CompositeDisposable
+import kiol.vkapp.commonui.pxF
 import kiol.vkapp.taskb.R
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.*
 import kiol.vkapp.taskb.camera.MyCamera.Companion.MIN_VALID_RECORD_TIME_MS
@@ -30,6 +31,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
 
     companion object {
         private const val PermissionRequestCode = 42
+        private const val AnimDuration = 100L
     }
 
     private lateinit var myCamerasManager: MyCamerasManager
@@ -41,6 +43,8 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
 
     private var torchX = 0f
     private var switchX = 0f
+
+    private val iconsOffset = 6.pxF
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -114,9 +118,11 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         }
 
         myCamerasManager.onCameraTypeChanged = {
-            when (it) {
-                Back -> changeTorchButton(true)
-                Front -> changeTorchButton(false)
+            if (torch.isLaidOut) {
+                when (it) {
+                    Back -> changeTorchButton(true)
+                    Front -> changeTorchButton(false)
+                }
             }
         }
 
@@ -147,27 +153,27 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         return if (show) {
             torch.animate().alpha(1.0f).x(torchX).apply { duration = 100 }
         } else {
-            torch.animate().alpha(0.0f).translationXBy(-20f).apply { duration = 100 }
+            torch.animate().alpha(0.0f).translationXBy(-iconsOffset).apply { duration = AnimDuration }
         }
     }
 
     private fun changeCamSwithcProgress(show: Boolean): ViewPropertyAnimator {
         return if (show) {
-            camSwithcProgress.animate().alpha(1.0f).scaleX(1.0f).scaleY(1.0f).apply {
-                duration = 100
-            }
+            camSwithcProgress.animate().alpha(1.0f)
+                .scaleX(1.0f).scaleY(1.0f).apply { duration = AnimDuration }
         } else {
-            camSwithcProgress.animate().alpha(0.0f).scaleX(0.5f).scaleY(0.5f).apply { duration = 100 }
+            camSwithcProgress.animate().alpha(0.0f)
+                .scaleX(0.5f).scaleY(0.5f).apply { duration = AnimDuration }
         }
     }
 
     private fun changeCamSwitchButton(show: Boolean): ViewPropertyAnimator {
         camSwitcher.clearAnimation()
         return if (show) {
-            camSwitcher.animate().alpha(1.0f).x(switchX).apply { duration = 100 }
+            camSwitcher.animate().alpha(1.0f).x(switchX).apply { duration = AnimDuration }
 
         } else {
-            camSwitcher.animate().alpha(0.0f).translationXBy(20f).apply { duration = 100 }
+            camSwitcher.animate().alpha(0.0f).translationXBy(iconsOffset).apply { duration = AnimDuration }
         }
     }
 
@@ -177,7 +183,12 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         if (isCameraPermissionGranted()) {
             myCamerasManager.createCamera()
         } else {
-            requestPermissions(arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO), PermissionRequestCode)
+            requestPermissions(
+                arrayOf(
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.RECORD_AUDIO
+                ), PermissionRequestCode
+            )
         }
     }
 

@@ -20,6 +20,9 @@ class QrOverlay @JvmOverloads constructor(
     companion object {
         val EmptyQrDrawModel = QrDrawModel(0f, 0f, 0f, 0f)
         private const val QRRectScale = 1.2f
+        private const val ScaleDuration = 500L
+        private const val AlphaDuration = 500L
+        private const val Duration = 50L
     }
 
     private var isShowing = false
@@ -28,7 +31,7 @@ class QrOverlay @JvmOverloads constructor(
     private val scaleAnimator = ValueAnimator.ofFloat(0.0f, 10.0f).apply {
         repeatMode = ValueAnimator.REVERSE
         repeatCount = Int.MAX_VALUE / 2
-        duration = 500
+        duration = ScaleDuration
         addUpdateListener {
             animScale = it.animatedValue as Float
             invalidate()
@@ -38,7 +41,7 @@ class QrOverlay @JvmOverloads constructor(
 
     private var alphaValue = 0f
     private val alphaAnimator = ValueAnimator.ofFloat().apply {
-        duration = 500
+        duration = AlphaDuration
         addUpdateListener {
             alphaValue = it.animatedValue as Float
             invalidate()
@@ -47,7 +50,7 @@ class QrOverlay @JvmOverloads constructor(
 
     private var rectSize = 0f
     private val rectSizeAnimator = ValueAnimator.ofFloat().apply {
-        duration = 50
+        duration = Duration
         addUpdateListener {
 
             rectSize = it.animatedValue as Float
@@ -57,7 +60,7 @@ class QrOverlay @JvmOverloads constructor(
 
     private var angle = 0f
     private val angleAnimator = ValueAnimator.ofFloat().apply {
-        duration = 50
+        duration = Duration
         addUpdateListener {
             angle = it.animatedValue as Float
             invalidate()
@@ -66,7 +69,7 @@ class QrOverlay @JvmOverloads constructor(
 
     private val centerPoint = PointF()
     private val centerAnimatorX = ValueAnimator.ofFloat().apply {
-        duration = 50
+        duration = Duration
         addUpdateListener {
             centerPoint.x = it.animatedValue as Float
             invalidate()
@@ -74,7 +77,7 @@ class QrOverlay @JvmOverloads constructor(
     }
 
     private val centerAnimatorY = ValueAnimator.ofFloat().apply {
-        duration = 50
+        duration = Duration
         addUpdateListener {
             centerPoint.y = it.animatedValue as Float
             invalidate()

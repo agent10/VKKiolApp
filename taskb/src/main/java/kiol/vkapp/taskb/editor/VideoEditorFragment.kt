@@ -168,7 +168,6 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     private fun showUIAnimated() {
         toolbar.animate().alpha(1.0f).translationY(10.pxF).duration = 1000
         timebar.animate().alpha(1.0f).translationY((-10).pxF).duration = 1000
-
     }
 
     private fun setupPlayer() {
@@ -258,10 +257,10 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
                             }
                             .subscribe({
                                 parentFragmentManager.popBackStack()
-                                Toast.makeText(requireContext(), "File saved", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(requireContext(), R.string.file_saved, Toast.LENGTH_SHORT).show()
                             }, {
                                 exoPlayer?.playWhenReady = true
-                                Toast.makeText(requireContext(), "Error saving", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(requireContext(), R.string.file_save_error, Toast.LENGTH_SHORT).show()
                             })
                     }
                 }

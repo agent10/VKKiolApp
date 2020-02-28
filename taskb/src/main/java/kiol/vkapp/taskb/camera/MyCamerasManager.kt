@@ -5,6 +5,7 @@ import android.view.TextureView
 import android.widget.Toast
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import kiol.vkapp.taskb.R
 import kiol.vkapp.taskb.camera.MyCamera.Companion.MIN_VALID_RECORD_TIME_MS
 import kiol.vkapp.taskb.camera.ui.QrDialog
 import kiol.vkapp.taskb.camera.ui.QrOverlay
@@ -95,7 +96,7 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
                         this@MyCamerasManager.onCamRecordEnd()
 
                     } else {
-                        Toast.makeText(context, "The video is too short", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.video_too_short, Toast.LENGTH_SHORT).show()
                         createCamera()
                     }
                 }

@@ -117,7 +117,10 @@ class VideoEditorTimebar @JvmOverloads constructor(
     private var cutClipRect = RectF()
 
     init {
-        val v = LayoutInflater.from(context).inflate(R.layout.video_editor_timebar_layout, this, true)
+        val v = LayoutInflater.from(context).inflate(
+            R.layout.video_editor_timebar_layout,
+            this, true
+        )
         timebar = v.findViewById(R.id.timebar)
         setWillNotDraw(false)
     }
@@ -180,7 +183,9 @@ class VideoEditorTimebar @JvmOverloads constructor(
         )
 
         cutClipRect.set(
-            leftCutX + CUT_THUMB_W / 2, timebar.top.toFloat() + CUT_THUMB_STROKE, rightCutX - CUT_THUMB_W / 2,
+            leftCutX + CUT_THUMB_W / 2,
+            timebar.top.toFloat() + CUT_THUMB_STROKE,
+            rightCutX - CUT_THUMB_W / 2,
             timebar
                 .bottom.toFloat() - CUT_THUMB_STROKE
         )
@@ -258,9 +263,13 @@ class VideoEditorTimebar @JvmOverloads constructor(
             val leftCutX = timebar.left.toFloat() + leftCut * timebar.measuredWidth
             val rightCutX = timebar.left.toFloat() + rightCut * timebar.measuredWidth
 
-            if (ex >= leftCutX - CUT_THUMB_W / 2 - CUT_THUMB_TAP_SPACE && ex <= leftCutX + CUT_THUMB_W + CUT_THUMB_TAP_SPACE) {
+            if (ex >= leftCutX - CUT_THUMB_W / 2 - CUT_THUMB_TAP_SPACE
+                && ex <= leftCutX + CUT_THUMB_W + CUT_THUMB_TAP_SPACE
+            ) {
                 setNewSelectedCutThumb(LEFT)
-            } else if (ex >= rightCutX - CUT_THUMB_W / 2 - CUT_THUMB_TAP_SPACE && ex <= rightCutX + CUT_THUMB_W + CUT_THUMB_TAP_SPACE) {
+            } else if (ex >= rightCutX - CUT_THUMB_W / 2 - CUT_THUMB_TAP_SPACE
+                && ex <= rightCutX + CUT_THUMB_W + CUT_THUMB_TAP_SPACE
+            ) {
                 setNewSelectedCutThumb(RIGHT)
             } else {
                 setNewSelectedCutThumb(NONE)

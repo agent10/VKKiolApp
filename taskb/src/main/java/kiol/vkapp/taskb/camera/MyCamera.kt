@@ -43,7 +43,7 @@ class MyCamera(private val context: Context, file: String) {
 
     companion object {
         private const val QR_WINDOW_MS = 5000L
-        const val MIN_VALID_RECORD_TIME_MS = 1000L
+        const val MIN_VALID_RECORD_TIME_MS = 2000L
 
         private var CAM_GLOBAL_ID = 0
         private fun getGlobalCamId(): String {
@@ -283,7 +283,10 @@ class MyCamera(private val context: Context, file: String) {
             )
             Front -> CaptureSessionCreator.FrontCameraSessionStrategy(zoomer, mediaRecorder, torch, recognizer)
         }
-        captureSessionCreator.create(sessionStrategy, camera, textureView, cameraConfig, backgroundHandler, onCameraSession)
+        captureSessionCreator.create(
+            sessionStrategy, camera,
+            textureView, cameraConfig, backgroundHandler, onCameraSession
+        )
     }
 
     fun setZoom(zoomLevel: Float) {

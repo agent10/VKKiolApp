@@ -24,7 +24,10 @@ class CaptureSessionCreator(
     interface SessionStrategy {
         fun onPreSetup(cameraConfig: CameraConfigurator.Config)
         fun onSurfaces(surfaces: MutableList<Surface>)
-        fun onSessionConfigured(previewRequestBuilder: CaptureRequest.Builder, cameraCaptureSession: CameraCaptureSession)
+        fun onSessionConfigured(
+            previewRequestBuilder: CaptureRequest.Builder,
+            cameraCaptureSession: CameraCaptureSession
+        )
     }
 
     abstract class RecorderCameraSessionStrategy(

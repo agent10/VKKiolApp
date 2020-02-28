@@ -51,6 +51,11 @@ class Recognizer(
     val onQrHttpUrl: (url: String) -> Unit
 ) {
 
+    companion object {
+        const val MaxWidth = 640
+        const val MaxHeight = 480
+    }
+
     private val compositeDisposable = CompositeDisposable()
 
     private lateinit var qrOverlay: QrOverlay
@@ -64,7 +69,7 @@ class Recognizer(
         }
 
     private val qrBarRecognizer = QRBarRecognizer(QrBarRecognizerImageDataParser())
-    val imageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2).apply {
+    val imageReader = ImageReader.newInstance(MaxWidth, MaxHeight, ImageFormat.YUV_420_888, 2).apply {
         setOnImageAvailableListener({ reader ->
             if (isEnabled) {
                 val img = reader.acquireLatestImage()
@@ -132,7 +137,7 @@ class Recognizer(
 
             m1.reset()
             m1.preRotate(90f)
-            m1.preTranslate(0f, -480f)
+            m1.preTranslate(0f, -MaxHeight.toFloat())
 
             m1.mapPoints(floatArrayPoints)
 
@@ -154,7 +159,7 @@ class Recognizer(
 
             val angle = v * sign(z) * 180 / Math.PI.toFloat()
 
-            tempRect1.set(0f, 0f, 480f, 640f)
+            tempRect1.set(0f, 0f, MaxHeight.toFloat(), MaxWidth.toFloat())
             tempRect2.set(0f, 0f, qrOverlay.width.toFloat(), qrOverlay.height.toFloat())
             m2.reset()
             m2.setRectToRect(tempRect1, tempRect2, Matrix.ScaleToFit.CENTER)
