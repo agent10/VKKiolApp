@@ -44,10 +44,12 @@ fun scalar(v1: Vector, v2: Vector): Float {
     return t / g
 }
 
-class Recognizer(context: Context,
-                 private val backgroundHandler: Handler,
-                 private val uiHandler: Handler,
-                 val onQrHttpUrl: (url: String) -> Unit) {
+class Recognizer(
+    context: Context,
+    private val backgroundHandler: Handler,
+    private val uiHandler: Handler,
+    val onQrHttpUrl: (url: String) -> Unit
+) {
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -57,7 +59,7 @@ class Recognizer(context: Context,
         set(value) {
             field = value
             uiHandler.post {
-                //qrOverlay.drawQr(QrOverlay.EmptyQrDrawModel)
+                qrOverlay.drawQr(QrOverlay.EmptyQrDrawModel)
             }
         }
 

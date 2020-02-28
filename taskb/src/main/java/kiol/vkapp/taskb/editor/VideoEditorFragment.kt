@@ -57,7 +57,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     private var playOnAppResume = false
 
     companion object {
-        private const val WAIT_FOR_MEDIARECORDER = 1500L
+        private const val WAIT_FOR_MEDIARECORDER = 1000L
         private const val VIDEO_FILE_NAME_TO_SAVE = "vktaskbmyvideo.mp4"
         private const val FILE_EXPORT_REQUEST_CODE = 43
     }
@@ -144,6 +144,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        handler.removeCallbacksAndMessages(null)
         releasePlayer()
         compositeDisposable.clear()
     }

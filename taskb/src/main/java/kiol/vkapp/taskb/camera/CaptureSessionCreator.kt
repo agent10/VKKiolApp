@@ -65,7 +65,7 @@ class CaptureSessionCreator(
 
         override fun onSurfaces(surfaces: MutableList<Surface>) {
             super.onSurfaces(surfaces)
-            //            surfaces += imageReader.surface
+            surfaces += imageReader.surface
         }
 
         override fun onSessionConfigured(

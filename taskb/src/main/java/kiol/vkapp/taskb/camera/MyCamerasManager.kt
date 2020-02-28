@@ -3,7 +3,11 @@ package kiol.vkapp.taskb.camera
 import android.content.Context
 import android.view.TextureView
 import android.widget.Toast
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 import kiol.vkapp.taskb.camera.MyCamera.Companion.MIN_VALID_RECORD_TIME_MS
+import kiol.vkapp.taskb.camera.ui.QrDialog
+import kiol.vkapp.taskb.camera.ui.QrOverlay
 import timber.log.Timber
 
 class MyCamerasManager(private val context: Context, private val tempFile: String) {
@@ -12,6 +16,7 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
     private var nextCamera: MyCamera? = null
 
     private lateinit var textureView: TextureView
+    private lateinit var qrOverlay: QrOverlay
 
     private var isSwitching = false
     private var lastSwitchCamera = MyCamera.CameraType.Back
@@ -22,10 +27,16 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
     var onCurrentCameraStateChanged: (MyCamera, MyCamera.CameraState) -> Unit = { _, _ -> }
 
     var onCamRecordEnd: () -> Unit = { }
+    var onQrReceived: (qrBody: String) -> Unit = {}
 
+    private var disposable: Disposable? = null
 
     fun setTextureView(textureView: TextureView) {
         this.textureView = textureView
+    }
+
+    fun setQrOverlay(qrOverlay: QrOverlay) {
+        this.qrOverlay = qrOverlay
     }
 
     fun createCamera() {
@@ -36,6 +47,7 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
         val nCamera = MyCamera(context, tempFile)
         nCamera.cameraType = cameraType
         nCamera.setTextureView(textureView)
+        nCamera.setQROverlay(qrOverlay)
 
         if (currentCamera == null) {
             setNewCam(nCamera)
@@ -96,6 +108,13 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
                         onCameraSwitchingFinished()
                     }
                     isSwitching = false
+
+                    disposable = getQrListener().subscribe({
+                        setEnableQrCallback(false)
+                        onQrReceived(it)
+                    }, {
+                        Timber.e(it)
+                    })
                 }
 
                 if (it == MyCamera.CameraState.Closed || it == MyCamera.CameraState.Error) {
@@ -116,6 +135,10 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
         currentCamera?.stopRecord()
     }
 
+    fun setEnableQrCallback(value: Boolean) {
+        currentCamera?.setEnableQrCallback(value)
+    }
+
     private fun handleCurrentFinishedState(isError: Boolean) {
         currentCamera = null
         onCameraChanged(null)
@@ -134,6 +157,9 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
 
     fun stopCamera() {
         nextCamera = null
+
+        disposable?.dispose()
+        disposable = null
 
         currentCamera?.stopCamera()
     }

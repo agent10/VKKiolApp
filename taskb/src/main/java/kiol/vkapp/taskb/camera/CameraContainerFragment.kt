@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
+import io.reactivex.disposables.CompositeDisposable
 import kiol.vkapp.taskb.R
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.*
 import kiol.vkapp.taskb.camera.MyCamera.Companion.MIN_VALID_RECORD_TIME_MS
@@ -57,7 +58,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         }
 
         view.findViewById<QrOverlay>(R.id.qrOverlay).apply {
-            //            myCamera.setQROverlay(this)
+            myCamerasManager.setQrOverlay(this)
         }
 
         camSwithcProgress = view.findViewById(R.id.camSwitchProgress)
@@ -87,8 +88,6 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
                     changeCamSwitchButton(false)
                     changeTorchButton(false)
                 } else {
-                    Timber.d("rectest1")
-
                     myCamerasManager.stopRecord()
 
                     changeCamSwitchButton(true)
@@ -129,12 +128,9 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
             getSimpleRouter().routeToEditor()
         }
 
-        //        val d = myCamera.getQrListener().subscribe({
-        //            setEnableQrCallback(false)
-        //            QrDialog.create(it).show(childFragmentManager, null)
-        //        }, {
-        //            Timber.e(it)
-        //        })
+        myCamerasManager.onQrReceived = {
+            QrDialog.create(it).show(childFragmentManager, null)
+        }
     }
 
     override fun onDestroyView() {
@@ -143,7 +139,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     }
 
     fun setEnableQrCallback(value: Boolean) {
-        //        myCamera.setEnableQrCallback(value)
+        myCamerasManager.setEnableQrCallback(value)
     }
 
     private fun changeTorchButton(show: Boolean): ViewPropertyAnimator {
