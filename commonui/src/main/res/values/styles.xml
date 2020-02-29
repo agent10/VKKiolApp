@@ -89,4 +89,10 @@
         <item name="android:textSize">15sp</item>
     </style>
 
+    <style name="TransparentNavBarBottomSheetDialog" parent="CustomBottomSheetDialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:navigationBarColor">@color/navBarColor</item>
+        <item name="android:windowLightNavigationBar" tools:ignore="NewApi">true</item>
+    </style>
+
 </resources>

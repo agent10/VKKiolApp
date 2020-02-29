@@ -5,6 +5,7 @@ import com.vk.api.sdk.VKDefaultValidationHandler
 import com.vk.api.sdk.auth.VKScope
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import kiol.vkapp.commonui.VKKiolActivity
 
 
 operator fun CompositeDisposable.plusAssign(d: Disposable) {

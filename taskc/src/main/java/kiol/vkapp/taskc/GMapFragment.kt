@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -60,6 +61,11 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         childFragmentManager.beginTransaction().replace(R.id.mapview, mapFragment).commitAllowingStateLoss()
 
         mapFragment.getMapAsync(this)
+
+        tabs.setOnApplyWindowInsetsListener { v, insets ->
+            view.updatePadding(top = insets.systemWindowInsetTop)
+            insets
+        }
 
         tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabReselected(tab: TabLayout.Tab?) {
