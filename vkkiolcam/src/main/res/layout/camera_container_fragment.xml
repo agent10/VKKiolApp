@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootCameraLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextureView
+        android:id="@+id/cameraView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <kiol.vkapp.cam.camera.ui.Vignette
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <kiol.vkapp.cam.camera.ui.QrOverlay
+        android:id="@+id/qrOverlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/cameraContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <kiol.vkapp.cam.camera.ui.RecordButton
+        android:id="@+id/recordBtn"
+        android:layout_width="@dimen/cam_rec_btn_size"
+        android:layout_height="@dimen/cam_rec_btn_size"
+        android:layout_marginBottom="@dimen/spacing_xxlarge"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <kiol.vkapp.cam.camera.ui.CheckableImageButton
+        android:id="@+id/torchSwitcher"
+        android:layout_width="@dimen/cam_btn_size"
+        android:layout_height="@dimen/cam_btn_size"
+        android:layout_marginEnd="@dimen/spacing_large"
+        android:background="@drawable/camera_btn_background"
+        android:src="@drawable/ic_torch"
+        app:layout_constraintBottom_toBottomOf="@id/recordBtn"
+        app:layout_constraintRight_toLeftOf="@id/recordBtn"
+        app:layout_constraintTop_toTopOf="@id/recordBtn" />
+
+    <ImageButton
+        android:id="@+id/camSwitcher"
+        android:layout_width="@dimen/cam_btn_size"
+        android:layout_height="@dimen/cam_btn_size"
+        android:layout_marginStart="@dimen/spacing_large"
+        android:background="@drawable/camera_btn_background"
+        android:src="@drawable/ic_cam_switch"
+        app:layout_constraintBottom_toBottomOf="@id/recordBtn"
+        app:layout_constraintLeft_toRightOf="@id/recordBtn"
+        app:layout_constraintTop_toTopOf="@id/recordBtn" />
+
+    <ProgressBar
+        android:id="@+id/camSwitchProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0"
+        android:indeterminate="true"
+        android:indeterminateDrawable="@drawable/cam_switch_rotate"
+        android:scaleX="0"
+        android:scaleY="0"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <include
+        layout="@layout/no_permissions_layout"
+        android:visibility="gone" />
+</androidx.constraintlayout.widget.ConstraintLayout>

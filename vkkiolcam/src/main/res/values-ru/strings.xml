@@ -1,0 +1,17 @@
+<resources>
+    <string name="permission_request">Камера и микрофон нужны для записи видео и QR</string>
+    <string name="camera_open_failed">Сбой камеры</string>
+    <string name="internal_error">Что-то пошло не так:(</string>
+    <string name="video_too_short">Запись слишком короткая</string>
+    <string name="file_saved">Запись сохранена</string>
+    <string name="file_save_error">Ошибка при сохранении</string>
+    <string name="qr_link">Внешняя ссылка</string>
+    <string name="qr_text">QR код</string>
+    <string name="qr_open">Открыть</string>
+
+    <string name="menu_sound_title">Звук</string>
+    <string name="menu_save_title">Сохранить</string>
+
+    <string name="fatal_camera_error">Полный швах, ничё не работает</string>
+
+</resources>
