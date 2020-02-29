@@ -213,36 +213,42 @@ class MyCamera(private val context: Context, file: String) {
 
         val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         Timber.d("try open camera($camGlobalId)")
-        manager.openCamera(cameraConfig.cameraId, object : CameraDevice.StateCallback() {
-            override fun onOpened(camera: CameraDevice) {
-                Timber.d("onOpened($camGlobalId)")
-                cameraDevice = camera
-                try {
-                    startCameraSession(camera, cameraConfig) {
-                        cameraState = CameraState.Ready
+        try {
+            manager.openCamera(cameraConfig.cameraId, object : CameraDevice.StateCallback() {
+                override fun onOpened(camera: CameraDevice) {
+                    Timber.d("onOpened($camGlobalId)")
+                    cameraDevice = camera
+                    try {
+                        startCameraSession(camera, cameraConfig) {
+                            cameraState = CameraState.Ready
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e)
+                        lastException = e
+                        cameraState = CameraState.Error
                     }
-                } catch (e: Exception) {
-                    Timber.e(e)
-                    lastException = e
+                }
+
+                override fun onClosed(camera: CameraDevice) {
+                    super.onClosed(camera)
+                    cameraState = CameraState.Closed
+                    Timber.d("onClosed($camGlobalId)")
+                }
+
+                override fun onDisconnected(camera: CameraDevice) {
+                    Timber.d("onDisconnected($camGlobalId)")
+                }
+
+                override fun onError(camera: CameraDevice, error: Int) {
+                    Timber.d("onError($camGlobalId), e: $error")
                     cameraState = CameraState.Error
                 }
-            }
-
-            override fun onClosed(camera: CameraDevice) {
-                super.onClosed(camera)
-                cameraState = CameraState.Closed
-                Timber.d("onClosed($camGlobalId)")
-            }
-
-            override fun onDisconnected(camera: CameraDevice) {
-                Timber.d("onDisconnected($camGlobalId)")
-            }
-
-            override fun onError(camera: CameraDevice, error: Int) {
-                Timber.d("onError($camGlobalId), e: $error")
-                cameraState = CameraState.Error
-            }
-        }, backgroundHandler)
+            }, backgroundHandler)
+        } catch (e: Exception) {
+            Timber.e(e)
+            lastException = CameraFatalException(e.message ?: "Fatal error")
+            cameraState = CameraState.Error
+        }
     }
 
     @Synchronized

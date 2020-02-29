@@ -1,4 +1,5 @@
 <resources>
     <string name="vk_login_btn">Login</string>
-
+    <string name="no_permissions_description">No permissions</string>
+    <string name="no_permissions_btn">Settings</string>
 </resources>

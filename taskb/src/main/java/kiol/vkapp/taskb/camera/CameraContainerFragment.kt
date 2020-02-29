@@ -6,14 +6,16 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.TextureView
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewPropertyAnimator
-import android.widget.ImageButton
-import android.widget.ProgressBar
-import android.widget.Toast
+import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
+import com.google.android.material.button.MaterialButton
 import io.reactivex.disposables.CompositeDisposable
+import kiol.vkapp.commonui.permissions.NoPermissionBtnListener
+import kiol.vkapp.commonui.permissions.PermissionManager
 import kiol.vkapp.commonui.pxF
 import kiol.vkapp.taskb.R
 import kiol.vkapp.taskb.camera.MyCamera.CameraType.*
@@ -41,14 +43,25 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     private lateinit var camSwithcProgress: ProgressBar
     private lateinit var camSwitcher: ImageButton
 
+    private lateinit var noPermissionsLayout: ViewGroup
+
     private var torchX = 0f
     private var switchX = 0f
 
     private val iconsOffset = 6.pxF
 
+    private lateinit var permissionManager: PermissionManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.d("onCreate")
+
+        permissionManager = PermissionManager(
+            requireContext(), listOf(
+                Manifest.permission.CAMERA,
+                Manifest.permission.RECORD_AUDIO
+            )
+        )
         myCamerasManager = MyCamerasManager(requireContext(), getTempVideoFile())
     }
 
@@ -56,6 +69,12 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Timber.d("onViewCreated")
+
+        noPermissionsLayout = view.findViewById(R.id.rootNoPermissionsLayout)
+
+        view.findViewById<TextView>(R.id.noPermsDescription).apply {
+            setText(R.string.permission_request)
+        }
 
         view.findViewById<TextureView>(R.id.cameraView).apply {
             myCamerasManager.setTextureView(this)
@@ -180,15 +199,11 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     override fun onStart() {
         super.onStart()
         Timber.d("onStart")
-        if (isCameraPermissionGranted()) {
-            myCamerasManager.createCamera()
-        } else {
-            requestPermissions(
-                arrayOf(
-                    Manifest.permission.CAMERA,
-                    Manifest.permission.RECORD_AUDIO
-                ), PermissionRequestCode
-            )
+        permissionManager.checkPermissions(this) { granted ->
+            noPermissionsLayout.visibility = if (granted) View.GONE else View.VISIBLE
+            if (granted) {
+                myCamerasManager.createCamera()
+            }
         }
     }
 
@@ -203,23 +218,6 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         permissions: Array<String>,
         grantResults: IntArray
     ) {
-
-        if (requestCode == PermissionRequestCode) {
-            Timber.d("perms, onRequestPermissionsResult, grantResults: $grantResults, permissions: $permissions")
-            if (grantResults.all { it == 1 }) {
-                myCamerasManager.createCamera()
-            } else {
-
-            }
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        }
+        permissionManager.invokePermissionRequest(requestCode, permissions, grantResults)
     }
-
-    private fun isCameraPermissionGranted() =
-        ContextCompat.checkSelfPermission(activity!!, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(
-                    activity!!,
-                    Manifest.permission.RECORD_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED
 }

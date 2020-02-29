@@ -1,3 +1,5 @@
 <resources>
     <string name="vk_login_btn">Войти</string>
+    <string name="no_permissions_description">Нужны права</string>
+    <string name="no_permissions_btn">Настройки</string>
 </resources>
