@@ -50,7 +50,7 @@ class MyCamera(private val context: Context, file: String) {
 
     companion object {
         private const val QR_WINDOW_MS = 5000L
-        const val MIN_VALID_RECORD_TIME_MS = 2000L
+        const val MIN_VALID_RECORD_TIME_MS = 3000L
     }
 
     private val camGlobalId = getGlobalCamId()

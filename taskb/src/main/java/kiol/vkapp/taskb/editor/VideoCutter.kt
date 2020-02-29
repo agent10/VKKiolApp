@@ -1,6 +1,7 @@
 package kiol.vkapp.taskb.editor
 
 import android.media.*
+import android.media.MediaCodec.BUFFER_FLAG_KEY_FRAME
 import android.net.Uri
 import android.os.FileUtils
 import io.reactivex.Completable
@@ -9,10 +10,14 @@ import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.io.*
 import java.nio.ByteBuffer
+import kotlin.math.max
+import kotlin.math.min
 
 class VideoCutter(private val file: String, private val cutFile: String) {
     companion object {
         private const val DEFAULT_BUFFER_SIZE = 2 * 1024 * 1024
+        private const val MinimumCutDurationUs = 800000
+        private const val OffsetMinimumCutDurationUs = 150000
     }
 
 
@@ -90,6 +95,8 @@ class VideoCutter(private val file: String, private val cutFile: String) {
             MediaMetadataRetriever.METADATA_KEY_DURATION
         ).toLong() * 1000L
 
+        retrieverSrc.release()
+
         if (degreesString != null) {
             val degrees = degreesString.toInt()
             if (degrees >= 0) {
@@ -97,14 +104,30 @@ class VideoCutter(private val file: String, private val cutFile: String) {
             }
         }
 
-        if (startUs > 0) {
-            extractor.seekTo(startUs, MediaExtractor.SEEK_TO_NEXT_SYNC)
+        var internalStartUs = startUs
+        var internalEndUs = if (endUs <= 0) durationUs else endUs
+        val durUs = internalEndUs - startUs
+        Timber.d("Try cut with new duration $durUs us")
+        if (durUs < MinimumCutDurationUs) {
+            internalStartUs -= OffsetMinimumCutDurationUs
+            internalStartUs = max(internalStartUs, 0)
+
+            internalEndUs += OffsetMinimumCutDurationUs
+            internalEndUs = min(internalEndUs, durationUs)
+        }
+
+
+
+        if (internalStartUs > 0) {
+            extractor.seekTo(internalStartUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
         }
         val offset = 0
         var trackIndex = -1
         val dstBuf: ByteBuffer = ByteBuffer.allocate(bufferSize)
         val bufferInfo: MediaCodec.BufferInfo = MediaCodec.BufferInfo()
         try {
+
+
             muxer.start()
             while (true) {
                 bufferInfo.offset = offset
@@ -116,7 +139,7 @@ class VideoCutter(private val file: String, private val cutFile: String) {
                 } else {
                     bufferInfo.presentationTimeUs = extractor.sampleTime
 
-                    val internalEndUs = if (endUs <= 0) durationUs else endUs
+
                     if (internalEndUs > 0 && bufferInfo.presentationTimeUs > internalEndUs) {
                         Timber.e("The current sample is over the trim end time.")
                         break
@@ -135,6 +158,7 @@ class VideoCutter(private val file: String, private val cutFile: String) {
         } catch (e: IllegalStateException) {
             Timber.e("The source video file is malformed")
         } finally {
+            extractor.release()
             muxer.release()
         }
         return

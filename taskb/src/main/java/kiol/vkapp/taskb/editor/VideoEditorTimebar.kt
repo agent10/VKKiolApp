@@ -41,7 +41,7 @@ class VideoEditorTimebar @JvmOverloads constructor(
     private val CUT_THUMB_STROKE = 3.pxF
     private val CUT_THUMB_TAP_SPACE = 3.pxF
     private val ARROW_STROKE = 2.pxF
-    private val MIN_CUT_THRESHOLD = 0.1f
+    private val MIN_CUT_THRESHOLD = 0.25f
 
     private val ARROW_WIDTH = 7.pxF
     private val ARROW_HEIGHT = 10.pxF
@@ -134,13 +134,6 @@ class VideoEditorTimebar @JvmOverloads constructor(
         imageView.scaleType = ImageView.ScaleType.CENTER_CROP
         imageView.setImageBitmap(image)
         timebar.addView(imageView)
-    }
-
-    fun setPosition(position: Long, duration: Long) {
-        if (duration != 0L) {
-            currentRelativePos = position.toFloat() / duration.toFloat()
-            invalidate()
-        }
     }
 
     fun setPosition(relativePos: Float) {

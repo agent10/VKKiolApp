@@ -95,6 +95,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
 
         camSwitcher = view.findViewById(R.id.camSwitcher)
         camSwitcher.setOnClickListener {
+            camSwithcProgress.visibility = View.VISIBLE
             changeCamSwithcProgress(true).withEndAction {
                 myCamerasManager.switchCameraFace()
             }
@@ -153,7 +154,9 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         }
 
         myCamerasManager.onCameraSwitchingFinished = {
-            changeCamSwithcProgress(false)
+            changeCamSwithcProgress(false).withEndAction {
+                camSwithcProgress.visibility = View.INVISIBLE
+            }
         }
 
         myCamerasManager.onCamRecordEnd = {

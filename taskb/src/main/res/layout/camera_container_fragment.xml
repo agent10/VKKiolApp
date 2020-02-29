@@ -80,6 +80,7 @@
         android:indeterminateDrawable="@drawable/cam_switch_rotate"
         android:scaleX="0"
         android:scaleY="0"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

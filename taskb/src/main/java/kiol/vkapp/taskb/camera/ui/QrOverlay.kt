@@ -36,7 +36,6 @@ class QrOverlay @JvmOverloads constructor(
             animScale = it.animatedValue as Float
             invalidate()
         }
-        start()
     }
 
     private var alphaValue = 0f
@@ -97,42 +96,46 @@ class QrOverlay @JvmOverloads constructor(
     private val qrRect = RectF()
 
     fun drawQr(qrDrawModel: QrDrawModel) {
-        this.qrDrawModel = qrDrawModel
-        centerAnimatorX.cancel()
-        centerAnimatorY.cancel()
-        rectSizeAnimator.cancel()
-        angleAnimator.cancel()
+        if (this.qrDrawModel != qrDrawModel) {
+            this.qrDrawModel = qrDrawModel
+            centerAnimatorX.cancel()
+            centerAnimatorY.cancel()
+            rectSizeAnimator.cancel()
+            angleAnimator.cancel()
 
-        val toShow = qrDrawModel.size > 0.1f
-        if (toShow) {
-            centerAnimatorX.setFloatValues(centerPoint.x, qrDrawModel.x)
-            centerAnimatorY.setFloatValues(centerPoint.y, qrDrawModel.y)
-            rectSizeAnimator.setFloatValues(rectSize, qrDrawModel.size * QRRectScale)
+            val toShow = qrDrawModel.size > 0.1f
+            if (toShow) {
+                centerAnimatorX.setFloatValues(centerPoint.x, qrDrawModel.x)
+                centerAnimatorY.setFloatValues(centerPoint.y, qrDrawModel.y)
+                rectSizeAnimator.setFloatValues(rectSize, qrDrawModel.size * QRRectScale)
 
-            var newAngle = if (qrDrawModel.angle < 0) 360f + qrDrawModel.angle else qrDrawModel.angle
-            if (newAngle.isNaN()) newAngle = 0f
-            if (angle.isNaN()) angle = 0f
-            angleAnimator.setFloatValues(angle, newAngle)
+                var newAngle = if (qrDrawModel.angle < 0) 360f + qrDrawModel.angle else qrDrawModel.angle
+                if (newAngle.isNaN()) newAngle = 0f
+                if (angle.isNaN()) angle = 0f
+                angleAnimator.setFloatValues(angle, newAngle)
 
-            centerAnimatorX.start()
-            centerAnimatorY.start()
-            rectSizeAnimator.start()
-            angleAnimator.start()
+                centerAnimatorX.start()
+                centerAnimatorY.start()
+                rectSizeAnimator.start()
+                angleAnimator.start()
+            }
+
+            if (isShowing && !toShow) {
+                scaleAnimator.cancel()
+                alphaAnimator.cancel()
+                alphaAnimator.setFloatValues(alphaValue, 0.0f)
+                alphaAnimator.start()
+                isShowing = false
+            } else if (!isShowing && toShow) {
+                scaleAnimator.start()
+                alphaAnimator.cancel()
+                alphaAnimator.setFloatValues(alphaValue, 1.0f)
+                alphaAnimator.start()
+                isShowing = true
+            }
+
+            invalidate()
         }
-
-        if (isShowing && !toShow) {
-            alphaAnimator.cancel()
-            alphaAnimator.setFloatValues(alphaValue, 0.0f)
-            alphaAnimator.start()
-            isShowing = false
-        } else if (!isShowing && toShow) {
-            alphaAnimator.cancel()
-            alphaAnimator.setFloatValues(alphaValue, 1.0f)
-            alphaAnimator.start()
-            isShowing = true
-        }
-
-        invalidate()
     }
 
     override fun onDraw(canvas: Canvas?) {

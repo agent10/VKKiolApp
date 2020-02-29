@@ -21,8 +21,10 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.FileDataSource
 import com.google.android.exoplayer2.util.Util
 import io.reactivex.Flowable
+import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.commonui.plusAssign
 import kiol.vkapp.commonui.pxF
 import kiol.vkapp.taskb.*
@@ -45,6 +47,8 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
     private var initialDuration = -1L
 
+    private var originalMediaSource: MediaSource? = null
+
     private lateinit var timebar: VideoEditorTimebar
     private lateinit var playerView: PlayerView
     private lateinit var progressBar: ProgressBar
@@ -55,6 +59,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
     private val handler = Handler()
 
+    private var saveOnDestroy = false
     private var playOnAppResume = false
 
     companion object {
@@ -91,7 +96,6 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
                     }
                 }
                 R.id.save -> {
-                    videoEditor.cut(lastStartUs, lastEndUs, lastVolume == -1f)
                     selectFileToSave()
                 }
                 else -> {
@@ -150,6 +154,15 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
         compositeDisposable.clear()
     }
 
+    override fun onStop() {
+        super.onStop()
+
+        if (saveOnDestroy) {
+            videoEditor.cut(lastStartUs, lastEndUs, lastVolume == -1f)
+            saveOnDestroy = false
+        }
+    }
+
     private fun releasePlayer() {
         exoPlayer?.stop()
         exoPlayer?.release()
@@ -184,11 +197,9 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
             }
         })
 
-        compositeDisposable += Flowable.interval(100, TimeUnit.MILLISECONDS)
+        compositeDisposable += Flowable.interval(50, TimeUnit.MILLISECONDS).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
-                timebar.setPosition(exoPlayer?.currentPosition ?: 0L, exoPlayer?.duration ?: 0L)
-
                 exoPlayer?.let {
                     if (it.duration > 0L) {
                         if (initialDuration == -1L) {
@@ -200,6 +211,9 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
             }
 
         getSimpleRouter()
+
+        val uri = Uri.parse(getTempVideoFile())
+        originalMediaSource = createMediaSource(uri)
         updateMediaSource()
     }
 
@@ -214,9 +228,6 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     }
 
     private fun updateMediaSource(left: Float = 0.0f, right: Float = 1.0f) {
-
-        val uri = Uri.parse(getTempVideoFile())
-
         lastStartUs = if (initialDuration == -1L) {
             0L
         } else {
@@ -228,7 +239,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
             (initialDuration * right * 1000L).toLong()
         }
 
-        val mediaSource = ClippingMediaSource(createMediaSource(uri), lastStartUs, lastEndUs)
+        val mediaSource = ClippingMediaSource(originalMediaSource, lastStartUs, lastEndUs)
         mediaSource.let {
             exoPlayer?.prepare(it)
             exoPlayer?.playWhenReady = true
@@ -236,6 +247,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     }
 
     private fun selectFileToSave() {
+        saveOnDestroy = true
         playOnAppResume = false
         val exportIntent = Intent(Intent.ACTION_CREATE_DOCUMENT)
         exportIntent.addCategory(Intent.CATEGORY_OPENABLE)
