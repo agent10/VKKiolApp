@@ -60,7 +60,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     private val handler = Handler()
 
     private var saveOnDestroy = false
-    private var playOnAppResume = false
+    private var playOnAppResume = true
 
     companion object {
         private const val WAIT_FOR_MEDIARECORDER = 1000L
