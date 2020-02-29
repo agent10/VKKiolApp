@@ -2,24 +2,28 @@ package kiol.vkapp.taskb.camera
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.LinearGradient
+import android.graphics.Shader
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.RectShape
 import android.os.Bundle
 import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewPropertyAnimator
-import android.widget.*
-import androidx.core.content.ContextCompat
+import android.widget.ImageButton
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
-import com.google.android.material.button.MaterialButton
-import io.reactivex.disposables.CompositeDisposable
-import kiol.vkapp.commonui.permissions.NoPermissionBtnListener
 import kiol.vkapp.commonui.permissions.PermissionManager
 import kiol.vkapp.commonui.pxF
 import kiol.vkapp.taskb.R
-import kiol.vkapp.taskb.camera.MyCamera.CameraType.*
-import kiol.vkapp.taskb.camera.MyCamera.Companion.MIN_VALID_RECORD_TIME_MS
+import kiol.vkapp.taskb.camera.MyCamera.CameraType.Back
+import kiol.vkapp.taskb.camera.MyCamera.CameraType.Front
 import kiol.vkapp.taskb.camera.ui.CheckableImageButton
 import kiol.vkapp.taskb.camera.ui.QrDialog
 import kiol.vkapp.taskb.camera.ui.QrOverlay
@@ -29,10 +33,10 @@ import kiol.vkapp.taskb.getTempVideoFile
 import kotlinx.android.synthetic.main.camera_container_fragment.*
 import timber.log.Timber
 
+
 class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
 
     companion object {
-        private const val PermissionRequestCode = 42
         private const val AnimDuration = 100L
     }
 
@@ -69,6 +73,9 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Timber.d("onViewCreated")
+
+        view.findViewById<ViewGroup>(R.id.rootCameraLayout).doOnLayout {
+        }
 
         noPermissionsLayout = view.findViewById(R.id.rootNoPermissionsLayout)
 

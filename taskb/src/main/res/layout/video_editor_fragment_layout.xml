@@ -13,7 +13,16 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:resize_mode="zoom"
+        app:shutter_background_color="@color/windowBackground"
         app:use_controller="false" />
+
+    <kiol.vkapp.taskb.camera.ui.Vignette
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -29,7 +38,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:alpha="0.0"
-        android:background="@android:color/white"
+        android:background="@color/windowBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

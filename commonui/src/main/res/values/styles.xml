@@ -10,6 +10,7 @@
         <item name="android:colorBackground">@color/colorBackground</item>
         <item name="android:windowBackground">@color/colorBackground</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:navigationBarColor">#FF000000</item>
 
         <item name="toolbarStyle">@style/ToolBarStyle</item>
         <item name="popupMenuStyle">@style/PopupMenuStyle</item>
