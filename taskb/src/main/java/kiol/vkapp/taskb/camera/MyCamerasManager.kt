@@ -31,6 +31,7 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
     var onQrReceived: (qrBody: String) -> Unit = {}
 
     private var disposable: Disposable? = null
+    private var ignoreCloseError = false
 
     fun setTextureView(textureView: TextureView) {
         this.textureView = textureView
@@ -45,6 +46,7 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
     }
 
     private fun createCamera(cameraType: MyCamera.CameraType = MyCamera.CameraType.Back) {
+        ignoreCloseError = false
         val nCamera = MyCamera(context, tempFile)
         nCamera.cameraType = cameraType
         nCamera.setTextureView(textureView)
@@ -119,7 +121,6 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
                 }
 
                 if (it == MyCamera.CameraState.Closed || it == MyCamera.CameraState.Error) {
-                    currentCamera?.onCamStateChanged = {}
                     handleCurrentFinishedState(it == MyCamera.CameraState.Error)
                 }
             }
@@ -141,17 +142,21 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
     }
 
     private fun handleCurrentFinishedState(isError: Boolean) {
-        currentCamera = null
-        onCameraChanged(null)
-
-        if (nextCamera != null) {
-            nextCamera?.let {
-                setNewCam(it)
-            }
-            nextCamera = null
-        } else {
-            if (isError) {
+        if (isError) {
+            if (!ignoreCloseError) {
                 createCamera()
+            }
+            ignoreCloseError = false
+        } else {
+            currentCamera?.onCamStateChanged = {}
+            currentCamera = null
+            onCameraChanged(null)
+
+            if (nextCamera != null) {
+                nextCamera?.let {
+                    setNewCam(it)
+                }
+                nextCamera = null
             }
         }
     }
@@ -162,6 +167,7 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
         disposable?.dispose()
         disposable = null
 
+        ignoreCloseError = true
         currentCamera?.stopCamera()
     }
 }

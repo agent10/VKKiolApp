@@ -26,6 +26,11 @@ import timber.log.Timber
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
+private var CAM_GLOBAL_ID = 0
+private fun getGlobalCamId(): String {
+    return ("MyCamId$CAM_GLOBAL_ID").also { CAM_GLOBAL_ID++ }
+}
+
 class MyCamera(private val context: Context, file: String) {
 
     enum class CameraState {
@@ -44,11 +49,6 @@ class MyCamera(private val context: Context, file: String) {
     companion object {
         private const val QR_WINDOW_MS = 5000L
         const val MIN_VALID_RECORD_TIME_MS = 2000L
-
-        private var CAM_GLOBAL_ID = 0
-        private fun getGlobalCamId(): String {
-            return ("MyCamId$CAM_GLOBAL_ID").also { CAM_GLOBAL_ID++ }
-        }
     }
 
     private val camGlobalId = getGlobalCamId()
@@ -205,7 +205,7 @@ class MyCamera(private val context: Context, file: String) {
         val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         manager.openCamera(cameraConfig.cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(camera: CameraDevice) {
-                Timber.d("onOpened")
+                Timber.d("onOpened($camGlobalId)")
                 cameraDevice = camera
                 try {
                     startCameraSession(camera, cameraConfig) {
@@ -220,15 +220,15 @@ class MyCamera(private val context: Context, file: String) {
             override fun onClosed(camera: CameraDevice) {
                 super.onClosed(camera)
                 cameraState = CameraState.Closed
-                Timber.d("onClosed")
+                Timber.d("onClosed($camGlobalId)")
             }
 
             override fun onDisconnected(camera: CameraDevice) {
-                Timber.d("onDisconnected")
+                Timber.d("onDisconnected($camGlobalId)")
             }
 
             override fun onError(camera: CameraDevice, error: Int) {
-                Timber.d("onError, e: $error")
+                Timber.d("onError($camGlobalId), e: $error")
                 cameraState = CameraState.Error
             }
         }, backgroundHandler)
@@ -236,33 +236,40 @@ class MyCamera(private val context: Context, file: String) {
 
     @Synchronized
     fun startCamera() {
-        Timber.d("try startCamera")
+        Timber.d("try startCamera($camGlobalId)")
         if (cameraState == CameraState.Idle) {
-            Timber.d("startCamera")
+            Timber.d("startCamera($camGlobalId)")
             waitForSurface()
         }
     }
 
     @Synchronized
     fun stopCamera() {
-        Timber.d("try stopCamera")
+        Timber.d("try stopCamera($camGlobalId)")
         recognizer.release()
         if (cameraState == CameraState.Ready) {
-            Timber.d("stopCamera")
-
             cameraState = CameraState.Closing
+            stopCameraForce()
+        } else if (cameraState == CameraState.Error) {
+            Timber.d("try stopCamera($camGlobalId) on Error state")
+            cameraState = CameraState.Closing
+            stopCameraForce()
+        }
+    }
 
-            backgroundHandler.post {
-                mediaRecorder.stop()
-                torch.reset()
+    private fun stopCameraForce() {
+        Timber.d("stopCameraForce($camGlobalId)")
 
-                backgroundHandler.removeCallbacksAndMessages(null)
+        backgroundHandler.post {
+            mediaRecorder.stop()
+            torch.reset()
 
-                Timber.d("try close camera device")
-                cameraDevice?.let {
-                    cameraDevice?.close()
-                    cameraDevice = null
-                }
+            backgroundHandler.removeCallbacksAndMessages(null)
+
+            Timber.d("try close camera($camGlobalId) device: $cameraDevice")
+            cameraDevice?.let {
+                cameraDevice?.close()
+                cameraDevice = null
             }
         }
     }
