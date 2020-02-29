@@ -42,18 +42,18 @@
 
     <kiol.vkapp.taskb.camera.ui.RecordButton
         android:id="@+id/recordBtn"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_marginBottom="56dp"
+        android:layout_width="@dimen/cam_rec_btn_size"
+        android:layout_height="@dimen/cam_rec_btn_size"
+        android:layout_marginBottom="@dimen/spacing_xxlarge"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
     <kiol.vkapp.taskb.camera.ui.CheckableImageButton
         android:id="@+id/torchSwitcher"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginRight="32dp"
+        android:layout_width="@dimen/cam_btn_size"
+        android:layout_height="@dimen/cam_btn_size"
+        android:layout_marginEnd="@dimen/spacing_large"
         android:background="@drawable/camera_btn_background"
         android:src="@drawable/ic_torch"
         app:layout_constraintBottom_toBottomOf="@id/recordBtn"
@@ -62,9 +62,9 @@
 
     <ImageButton
         android:id="@+id/camSwitcher"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginLeft="32dp"
+        android:layout_width="@dimen/cam_btn_size"
+        android:layout_height="@dimen/cam_btn_size"
+        android:layout_marginStart="@dimen/spacing_large"
         android:background="@drawable/camera_btn_background"
         android:src="@drawable/ic_cam_switch"
         app:layout_constraintBottom_toBottomOf="@id/recordBtn"

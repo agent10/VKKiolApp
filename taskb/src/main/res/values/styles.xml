@@ -3,6 +3,12 @@
     <style name="AppTheme" parent="VKKiolAppTheme">
         <item name="android:windowBackground">@color/windowBackground</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
-        <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialog</item>
+        <item name="bottomSheetDialogTheme">@style/TransparentNavBarBottomSheetDialog</item>
+    </style>
+
+    <style name="TransparentNavBarBottomSheetDialog" parent="CustomBottomSheetDialog">
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:navigationBarColor">@color/bottomSheetBackground</item>
+        <item name="android:windowLightNavigationBar" tools:ignore="NewApi">true</item>
     </style>
 </resources>

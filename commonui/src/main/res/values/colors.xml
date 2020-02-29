@@ -5,4 +5,8 @@
     <color name="colorBackground">#FFFFFF</color>
     <color name="colorAccent">#4986CC</color>
     <color name="statusBarColor">#000000</color>
+
+    <color name="bottomSheetBackground">#FFFFFF</color>
+
+
 </resources>

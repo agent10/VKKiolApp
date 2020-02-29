@@ -5,11 +5,11 @@
     <item
         android:id="@+id/soundOff"
         android:icon="@drawable/ic_sound_off"
-        android:title="Sound"
+        android:title="@string/menu_sound_title"
         app:showAsAction="always" />
     <item
         android:id="@+id/save"
         android:icon="@drawable/ic_save"
-        android:title="Save"
+        android:title="@string/menu_save_title"
         app:showAsAction="always" />
 </menu>

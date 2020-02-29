@@ -17,7 +17,7 @@
         android:id="@+id/qrBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="@dimen/spacing_normal"
         android:ellipsize="end"
         android:lines="1"
         android:textAppearance="@style/BottomSheetInfoTextAppearence" />
@@ -27,7 +27,7 @@
         style="@style/VKKiolButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Open"
+        android:layout_marginTop="@dimen/spacing_normal"
+        android:text="@string/qr_open"
         android:theme="@style/ThemeMaterial" />
 </LinearLayout>

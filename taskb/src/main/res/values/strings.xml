@@ -8,5 +8,9 @@
     <string name="file_save_error">Error with saving</string>
     <string name="qr_link">External link</string>
     <string name="qr_text">QR code</string>
+    <string name="qr_open">Open</string>
     <string name="fatal_camera_error">Fatal camera error</string>
+
+    <string name="menu_sound_title">Sound</string>
+    <string name="menu_save_title">Save</string>
 </resources>
