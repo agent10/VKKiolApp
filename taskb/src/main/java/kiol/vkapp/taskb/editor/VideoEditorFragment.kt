@@ -23,6 +23,7 @@ import com.google.android.exoplayer2.util.Util
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import kiol.vkapp.commonui.plusAssign
 import kiol.vkapp.commonui.pxF
 import kiol.vkapp.taskb.*
 import kiol.vkapp.taskb.editor.VideoEditorTimebar.SelectedCutThumb.*

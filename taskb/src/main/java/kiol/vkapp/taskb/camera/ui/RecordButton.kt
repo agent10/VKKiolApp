@@ -4,6 +4,7 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.shapes.ArcShape
+import android.media.MediaActionSound
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -82,8 +83,22 @@ class RecordButton @JvmOverloads constructor(
 
     private val progressRect = RectF()
 
+    private lateinit var sound: MediaActionSound
+
     init {
         setWillNotDraw(false)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        sound = MediaActionSound()
+        sound.load(MediaActionSound.START_VIDEO_RECORDING)
+        sound.load(MediaActionSound.STOP_VIDEO_RECORDING)
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        sound.release()
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -97,6 +112,7 @@ class RecordButton @JvmOverloads constructor(
             MotionEvent.ACTION_DOWN -> {
                 progressAnimator.cancel()
                 progressAnimator.start()
+                playBeepSound(true)
                 callback.onRecord(true)
                 setScale(true)
                 return true
@@ -110,12 +126,17 @@ class RecordButton @JvmOverloads constructor(
                 return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                playBeepSound(false)
                 progressAnimator.cancel()
                 progressValue = 0.0f
                 return true
             }
         }
         return super.onTouchEvent(event)
+    }
+
+    private fun playBeepSound(start: Boolean) {
+        sound.play(if (start) MediaActionSound.START_VIDEO_RECORDING else MediaActionSound.STOP_VIDEO_RECORDING)
     }
 
     private fun handleStopRecording() {
