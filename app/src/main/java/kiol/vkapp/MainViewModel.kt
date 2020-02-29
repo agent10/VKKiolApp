@@ -8,8 +8,8 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.processors.PublishProcessor
 import kiol.vkapp.commondata.domain.DocItem
 import kiol.vkapp.commondata.domain.docs.DocsUseCase
+import kiol.vkapp.commonui.plusAssign
 import kiol.vkapp.utils.DocsDownloadManager
-import kiol.vkapp.utils.plusAssign
 import timber.log.Timber
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {

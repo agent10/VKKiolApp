@@ -50,6 +50,7 @@ class DocsAdapter(
     }
 
     class DocViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+        val root: View = v.findViewById(R.id.rootDocItemView)
         val titleTv: TextView = v.findViewById(R.id.docTitleTv)
         val imageTv: ImageView = v.findViewById(R.id.docImageIv)
         val infoTv: TextView = v.findViewById(R.id.docInfoTv)

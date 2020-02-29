@@ -1,12 +1,15 @@
 package kiol.vkapp
 
 import android.app.Application
+import io.reactivex.plugins.RxJavaPlugins
+import kiol.vkapp.commonui.VKBaseApp
 import timber.log.Timber
 
-class TheApp : Application() {
+class TheApp : VKBaseApp() {
     override fun onCreate() {
         super.onCreate()
-
-        Timber.plant(Timber.DebugTree())
+        RxJavaPlugins.setErrorHandler {
+            Timber.e("UndeliverableException $it")
+        }
     }
 }

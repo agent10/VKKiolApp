@@ -17,7 +17,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.vk.api.sdk.VK
 import io.reactivex.disposables.CompositeDisposable
 import kiol.vkapp.commondata.domain.DocItem
-import kiol.vkapp.utils.plusAssign
+import kiol.vkapp.commonui.plusAssign
 import timber.log.Timber
 
 class MainFragment : Fragment(R.layout.main_fragment_layout) {
@@ -47,7 +47,7 @@ class MainFragment : Fragment(R.layout.main_fragment_layout) {
         }
 
         adapter = DocsAdapter({ vh, item ->
-            vh.imageTv.setOnClickListener {
+            vh.root.setOnClickListener {
                 openContent(item)
             }
 
