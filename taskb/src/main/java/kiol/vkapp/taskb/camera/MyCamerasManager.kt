@@ -96,7 +96,6 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
                 if (it is MyCamera.Record.End) {
                     if (it.timeMs >= MIN_VALID_RECORD_TIME_MS) {
                         this@MyCamerasManager.onCamRecordEnd()
-
                     } else {
                         Toast.makeText(context, R.string.video_too_short, Toast.LENGTH_SHORT).show()
                         createCamera()
@@ -143,10 +142,16 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
 
     private fun handleCurrentFinishedState(isError: Boolean) {
         if (isError) {
-            if (!ignoreCloseError) {
-                createCamera()
+            val lastE = currentCamera?.lastException
+            if (lastE is MyCamera.CameraFatalException) {
+                Timber.e(lastE)
+                Toast.makeText(context, R.string.fatal_camera_error, Toast.LENGTH_SHORT).show()
+            } else {
+                if (!ignoreCloseError) {
+                    createCamera()
+                }
+                ignoreCloseError = false
             }
-            ignoreCloseError = false
         } else {
             currentCamera?.onCamStateChanged = {}
             currentCamera = null

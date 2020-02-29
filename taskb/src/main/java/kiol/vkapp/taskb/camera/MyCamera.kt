@@ -33,6 +33,8 @@ private fun getGlobalCamId(): String {
 
 class MyCamera(private val context: Context, file: String) {
 
+    class CameraFatalException(error: String) : Exception(error)
+
     enum class CameraState {
         Idle, Initializing, Ready, Closing, Closed, Error
     }
@@ -99,6 +101,10 @@ class MyCamera(private val context: Context, file: String) {
 
     private val zoomer = Zoomer(context, backgroundHandler)
 
+    //TODO
+    var lastException: Exception? = null
+        private set
+
     init {
         Timber.d("Camera($camGlobalId) constructed with $cameraState state")
     }
@@ -152,6 +158,7 @@ class MyCamera(private val context: Context, file: String) {
             override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?) = true
 
             override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
+                Timber.d("onSurfaceTextureAvailable for ($camGlobalId)")
                 textureAvailableCallback(surface)
             }
         }
@@ -193,6 +200,8 @@ class MyCamera(private val context: Context, file: String) {
 
     @SuppressLint("MissingPermission")
     private fun setupCamera() {
+        Timber.d("setupCamera($camGlobalId)")
+
         val cameraConfig = cameraConfigurator.createConfig(
             null,
             textureView.width,
@@ -203,6 +212,7 @@ class MyCamera(private val context: Context, file: String) {
         textureView.configureTransform(Surface.ROTATION_0, cameraConfig.previewSize)
 
         val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        Timber.d("try open camera($camGlobalId)")
         manager.openCamera(cameraConfig.cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(camera: CameraDevice) {
                 Timber.d("onOpened($camGlobalId)")
@@ -213,6 +223,7 @@ class MyCamera(private val context: Context, file: String) {
                     }
                 } catch (e: Exception) {
                     Timber.e(e)
+                    lastException = e
                     cameraState = CameraState.Error
                 }
             }

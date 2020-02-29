@@ -5,6 +5,7 @@ import android.media.MediaRecorder
 import android.util.Size
 import android.view.Surface
 import kiol.vkapp.taskb.camera.CameraConfigurator
+import kiol.vkapp.taskb.camera.MyCamera
 import timber.log.Timber
 
 class MediaRecorderInternal(private val file: String) {
@@ -60,20 +61,24 @@ class MediaRecorderInternal(private val file: String) {
             Timber.e("MediaRecorder, error: mr = $mr, what = $what, $extra = $extra")
 
         }
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-        mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-        mediaRecorder.setOutputFile(file)
-        mediaRecorder.setVideoEncodingBitRate(profile.videoBitRate)
-        mediaRecorder.setAudioEncodingBitRate(profile.audioBitRate)
-        mediaRecorder.setAudioSamplingRate(profile.audioSampleRate)
-        mediaRecorder.setVideoFrameRate(profile.videoFrameRate)
-        mediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight)
-        mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-        mediaRecorder.setOrientationHint(if (cameraConfig.isFaceCamera) 270 else 90)
-        mediaRecorder.prepare()
-        configured = true
+        try {
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+            mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            mediaRecorder.setOutputFile(file)
+            mediaRecorder.setVideoEncodingBitRate(profile.videoBitRate)
+            mediaRecorder.setAudioEncodingBitRate(profile.audioBitRate)
+            mediaRecorder.setAudioSamplingRate(profile.audioSampleRate)
+            mediaRecorder.setVideoFrameRate(profile.videoFrameRate)
+            mediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight)
+            mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            mediaRecorder.setOrientationHint(if (cameraConfig.isFaceCamera) 270 else 90)
+            mediaRecorder.prepare()
+            configured = true
+        } catch (e: Exception) {
+            throw MyCamera.CameraFatalException("MediaRecorder config failed")
+        }
     }
 
     private fun chooseCamcorderProfile(cameraConfig: CameraConfigurator.Config): CamcorderProfile {

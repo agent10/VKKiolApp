@@ -8,5 +8,6 @@
     <string name="file_save_error">Ошибка при сохранении</string>
     <string name="qr_link">Внешняя ссылка</string>
     <string name="qr_text">QR код</string>
+    <string name="fatal_camera_error">Полный швах, ничё не работает</string>
 
 </resources>
