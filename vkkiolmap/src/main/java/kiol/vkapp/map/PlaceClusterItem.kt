@@ -1,4 +1,4 @@
-package kiol.vkapp.taskc
+package kiol.vkapp.map
 
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.clustering.ClusterItem

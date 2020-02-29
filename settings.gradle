@@ -1,2 +1,2 @@
-include ':app', ':commondata', ':commonui', ':taskb', 'taskc'
+include ':app', ':commondata', ':commonui', ':taskb', 'vkkiolmap'
 rootProject.name='VKKiolApp'

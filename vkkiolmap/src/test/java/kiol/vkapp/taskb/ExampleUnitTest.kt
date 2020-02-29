@@ -1,4 +1,4 @@
-package kiol.vkapp.taskc
+package kiol.vkapp.map
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

@@ -1,4 +1,4 @@
-package kiol.vkapp.taskc.renderers
+package kiol.vkapp.map.renderers
 
 import android.content.Context
 import android.graphics.*
@@ -21,7 +21,7 @@ import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commonui.px
 import kiol.vkapp.commonui.pxF
-import kiol.vkapp.taskc.PlaceClusterItem
+import kiol.vkapp.map.PlaceClusterItem
 import timber.log.Timber
 import java.security.MessageDigest
 import java.util.concurrent.Executors

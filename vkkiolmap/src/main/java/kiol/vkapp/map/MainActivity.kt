@@ -1,4 +1,4 @@
-package kiol.vkapp.taskc
+package kiol.vkapp.map
 
 import com.vk.api.sdk.VKApiConfig
 import com.vk.api.sdk.VKDefaultValidationHandler

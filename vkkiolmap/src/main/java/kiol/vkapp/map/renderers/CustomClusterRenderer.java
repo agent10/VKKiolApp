@@ -1,4 +1,4 @@
-package kiol.vkapp.taskc.renderers;
+package kiol.vkapp.map.renderers;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;

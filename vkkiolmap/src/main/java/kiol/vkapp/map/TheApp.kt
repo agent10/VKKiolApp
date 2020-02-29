@@ -1,4 +1,4 @@
-package kiol.vkapp.taskc
+package kiol.vkapp.map
 
 import android.app.Application
 import io.reactivex.plugins.RxJavaPlugins

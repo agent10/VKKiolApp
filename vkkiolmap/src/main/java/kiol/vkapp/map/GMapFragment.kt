@@ -1,4 +1,4 @@
-package kiol.vkapp.taskc
+package kiol.vkapp.map
 
 import android.os.Bundle
 import android.view.View
@@ -19,7 +19,7 @@ import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.places.PlacesUseCase
-import kiol.vkapp.taskc.renderers.MarkerImageGenerator
+import kiol.vkapp.map.renderers.MarkerImageGenerator
 import timber.log.Timber
 
 class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback {

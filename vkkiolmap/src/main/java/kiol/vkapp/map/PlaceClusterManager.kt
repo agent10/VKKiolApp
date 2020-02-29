@@ -1,4 +1,4 @@
-package kiol.vkapp.taskc
+package kiol.vkapp.map
 
 import android.content.Context
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -7,8 +7,8 @@ import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.google.maps.android.clustering.algo.ScreenBasedAlgorithmAdapter
-import kiol.vkapp.taskc.renderers.MarkerImageGenerator
-import kiol.vkapp.taskc.renderers.PlaceClusterRenderer
+import kiol.vkapp.map.renderers.MarkerImageGenerator
+import kiol.vkapp.map.renderers.PlaceClusterRenderer
 
 class PlaceClusterManager(
     context: Context,

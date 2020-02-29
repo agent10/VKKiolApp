@@ -1,4 +1,4 @@
-package kiol.vkapp.taskc.renderers
+package kiol.vkapp.map.renderers
 
 import android.content.Context
 import android.location.Location
@@ -10,7 +10,7 @@ import com.google.maps.android.SphericalUtil
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterManager
 import kiol.vkapp.commondata.domain.PlaceType
-import kiol.vkapp.taskc.PlaceClusterItem
+import kiol.vkapp.map.PlaceClusterItem
 import timber.log.Timber
 
 class PlaceClusterRenderer(
