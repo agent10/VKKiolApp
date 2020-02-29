@@ -49,6 +49,7 @@ class ImageViewerFragment : Fragment(R.layout.image_viewer_fragment_layout) {
 
         arguments?.getString(URL)?.let {
             val circularProgressDrawable = CircularProgressDrawable(requireContext()).apply {
+                setColorSchemeColors(Color.WHITE)
                 setStyle(CircularProgressDrawable.DEFAULT)
                 start()
             }
