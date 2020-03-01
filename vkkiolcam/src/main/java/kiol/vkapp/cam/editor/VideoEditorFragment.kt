@@ -1,6 +1,8 @@
 package kiol.vkapp.cam.editor
 
+import android.app.Activity
 import android.app.Activity.RESULT_OK
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -63,8 +65,17 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
     companion object {
         private const val WAIT_FOR_MEDIARECORDER = 1000L
+        private const val ASK_PLAYER_POSITION_INTERVAL = 50L
         private const val VIDEO_FILE_NAME_TO_SAVE = "vktaskbmyvideo.mp4"
         private const val FILE_EXPORT_REQUEST_CODE = 43
+        private const val ANIMATION_DURATION = 250L
+        private const val ANIMATION_START_DURATION = 1000L
+        private const val SEEK_DIV = 100L
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        createVideoEditor()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -107,8 +118,8 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
             if (inProcess) {
                 exoPlayer?.playWhenReady = false
                 val roundPos = when (activeThumb) {
-                    LEFT -> ((exoPlayer?.duration ?: 0L) * left / 100f).roundToLong()
-                    RIGHT -> ((exoPlayer?.duration ?: 0L) * right / 100f).roundToLong()
+                    LEFT -> ((exoPlayer?.duration ?: 0L) * left / SEEK_DIV).roundToLong()
+                    RIGHT -> ((exoPlayer?.duration ?: 0L) * right / SEEK_DIV).roundToLong()
                     NONE -> 0L
                 }
                 exoPlayer?.seekTo(roundPos * 100L)
@@ -118,8 +129,8 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
                 exoPlayer?.seekTo(0)
                 updateView.animate().alpha(1.0f).withEndAction {
                     updateMediaSource(left, right)
-                    updateView.animate().alpha(0.0f).duration = 250
-                }.duration = 250
+                    updateView.animate().alpha(0.0f).duration = ANIMATION_DURATION
+                }.duration = ANIMATION_DURATION
             }
         }
 
@@ -127,9 +138,8 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
         handler.postDelayed({
             progressBar.visibility = View.GONE
-            createVideoEditor()
-            getThumbnails()
             setupPlayer()
+            getThumbnails()
             showUIAnimated()
         }, WAIT_FOR_MEDIARECORDER)
     }
@@ -179,8 +189,8 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     }
 
     private fun showUIAnimated() {
-        toolbar.animate().alpha(1.0f).translationY(10.pxF).duration = 1000
-        timebar.animate().alpha(1.0f).translationY((-10).pxF).duration = 1000
+        toolbar.animate().alpha(1.0f).translationY(10.pxF).duration = ANIMATION_START_DURATION
+        timebar.animate().alpha(1.0f).translationY((-10).pxF).duration = ANIMATION_START_DURATION
     }
 
     private fun setupPlayer() {
@@ -196,7 +206,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
             }
         })
 
-        compositeDisposable += Flowable.interval(50, TimeUnit.MILLISECONDS).subscribeOn(Schedulers.io())
+        compositeDisposable += Flowable.interval(ASK_PLAYER_POSITION_INTERVAL, TimeUnit.MILLISECONDS).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
                 exoPlayer?.let {
@@ -257,25 +267,29 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == FILE_EXPORT_REQUEST_CODE && resultCode == RESULT_OK) {
-            data?.let {
-                val uri = data.data
-                uri?.let {
-                    requireContext().contentResolver
-                        .openFileDescriptor(uri, "rwt")?.fileDescriptor?.let {
-                        compositeDisposable += videoEditor.saveCuttedFile(it)
-                            .doOnEvent {
-                                playOnAppResume = true
-                            }
-                            .subscribe({
-                                parentFragmentManager.popBackStack()
-                                Toast.makeText(requireContext(), R.string.file_saved, Toast.LENGTH_SHORT).show()
-                            }, {
-                                exoPlayer?.playWhenReady = true
-                                Toast.makeText(requireContext(), R.string.file_save_error, Toast.LENGTH_SHORT).show()
-                            })
+        if (requestCode == FILE_EXPORT_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                data?.let {
+                    val uri = data.data
+                    uri?.let {
+                        requireContext().contentResolver
+                            .openFileDescriptor(uri, "rwt")?.fileDescriptor?.let {
+                            compositeDisposable += videoEditor.saveCuttedFile(it)
+                                .doOnEvent {
+                                    playOnAppResume = true
+                                }
+                                .subscribe({
+                                    parentFragmentManager.popBackStack()
+                                    Toast.makeText(requireContext(), R.string.file_saved, Toast.LENGTH_SHORT).show()
+                                }, {
+                                    exoPlayer?.playWhenReady = true
+                                    Toast.makeText(requireContext(), R.string.file_save_error, Toast.LENGTH_SHORT).show()
+                                })
+                        }
                     }
                 }
+            } else {
+                exoPlayer?.playWhenReady = true
             }
         }
     }

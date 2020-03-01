@@ -98,6 +98,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         torch.setOnClickListener {
             myCamerasManager.switchTorch()
         }
+        torch.alpha = if (myCamerasManager.isBackLastCamType()) 1.0f else 0.0f
 
         val recordBtn = view.findViewById<RecordButton>(R.id.recordBtn)
         recordBtn.callback = object : RecordButton.Callback {
@@ -107,11 +108,13 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
 
             override fun onRecord(started: Boolean) {
                 if (started) {
+                    setEnableQrCallback(false)
                     myCamerasManager.startRecord()
 
                     changeCamSwitchButton(false)
                     changeTorchButton(false)
                 } else {
+                    setEnableQrCallback(true)
                     myCamerasManager.stopRecord()
 
                     changeCamSwitchButton(true)
@@ -149,6 +152,11 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
         myCamerasManager.onCameraSwitchingFinished = {
             changeCamSwithcProgress(false).withEndAction {
                 camSwithcProgress.visibility = View.INVISIBLE
+
+                when (myCamerasManager.getCurrentCameraType()) {
+                    Back -> changeTorchButton(true)
+                    Front -> changeTorchButton(false)
+                }
             }
         }
 

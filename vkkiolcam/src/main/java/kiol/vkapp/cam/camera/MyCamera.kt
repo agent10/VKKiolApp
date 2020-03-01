@@ -72,7 +72,9 @@ class MyCamera(private val context: Context, file: String) {
     private var qrListenerEnabled = true
     private val _qrListener: PublishProcessor<String> = PublishProcessor.create()
 
-    private val captureSessionCreator = CaptureSessionCreator(context)
+    private val captureSessionCreator = CaptureSessionCreator(context) {
+        this.cameraSession = it
+    }
 
     private val cameraConfigurator = CameraConfigurator(context)
 
@@ -96,6 +98,7 @@ class MyCamera(private val context: Context, file: String) {
     private val torch = Torch(backgroundHandler)
 
     private var cameraDevice: CameraDevice? = null
+    private var cameraSession: CameraCaptureSession? = null
 
     private val zoomer = Zoomer(context, backgroundHandler)
 
@@ -136,6 +139,9 @@ class MyCamera(private val context: Context, file: String) {
     fun stopRecord() {
         if (cameraState == CameraState.Ready) {
             backgroundHandler.post {
+
+                cameraSession?.stopRepeating()
+                Thread.sleep(100)
                 mediaRecorder.stop()
                 val time = System.currentTimeMillis() - recordStartTimestampMs
                 uiHandler.post {

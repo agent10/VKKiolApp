@@ -70,6 +70,9 @@ class MyCamerasManager(private val context: Context, private val tempFile: Strin
         createCamera(nextType)
     }
 
+    fun isBackCurrentCamType() = getCurrentCameraType() == MyCamera.CameraType.Back
+    fun isBackLastCamType() = lastSwitchCamera == MyCamera.CameraType.Back
+
     fun getCurrentCameraType() = currentCamera?.cameraType ?: MyCamera.CameraType.Back
 
     fun switchTorch(): Boolean {
