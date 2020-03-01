@@ -44,7 +44,7 @@ class VideoCutter(private val file: String, private val cutFile: String) {
     fun cut(startUs: Long, endUs: Long, withAudio: Boolean) {
         val t = System.currentTimeMillis()
         val d = Flowable.fromCallable {
-            genVideoUsingMuxer(file, cutFile, startUs, endUs, withAudio)
+            cutVideo(file, cutFile, startUs, endUs, withAudio)
         }.subscribeOn(Schedulers.computation()).subscribe({
             Timber.d("Cut finished, time: ${System.currentTimeMillis() - t}ms")
         }, {
@@ -53,7 +53,7 @@ class VideoCutter(private val file: String, private val cutFile: String) {
     }
 
     @Throws(IOException::class)
-    private fun genVideoUsingMuxer(
+    private fun cutVideo(
         srcPath: String, dstPath: String,
         startUs: Long, endUs: Long, useAudio: Boolean
     ) {
