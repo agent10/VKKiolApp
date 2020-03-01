@@ -63,5 +63,6 @@ dependencies {
 
     implementation project(":commondata")
     implementation project(":commonui")
+
     testImplementation "junit:junit:$junitVersion"
 }
