@@ -1,6 +1,9 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="AppTheme" parent="VKKiolAppTheme" />
+    <style name="AppTheme" parent="VKKiolAppTheme">
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+    </style>
 
     <style name="DocItemStyle">
         <item name="android:background">?attr/selectableItemBackground</item>
