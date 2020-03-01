@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">Документы</string>
     <string name="dm_title">Скачивание</string>
     <string name="dm_completed">Скачивание завершено</string>
     <string name="text_viewer_failed_download">Не удалось загрузить файл</string>

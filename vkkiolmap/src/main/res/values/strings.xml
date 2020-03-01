@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">TaskC</string>
+    <string name="app_name" translatable="false">VKKiolMap</string>
     <integer name="com_vk_sdk_AppId">7334398</integer>
 
     <string name="events_tab_title">Events</string>
