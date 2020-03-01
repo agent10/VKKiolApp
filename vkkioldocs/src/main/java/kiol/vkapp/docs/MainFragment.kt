@@ -1,5 +1,7 @@
 package kiol.vkapp.docs
 
+import android.Manifest
+import android.content.Intent
 import android.opengl.Visibility
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -19,6 +21,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.vk.api.sdk.VK
 import io.reactivex.disposables.CompositeDisposable
 import kiol.vkapp.commondata.domain.DocItem
+import kiol.vkapp.commonui.permissions.PermissionManager
 import kiol.vkapp.commonui.plusAssign
 import kiol.vkapp.docs.R
 import timber.log.Timber
@@ -34,10 +37,14 @@ class MainFragment : Fragment(R.layout.main_fragment_layout) {
 
     private lateinit var swiper: SwipeRefreshLayout
 
+    private lateinit var permissionManager: PermissionManager
+
     private val compositeDisposable = CompositeDisposable()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        permissionManager = PermissionManager(requireContext(), listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
 
         contentViewer = view.findViewById(R.id.contentViewer)
         docs = view.findViewById(R.id.docs)
@@ -120,14 +127,20 @@ class MainFragment : Fragment(R.layout.main_fragment_layout) {
         } catch (e: ViewerNotAvailable) {
             Timber.w("Can't create content viewer, request for download, $e")
 
-            val builder = AlertDialog.Builder(requireContext())
-                .setTitle(R.string.download_dialog_title)
-                .setMessage(R.string.download_dialog_msg)
-                .setPositiveButton(R.string.download_dialog_ok) { _, _ ->
-                    viewModel.downloadDoc(docItem)
+            permissionManager.checkPermissions(this) {
+                if (it) {
+                    val builder = AlertDialog.Builder(requireContext())
+                        .setTitle(R.string.download_dialog_title)
+                        .setMessage(R.string.download_dialog_msg)
+                        .setPositiveButton(R.string.download_dialog_ok) { _, _ ->
+                            viewModel.downloadDoc(docItem)
+                        }
+                        .setNegativeButton(R.string.common_cancel, null)
+                    builder.show()
+                } else {
+                    Toast.makeText(requireContext(), R.string.no_perms_for_download, Toast.LENGTH_SHORT).show()
                 }
-                .setNegativeButton(R.string.common_cancel, null)
-            builder.show()
+            }
         } catch (e: Exception) {
             Timber.e("Can't create content viewer, $e")
         }
@@ -166,5 +179,13 @@ class MainFragment : Fragment(R.layout.main_fragment_layout) {
             .setNegativeButton(R.string.common_cancel, null)
             .create()
         dialog.show()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        permissionManager.invokePermissionRequest(requestCode, permissions, grantResults)
     }
 }

@@ -16,4 +16,5 @@
     <string name="docs_not_found">Docs not found</string>
     <string name="doc_menu_rename">Rename</string>
     <string name="doc_menu_remove">Remove</string>
+    <string name="no_perms_for_download">No pemissions for download</string>
 </resources>

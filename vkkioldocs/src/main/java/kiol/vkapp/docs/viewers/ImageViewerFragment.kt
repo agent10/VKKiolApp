@@ -2,6 +2,7 @@ package kiol.vkapp.docs.viewers
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.bumptech.glide.Glide
@@ -32,6 +33,10 @@ class ImageViewerFragment : Fragment(R.layout.image_viewer_fragment_layout) {
 
         val dismissFrameLayout = view.findViewById<DragToDismissFrameLayout>(R.id.dismissLayout)
         val photoView = view.findViewById<PhotoView>(R.id.photo_view)
+        photoView.setOnApplyWindowInsetsListener { v, insets ->
+            view.updatePadding(bottom = insets.systemWindowInsetBottom)
+            insets
+        }
 
         photoView.setOnScaleChangeListener { _, _, _ ->
             photoView.setAllowParentInterceptOnEdge(photoView.scale <= 1.0f)

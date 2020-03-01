@@ -13,4 +13,6 @@
     <string name="docs_not_found">Ничего не найдено</string>
     <string name="doc_menu_rename">Переименовать</string>
     <string name="doc_menu_remove">Удалить</string>
+    <string name="no_perms_for_download">Нет прав для скачивания</string>
+
 </resources>
