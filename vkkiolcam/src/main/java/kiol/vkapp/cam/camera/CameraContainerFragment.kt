@@ -181,7 +181,7 @@ class CameraContainerFragment : Fragment(R.layout.camera_container_fragment) {
     private fun changeTorchButton(show: Boolean): ViewPropertyAnimator {
         torch.clearAnimation()
         return if (show) {
-            torch.animate().alpha(1.0f).x(torchX).apply { duration = 100 }
+            torch.animate().alpha(1.0f).x(torchX).apply { duration = AnimDuration }
         } else {
             torch.animate().alpha(0.0f).translationXBy(-iconsOffset).apply { duration = AnimDuration }
         }
