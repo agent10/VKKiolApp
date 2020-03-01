@@ -17,6 +17,7 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
     companion object {
         private const val DEQUEUE_TIMEOUT_US = 0L
         const val NUM_FRAMES = 10
+        const val NUM_FRAMES_ADD = 2
     }
 
     private val imageConverter = ImageConverter(context)
@@ -31,7 +32,7 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
                 val rotation = mediaMetadataRetriever.getRotation()
                 val durationUs = mediaMetadataRetriever.getDurationUs()
 
-                val seekUsStep = durationUs / NUM_FRAMES
+                val seekUsStep = durationUs / (NUM_FRAMES + NUM_FRAMES_ADD)
 
                 var currSeek = 0L
                 decoder.start()
@@ -57,7 +58,6 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
                                     stop = true
                                 } else {
                                     Timber.d("queueInput index: $inIndex")
-                                    processed++
                                     decoder.queueInputBuffer(inIndex, 0, size, extractor.sampleTime, 0)
                                 }
 
@@ -83,12 +83,14 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
 
                             try {
                                 val image = decoder.getOutputImage(outIndex)
-                                image?.let {
-                                    processed--
-                                    val retb = imageConverter.convert(it, rotation)
-                                    it.close()
+                                if (processed <= NUM_FRAMES) {
+                                    image?.let {
+                                        processed++
+                                        val retb = imageConverter.convert(it, rotation)
+                                        it.close()
 
-                                    emitter.onNext(retb)
+                                        emitter.onNext(retb)
+                                    }
                                 }
                                 decoder.releaseOutputBuffer(outIndex, false)
 
@@ -97,8 +99,8 @@ class PreviewsExtractor(private val context: Context, private val filePath: Stri
                             }
                         } else {
                             if (stop) {
-                                Timber.d("dequeueOutputBuffer try to stop, but wait other $processed will process")
-                                if (processed == 0) {
+                                Timber.d("dequeueOutputBuffer try to stop, but wait, $processed finished")
+                                if (processed >= NUM_FRAMES) {
                                     break
                                 }
                             } else {
