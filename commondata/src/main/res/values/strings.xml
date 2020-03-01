@@ -1,2 +1,12 @@
 <resources>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+
+    <string name="bytes">B</string>
+    <string name="kbytes">KB</string>
+    <string name="mbytes">MB</string>
+    <string name="gytes">GB</string>
+    <string name="tbytes">TB</string>
+    <string name="pbytes">PB</string>
+    <string name="ebytes">EB</string>
 </resources>

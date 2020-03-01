@@ -6,6 +6,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.processors.PublishProcessor
+import kiol.vkapp.commondata.SimpleResourceProvider
 import kiol.vkapp.commondata.domain.DocItem
 import kiol.vkapp.commondata.domain.docs.DocsUseCase
 import kiol.vkapp.commonui.plusAssign
@@ -15,7 +16,7 @@ import timber.log.Timber
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val docsUseCase = DocsUseCase()
+    private val docsUseCase = DocsUseCase(SimpleResourceProvider(app))
     private val docsDownloadManager = DocsDownloadManager(app)
 
     private val compositeDisposable = CompositeDisposable()

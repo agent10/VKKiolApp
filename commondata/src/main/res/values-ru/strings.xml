@@ -1,0 +1,12 @@
+<resources>
+    <string name="today">Сегодня</string>
+    <string name="yesterday">Вчера</string>
+
+    <string name="bytes">Б</string>
+    <string name="kbytes">КБ</string>
+    <string name="mbytes">МБ</string>
+    <string name="gytes">ГБ</string>
+    <string name="tbytes">ТБ</string>
+    <string name="pbytes">ПБ</string>
+    <string name="ebytes">ЭБ</string>
+</resources>

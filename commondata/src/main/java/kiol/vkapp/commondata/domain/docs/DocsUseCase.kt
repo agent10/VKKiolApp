@@ -3,17 +3,21 @@ package kiol.vkapp.commondata.domain.docs
 import android.text.format.DateFormat
 import io.reactivex.Flowable
 import io.reactivex.schedulers.Schedulers
+import kiol.vkapp.commondata.R
+import kiol.vkapp.commondata.SimpleResourceProvider
 import kiol.vkapp.commondata.data.VKDocItem
 import kiol.vkapp.commondata.domain.DocItem
 import timber.log.Timber
 import java.util.*
 import kotlin.math.abs
 
-class DocsUseCase {
+class DocsUseCase(private val simpleResourceProvider: SimpleResourceProvider) {
 
     private companion object {
         const val PAGE_SIZE = 10L
         const val INITIAL_SIZE = 10L
+        private const val FormatterWithYear = "yyyy dd MMMM"
+        private const val FormatterNoYear = "dd MMMM"
     }
 
     private val docsCache = DocsCache()
@@ -63,17 +67,17 @@ class DocsUseCase {
         return if (neededTime.get(Calendar.YEAR) == nowTime.get(Calendar.YEAR)) {
             when {
                 nowTime.get(Calendar.DATE) == neededTime.get(Calendar.DATE) -> {
-                    "Сегодня"
+                    simpleResourceProvider.getString(R.string.today)
                 }
                 nowTime.get(Calendar.DATE) - neededTime.get(Calendar.DATE) == 1 -> {
-                    "Вчера"
+                    simpleResourceProvider.getString(R.string.yesterday)
                 }
                 else -> {
-                    DateFormat.format("dd MMMM", neededTime).toString()
+                    DateFormat.format(FormatterNoYear, neededTime).toString()
                 }
             }
         } else {
-            DateFormat.format("yyyy dd MMMM", neededTime).toString()
+            DateFormat.format(FormatterWithYear, neededTime).toString()
         }
     }
 
@@ -81,26 +85,28 @@ class DocsUseCase {
         val s = if (bytes < 0) "-" else ""
         var b =
             if (bytes == Long.MIN_VALUE) Long.MAX_VALUE else abs(bytes)
-        return if (b < 1000L) "$bytes Б" else if (b < 999950L) String.format(
-            "%s%.1f КБ",
+        return if (b < 1000L) "$bytes ${getBS(R.string.bytes)}" else if (b < 999950L) String.format(
+            "%s%.1f ${getBS(R.string.kbytes)}",
             s,
             b / 1e3
         ) else if (1000.let { b /= it; b } < 999950L) String.format(
-            "%s%.1f МБ",
+            "%s%.1f ${getBS(R.string.mbytes)}",
             s,
             b / 1e3
         ) else if (1000.let { b /= it; b } < 999950L) String.format(
-            "%s%.1f ГБ",
+            "%s%.1f ${getBS(R.string.gytes)}",
             s,
             b / 1e3
         ) else if (1000.let { b /= it; b } < 999950L) String.format(
-            "%s%.1f ТБ",
+            "%s%.1f ${getBS(R.string.tbytes)}",
             s,
             b / 1e3
         ) else if (1000.let { b /= it; b } < 999950L) String.format(
-            "%s%.1f ПБ",
+            "%s%.1f ${getBS(R.string.pbytes)}",
             s,
             b / 1e3
-        ) else String.format("%s%.1f ЭБ", s, b / 1e6)
+        ) else String.format("%s%.1f ${getBS(R.string.ebytes)}", s, b / 1e6)
     }
+
+    private fun getBS(resId: Int) = simpleResourceProvider.getString(resId)
 }
