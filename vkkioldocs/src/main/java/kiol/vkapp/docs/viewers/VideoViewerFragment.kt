@@ -51,7 +51,7 @@ class VideoViewerFragment : Fragment(R.layout.video_viewer_fragment_layout) {
     private fun setupPlayer() {
         exoPlayer?.playWhenReady = true
 
-        val uri = Uri.parse(arguments!!.getString(URL))
+        val uri = Uri.parse(requireArguments().getString(URL))
 
         val mediaSource = createMediaSource(uri)
 
