@@ -11,6 +11,17 @@ import timber.log.Timber
 class MediaRecorderInternal(private val file: String) {
     class MediaRecorderNotConfigured : Exception()
 
+    companion object {
+        private const val QUALITY_720P_WIDTH = 1280
+        private const val QUALITY_720P_HEIGHT = 720
+
+        private const val QUALITY_480P_WIDTH = 720
+        private const val QUALITY_480P_HEIGHT = 480
+
+        private const val BACK_ORIENTATION = 90
+        private const val FACE_ORIENTATION = 270
+    }
+
     private val mediaRecorder = MediaRecorder()
 
     private var configured = false
@@ -73,7 +84,7 @@ class MediaRecorderInternal(private val file: String) {
             mediaRecorder.setVideoSize(profile.videoFrameWidth, profile.videoFrameHeight)
             mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
             mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            mediaRecorder.setOrientationHint(if (cameraConfig.isFaceCamera) 270 else 90)
+            mediaRecorder.setOrientationHint(if (cameraConfig.isFaceCamera) FACE_ORIENTATION else BACK_ORIENTATION)
             mediaRecorder.prepare()
             configured = true
         } catch (e: Exception) {
@@ -84,9 +95,9 @@ class MediaRecorderInternal(private val file: String) {
     private fun chooseCamcorderProfile(cameraConfig: CameraConfigurator.Config): CamcorderProfile {
         val camId = cameraConfig.cameraId.toInt()
         var quality = CamcorderProfile.QUALITY_LOW
-        if (cameraConfig.mediaRecorderSize.contains(Size(1280, 720))) {
+        if (cameraConfig.mediaRecorderSize.contains(Size(QUALITY_720P_WIDTH, QUALITY_720P_HEIGHT))) {
             quality = CamcorderProfile.QUALITY_720P
-        } else if (cameraConfig.mediaRecorderSize.contains(Size(720, 480))) {
+        } else if (cameraConfig.mediaRecorderSize.contains(Size(QUALITY_480P_WIDTH, QUALITY_480P_HEIGHT))) {
             quality = CamcorderProfile.QUALITY_480P
         }
         return try {
