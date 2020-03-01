@@ -16,6 +16,7 @@ class MainActivity : VKKiolActivity() {
 
     override fun getVKScopes() = arrayListOf(VKScope.PHOTOS, VKScope.GROUPS, VKScope.OFFLINE)
 
+    override fun getTaskDescription() = getString(R.string.app_name)
 
     //Need to override VK api version to use "place" field for groups.get
     //It doesn't work in 5.103 for me
