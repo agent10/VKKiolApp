@@ -1,7 +1,7 @@
 <resources>
     <string name="permission_request">Камера и микрофон нужны для записи видео и QR</string>
     <string name="camera_open_failed">Сбой камеры</string>
-    <string name="internal_error">Что-то пошло не так:(</string>
+    <string name="exoplayer_error">Ошибка плеера:(</string>
     <string name="video_too_short">Запись слишком короткая</string>
     <string name="file_saved">Запись сохранена</string>
     <string name="file_save_error">Ошибка при сохранении</string>

@@ -61,7 +61,6 @@ dependencies {
 
     implementation "com.google.zxing:core:$zxingVersion"
 
-    implementation project(":commondata")
     implementation project(":commonui")
 
     testImplementation "junit:junit:$junitVersion"

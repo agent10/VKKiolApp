@@ -192,7 +192,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
         exoPlayer?.addListener(object : Player.EventListener {
             override fun onPlayerError(error: ExoPlaybackException) {
                 Timber.e("Playback error: $error")
-                Toast.makeText(requireContext(), R.string.internal_error, Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), R.string.exoplayer_error, Toast.LENGTH_SHORT).show()
             }
         })
 

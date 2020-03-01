@@ -1,7 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="AppTheme" parent="VKKiolAppTheme">
-        <item name="android:windowBackground">@color/windowBackground</item>
+        <item name="android:windowBackground">@null</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
         <item name="bottomSheetDialogTheme">@style/TransparentNavBarBottomSheetDialog</item>
     </style>

@@ -3,7 +3,7 @@
 
     <string name="permission_request">Camera and mic are required for video and QR scanning</string>
     <string name="camera_open_failed">Camera failed and restarted</string>
-    <string name="internal_error">Something went wrong:(</string>
+    <string name="exoplayer_error">Player error:(</string>
     <string name="video_too_short">Recording is too short</string>
     <string name="file_saved">Video saved</string>
     <string name="file_save_error">Error with saving</string>
