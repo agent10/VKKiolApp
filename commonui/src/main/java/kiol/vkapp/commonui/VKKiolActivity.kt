@@ -2,6 +2,8 @@ package kiol.vkapp.commonui
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -15,10 +17,22 @@ import ltd.abtech.commonui.R
 import timber.log.Timber
 
 abstract class VKKiolActivity : AppCompatActivity() {
+
+    private lateinit var vkBtn: Button
+    private lateinit var vkDesc: TextView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.vkkiol_activity)
+
+        vkDesc = findViewById(R.id.vkinfo)
+        vkDesc.text = getTaskDescription()
+
+        vkBtn = findViewById(R.id.vklogin)
+        vkBtn.setOnClickListener {
+            VK.login(this, getVKScopes())
+        }
 
         val config = getCustomVKConfig()
         config?.let {
@@ -26,17 +40,12 @@ abstract class VKKiolActivity : AppCompatActivity() {
         }
 
         checkIsVKLoggedIn(savedInstanceState)
-
-        findViewById<TextView>(R.id.vkinfo).text = getTaskDescription()
-
-        findViewById<Button>(R.id.vklogin).setOnClickListener {
-            VK.login(this, getVKScopes())
-        }
     }
 
     private fun checkIsVKLoggedIn(savedInstanceState: Bundle?) {
         if (VK.isLoggedIn()) {
             if (savedInstanceState == null) {
+                hideVkControls()
                 startMainFragment(R.id.contentViewer)
             }
         }
@@ -45,6 +54,7 @@ abstract class VKKiolActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val callback = object : VKAuthCallback {
             override fun onLogin(token: VKAccessToken) {
+                hideVkControls()
                 startMainFragment(R.id.contentViewer)
             }
 
@@ -65,4 +75,9 @@ abstract class VKKiolActivity : AppCompatActivity() {
     abstract fun startMainFragment(containerId: Int)
 
     open fun getCustomVKConfig(): VKApiConfig? = null
+
+    private fun hideVkControls() {
+        vkDesc.visibility = View.GONE
+        vkBtn.visibility = View.GONE
+    }
 }

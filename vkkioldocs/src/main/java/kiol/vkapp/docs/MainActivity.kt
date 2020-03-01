@@ -5,6 +5,7 @@ import kiol.vkapp.commonui.VKKiolActivity
 
 class MainActivity : VKKiolActivity() {
 
+    override fun getTaskDescription() = getString(R.string.app_name)
 
     override fun getVKScopes() = arrayListOf(VKScope.DOCS, VKScope.OFFLINE)
 
