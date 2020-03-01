@@ -66,7 +66,7 @@ class VideoEditorFragment : Fragment(R.layout.video_editor_fragment_layout) {
     companion object {
         private const val WAIT_FOR_MEDIARECORDER = 1000L
         private const val ASK_PLAYER_POSITION_INTERVAL = 50L
-        private const val VIDEO_FILE_NAME_TO_SAVE = "vktaskbmyvideo.mp4"
+        private const val VIDEO_FILE_NAME_TO_SAVE = "vkcammyvideo.mp4"
         private const val FILE_EXPORT_REQUEST_CODE = 43
         private const val ANIMATION_DURATION = 250L
         private const val ANIMATION_START_DURATION = 1000L
