@@ -4,6 +4,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -40,6 +41,10 @@ class VideoViewerFragment : Fragment(R.layout.video_viewer_fragment_layout) {
         super.onViewCreated(view, savedInstanceState)
 
         val playerView = view.findViewById<PlayerView>(R.id.playerView)
+        playerView.setOnApplyWindowInsetsListener { v, insets ->
+            view.updatePadding(bottom = insets.systemWindowInsetBottom)
+            insets
+        }
 
         val context = requireContext()
         exoPlayer = SimpleExoPlayer.Builder(context).setTrackSelector(DefaultTrackSelector(context)).build()

@@ -10,6 +10,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
@@ -42,6 +44,12 @@ class MainFragment : Fragment(R.layout.main_fragment_layout) {
         swiper = view.findViewById(R.id.swipetorefresh)
         val notFoundHint = view.findViewById<TextView>(R.id.notFoundHint)
 
+        view.findViewById<Toolbar>(R.id.toolbar).apply {
+            setOnApplyWindowInsetsListener { v, insets ->
+                view.updatePadding(top = insets.systemWindowInsetTop)
+                insets
+            }
+        }
 
         swiper.setOnRefreshListener {
             viewModel.loadDocs()
