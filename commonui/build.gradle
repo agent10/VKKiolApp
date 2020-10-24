@@ -34,6 +34,8 @@ dependencies {
     implementation "androidx.core:core-ktx:$coreCtxVersion"
     implementation "com.vk:androidsdk:$vkSdkVersion"
     implementation "com.jakewharton.timber:timber:$timberVersion"
+    implementation "androidx.lifecycle:lifecycle-common-java8:2.2.0"
+
 
     implementation "androidx.constraintlayout:constraintlayout:$constraintlayoutVersion"
     implementation "com.google.android.material:material:$materialVersion"
