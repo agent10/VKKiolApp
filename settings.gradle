@@ -1,2 +1,3 @@
+include ':vkkiolapp'
 include ':vkkioldocs', ':commondata', ':commonui', ':vkkiolcam', 'vkkiolmap'
 rootProject.name='VKKiolApp'
