@@ -7,6 +7,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.docs.MainFragment
+import kiol.vkapp.map.GMapFragment
 import kiol.vkappvkkiolapp.databinding.EntryTempFragmentBinding
 
 class EntryFragment : Fragment(R.layout.entry_temp_fragment) {
@@ -25,12 +26,12 @@ class EntryFragment : Fragment(R.layout.entry_temp_fragment) {
                         .commitAllowingStateLoss()
                 }
                 R.id.nav_map_id -> {
-                    childFragmentManager.beginTransaction().replace(R.id.nav_host_fragment, MainFragment())
+                    childFragmentManager.beginTransaction().replace(R.id.nav_host_fragment, GMapFragment())
                         .commitAllowingStateLoss()
                 }
             }
             true
         }
-        binding.bttmNav.selectedItemId = R.id.nav_map_id
+        binding.bttmNav.selectedItemId = R.id.nav_docs_id
     }
 }
