@@ -19,19 +19,7 @@ class EntryFragment : Fragment(R.layout.entry_temp_fragment) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.bttmNav.setOnNavigationItemSelectedListener {
-            when (it.itemId) {
-                R.id.nav_docs_id -> {
-                    childFragmentManager.beginTransaction().replace(R.id.nav_host_fragment, MainFragment())
-                        .commitAllowingStateLoss()
-                }
-                R.id.nav_map_id -> {
-                    childFragmentManager.beginTransaction().replace(R.id.nav_host_fragment, GMapFragment())
-                        .commitAllowingStateLoss()
-                }
-            }
-            true
-        }
-        binding.bttmNav.selectedItemId = R.id.nav_docs_id
+        childFragmentManager.beginTransaction().replace(R.id.nav_host_fragment, GMapFragment())
+            .commitAllowingStateLoss()
     }
 }

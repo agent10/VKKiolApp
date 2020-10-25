@@ -34,6 +34,10 @@ android {
     viewBinding {
         enabled = true
     }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
@@ -64,6 +68,10 @@ dependencies {
 
     implementation "io.reactivex.rxjava2:rxjava:$rxVersion"
     implementation "io.reactivex.rxjava2:rxandroid:$rxAndroidVersion"
+
+    implementation "androidx.camera:camera-camera2:1.0.0-beta11"
+    implementation "androidx.camera:camera-lifecycle:1.0.0-beta11"
+    implementation "androidx.camera:camera-view:1.0.0-alpha18"
 
     implementation project(":commondata")
     implementation project(":commonui")

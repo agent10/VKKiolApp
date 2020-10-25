@@ -19,6 +19,9 @@ import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.places.PlacesUseCase
+import kiol.vkapp.commonui.permissions.PermissionManager
+import kiol.vkapp.commonui.viewLifecycleLazy
+import kiol.vkapp.map.databinding.GmapFragmentLayoutBinding
 import kiol.vkapp.map.renderers.MarkerImageGenerator
 import timber.log.Timber
 
@@ -28,9 +31,11 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         private val SPB_LAT_LONG = LatLng(59.9343, 30.3351)
     }
 
-    private lateinit var mapview: FrameLayout
+    private val binding by viewLifecycleLazy {
+        GmapFragmentLayoutBinding.bind(requireView())
+    }
 
-    private lateinit var tabs: TabLayout
+    private lateinit var mapview: FrameLayout
 
     private lateinit var mapFragment: SupportMapFragment
 
@@ -53,7 +58,6 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        tabs = view.findViewById(R.id.tabs)
         mapview = view.findViewById(R.id.mapview)
         progressBar = view.findViewById(R.id.progressbar)
 
@@ -62,29 +66,26 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
 
         mapFragment.getMapAsync(this)
 
-        tabs.setOnApplyWindowInsetsListener { v, insets ->
-            view.updatePadding(top = insets.systemWindowInsetTop)
-            insets
+        binding.toolbar.setOnMenuItemClickListener {
+            if (it.itemId == R.id.add_box) {
+                childFragmentManager.beginTransaction()
+                    .setCustomAnimations(
+                        R.anim.viewer_fragment_open_enter,
+                        R.anim.viewer_fragment_open_enter,
+                        R.anim.viewer_fragment_open_exit,
+                        R.anim.viewer_fragment_open_exit
+                    ).replace(
+                        R.id.contentViewer, CamFragment()
+                    ).addToBackStack(null)
+                    .commitAllowingStateLoss()
+            }
+            true
         }
 
-        tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabReselected(tab: TabLayout.Tab?) {
-            }
-
-            override fun onTabUnselected(tab: TabLayout.Tab?) {
-            }
-
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                when (tab?.position) {
-                    0 -> updateMap(PlaceType.Events)
-                    1 -> updateMap(PlaceType.Photos)
-                    2 -> updateMap(PlaceType.Groups)
-                    else -> Timber.e("Unknown tab")
-                }
-            }
-        })
-
-        updateMap(PlaceType.Events)
+        //        tabs.setOnApplyWindowInsetsListener { v, insets ->
+        //            view.updatePadding(top = insets.systemWindowInsetTop)
+        //            insets
+        //        }
     }
 
     override fun onDestroyView() {
@@ -127,6 +128,8 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
             googleMap.setMinZoomPreference(1.0f)
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(SPB_LAT_LONG, 7f))
             initClusterManager(googleMap)
+
+            updateMap(PlaceType.Groups)
         }
     }
 
