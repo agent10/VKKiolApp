@@ -1,8 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
 apply from: '../libVersions.gradle'
-
 
 android {
     compileSdkVersion 29
@@ -30,6 +30,10 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    viewBinding {
+        enabled = true
+    }
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
@@ -53,6 +57,7 @@ dependencies {
 
     implementation "com.github.bumptech.glide:glide:$glideVersion"
     implementation "com.github.chrisbanes:PhotoView:$photoViewVersion"
+    implementation("io.coil-kt:coil:1.0.0")
 
     implementation "com.google.android.gms:play-services-maps:$playServicesMapsVersion"
     implementation "com.google.maps.android:android-maps-utils:$googleMapUtilsVersion"

@@ -1,5 +1,6 @@
 package kiol.vkapp.commondata.domain
 
+import android.graphics.Color
 import kiol.vkapp.commondata.data.*
 
 data class DocItem(
@@ -37,8 +38,10 @@ data class DocItem(
 }
 
 enum class PlaceType {
-    Groups, Events, Photos
+    Groups, Events, Photos, Box
 }
+
+data class CustomPlaceParams(val color: Int, val vkGroups: List<VKGroup> = emptyList())
 
 data class Place(
     val id: Int,
@@ -49,7 +52,8 @@ data class Place(
     val address: String,
     val description: String,
     val photo: String,
-    val sizes: List<VKImagePreview>? = null
+    val sizes: List<VKImagePreview>? = null,
+    val customPlaceParams: CustomPlaceParams? = null
 ) {
     fun createLink(): String {
         var link = "https://www.vk.com/"
@@ -62,7 +66,7 @@ data class Place(
     }
 }
 
-fun VKGroup.convert(placeType: PlaceType): Place {
+fun VKGroup.convert(placeType: PlaceType, vkGroups: List<VKGroup> = emptyList()): Place {
     return Place(
         id,
         placeType,
@@ -71,7 +75,7 @@ fun VKGroup.convert(placeType: PlaceType): Place {
         place?.title.orEmpty(),
         place?.address.orEmpty(),
         description.orEmpty(),
-        place?.group_photo.orEmpty()
+        place?.group_photo.orEmpty(), null, CustomPlaceParams(Color.GREEN, vkGroups)
     )
 }
 

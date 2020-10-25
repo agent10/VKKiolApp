@@ -65,6 +65,11 @@ class MarkerImageGenerator(private val context: Context) {
     private var placeStubBitmapDescriptor: BitmapDescriptor? = null
 
     private val placeBitmapTransformation = PlaceBitmapTransformation()
+    private val boxBitmapTransformationMap = mapOf(
+        Color.GREEN to PlaceBitmapTransformation(Color.GREEN),
+        Color.RED to PlaceBitmapTransformation(Color.RED),
+        Color.GRAY to PlaceBitmapTransformation(Color.GRAY)
+    )
     private val photoBitmapTransformation = PlacePhotoBitmapTransformation()
 
     private val rndColors = listOf(Color.BLUE, Color.RED, Color.GRAY, Color.MAGENTA, Color.BLACK)
@@ -127,7 +132,7 @@ class MarkerImageGenerator(private val context: Context) {
         }
     }
 
-    private inner class PlaceBitmapTransformation : BitmapTransformation() {
+    private inner class PlaceBitmapTransformation(private val color: Int? = null) : BitmapTransformation() {
         private val ID = "KIOL.PlaceBitmapTransformation2"
 
         override fun updateDiskCacheKey(messageDigest: MessageDigest) {
@@ -167,7 +172,13 @@ class MarkerImageGenerator(private val context: Context) {
                 PLACE_SIZE / 2f - (BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS), placeRoundPaint
             )
             canvas.drawBitmap(bitmap, rect, outRect, placeCropPaint)
-            canvas.drawArc(outRect.toRectF(), 0f, 360f, false, placeRoundBoundPaint)
+
+            if (color != null) {
+                boxRoundBoundPaint.color = color
+                canvas.drawArc(outRect.toRectF(), 0f, 360f, false, boxRoundBoundPaint)
+            } else {
+                canvas.drawArc(outRect.toRectF(), 0f, 360f, false, placeRoundBoundPaint)
+            }
             return output
         }
     }
@@ -182,6 +193,14 @@ class MarkerImageGenerator(private val context: Context) {
     }
 
     private val placeRoundBoundPaint = Paint().apply {
+        isAntiAlias = true
+        style = Paint.Style.STROKE
+        strokeWidth = BOUND_STOKER_WIDTH.toFloat()
+        setShadowLayer(BOUND_SHADOW_RADIUS.toFloat(), 0f, 0f, 0xAA000000.toInt())
+        color = 0xFFFFFFFF.toInt()
+    }
+
+    private val boxRoundBoundPaint = Paint().apply {
         isAntiAlias = true
         style = Paint.Style.STROKE
         strokeWidth = BOUND_STOKER_WIDTH.toFloat()
@@ -428,7 +447,13 @@ class MarkerImageGenerator(private val context: Context) {
     private fun getTransformation(place: Place): BitmapTransformation {
         return when (place.placeType) {
             PlaceType.Photos -> photoBitmapTransformation
-            else -> placeBitmapTransformation
+            else -> {
+                if (place.customPlaceParams != null) {
+                    boxBitmapTransformationMap[place.customPlaceParams?.color] ?: placeBitmapTransformation
+                } else {
+                    placeBitmapTransformation
+                }
+            }
         }
     }
 

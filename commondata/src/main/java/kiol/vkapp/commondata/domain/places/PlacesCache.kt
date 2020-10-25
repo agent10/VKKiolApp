@@ -18,7 +18,7 @@ class PlacesCache : RxResponseCache<PlaceType, List<Place>>() {
     override fun fetch(param: PlaceType?): Flowable<List<Place>> {
         param?.let {
             return when (param) {
-                Groups -> getGroupsOrEvents(false)
+                Groups, Box -> getGroupsOrEvents(false)
                 Events -> getGroupsOrEvents(true)
                 Photos -> getPhotos()
             }
@@ -31,7 +31,7 @@ class PlacesCache : RxResponseCache<PlaceType, List<Place>>() {
                     it.place.latitude > Float.MIN_VALUE &&
                     it.place.longitude > Float.MIN_VALUE
         }.map {
-            it.convert(placeType)
+            it.convert(placeType, shuffled().take(10))
         }
     }
 
@@ -45,7 +45,7 @@ class PlacesCache : RxResponseCache<PlaceType, List<Place>>() {
 
     private fun getGroupsOrEvents(events: Boolean) = Flowable.fromCallable {
         val request = VKRequest<JSONObject>("groups.get")
-            .addParam("filter", if (events) "events" else "groups")
+            .addParam("filter", if (events) "events" else "groups, publics")
             .addParam("extended", 1)
             .addParam("fields", "place,description")
             .addParam("count", 1000)
