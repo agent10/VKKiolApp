@@ -27,6 +27,7 @@ import java.util.*
 class CamFragment : Fragment(R.layout.cam_layout) {
     companion object {
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+        var lastSavedUri: Uri? = null
     }
 
     private var imageCapture: ImageCapture? = null
@@ -102,8 +103,8 @@ class CamFragment : Fragment(R.layout.cam_layout) {
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val savedUri = Uri.fromFile(photoFile)
-                    val msg = "Photo capture succeeded: $savedUri"
+                    lastSavedUri = Uri.fromFile(photoFile)
+                    val msg = "Photo capture succeeded: $lastSavedUri"
                     Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
                 }
             })

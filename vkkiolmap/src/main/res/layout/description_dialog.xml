@@ -6,6 +6,13 @@
     android:orientation="vertical"
     android:padding="?attr/dialogPreferredPadding">
 
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/title"
         android:layout_width="0dp"
@@ -14,9 +21,10 @@
         android:ellipsize="end"
         android:maxLines="2"
         android:textAppearance="@style/BottomSheetTitleTextAppearence"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/image"
+        app:layout_constraintLeft_toRightOf="@id/image"
         app:layout_constraintRight_toLeftOf="@id/close"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="@id/image" />
 
     <ImageButton
         android:id="@+id/close"
@@ -27,14 +35,6 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/image"
-        android:layout_width="0dp"
-        android:layout_height="100dp"
-        android:layout_marginTop="@dimen/spacing_normal"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title" />
 
     <LinearLayout
         android:id="@+id/addressLine"
@@ -85,7 +85,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="@dimen/spacing_normal"
             android:ellipsize="end"
-            android:maxLines="4"
+            android:maxLines="8"
             android:textAppearance="@style/BottomSheetInfoTextAppearence" />
     </LinearLayout>
 
@@ -93,6 +93,7 @@
         android:id="@+id/groupsList"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_normal"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/infoLine" />
@@ -100,24 +101,11 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/unsubscribeBtn"
         style="@style/VKKiolButton"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/spacing_normal"
         android:text="Unsubscribe"
         android:theme="@style/ThemeMaterial"
-        app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/groupsList" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/httpOpenBtn"
-        style="@style/VKKiolButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_normal"
-        android:text="@string/open"
-        android:theme="@style/ThemeMaterial"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/unsubscribeBtn" />
 </androidx.constraintlayout.widget.ConstraintLayout>

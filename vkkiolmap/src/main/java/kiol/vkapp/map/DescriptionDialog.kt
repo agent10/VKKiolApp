@@ -16,6 +16,8 @@ import coil.load
 import coil.transform.CircleCropTransformation
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kiol.vkapp.commondata.data.VKGroup
+import kiol.vkapp.commondata.domain.Box
+import kiol.vkapp.commondata.domain.BoxType
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 
@@ -46,26 +48,20 @@ class GroupsAdapter(val groups: List<VKGroup>, private val click: (VKGroup) -> U
 class DescriptionDialog : BottomSheetDialogFragment() {
 
     companion object {
-        private const val PLACE_LINK = "place_link"
         private const val PLACE_TITLE = "place_title"
-        private const val PLACE_IMAGE = "place_title"
         private const val PLACE_ADDRESSS = "place_address"
         private const val PLACE_DESCRIPTION = "place_description"
-        private const val PLACE_VKGROUPS = "place_vkgroups"
+        private const val PLACE_BOX = "place_box"
 
         fun create(place: Place): DescriptionDialog {
             return DescriptionDialog().apply {
                 arguments = Bundle().apply {
-                    putString(PLACE_LINK, place.createLink())
                     putString(PLACE_TITLE, place.title)
-                    putString(PLACE_IMAGE, place.photo)
                     putString(PLACE_ADDRESSS, place.address)
                     putString(PLACE_DESCRIPTION, place.description)
 
                     place.customPlaceParams?.let {
-                        val list = arrayListOf<VKGroup>()
-                        list.addAll(it.vkGroups)
-                        putParcelableArrayList(PLACE_VKGROUPS, list)
+                        putParcelable(PLACE_BOX, it.box)
                     }
                 }
             }
@@ -79,18 +75,16 @@ class DescriptionDialog : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val title = arguments?.getString(PLACE_TITLE, "").orEmpty()
-        val address = arguments?.getString(PLACE_ADDRESSS, "").orEmpty()
-        val desc = arguments?.getString(PLACE_DESCRIPTION, "").orEmpty()
-        val link = arguments?.getString(PLACE_LINK, "").orEmpty()
-        val imageLink = arguments?.getString(PLACE_IMAGE, "").orEmpty()
-        val groups = arguments?.getParcelableArrayList<VKGroup>(PLACE_VKGROUPS).orEmpty()
+        val args = requireArguments()
+        val title = args.getString(PLACE_TITLE, "").orEmpty()
+        val address = args.getString(PLACE_ADDRESSS, "").orEmpty()
+        val desc = args.getString(PLACE_DESCRIPTION, "").orEmpty()
+        val box: Box = args.getParcelable(PLACE_BOX)!!
 
         val addressLine = view.findViewById<ViewGroup>(R.id.addressLine)
         val titleTv = view.findViewById<TextView>(R.id.title)
         val addressTv = view.findViewById<TextView>(R.id.address)
         val descTv = view.findViewById<TextView>(R.id.description)
-        val btn = view.findViewById<Button>(R.id.httpOpenBtn)
         val unsubscribeBtn = view.findViewById<Button>(R.id.unsubscribeBtn)
         val image = view.findViewById<ImageView>(R.id.image)
         val groupsList = view.findViewById<RecyclerView>(R.id.groupsList)
@@ -99,6 +93,7 @@ class DescriptionDialog : BottomSheetDialogFragment() {
             dismissAllowingStateLoss()
         }
 
+        unsubscribeBtn.visibility = if (box.boxType == BoxType.Ok) View.GONE else View.VISIBLE
         unsubscribeBtn.setOnClickListener {
             dismiss()
             parentFragment?.fragmentManager?.let {
@@ -113,12 +108,14 @@ class DescriptionDialog : BottomSheetDialogFragment() {
         titleTv.text = title
         addressTv.text = address
         descTv.text = desc
-        image.load(imageLink)
+        image.load(box.photo) {
+            crossfade(true)
+            transformations(CircleCropTransformation())
+        }
 
         groupsList.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
-        groupsList.adapter = GroupsAdapter(groups) {}
-
-        btn.setOnClickListener {
+        groupsList.adapter = GroupsAdapter(box.vkGroups) {
+            val link = it.createLink()
             if (link.isNotEmpty()) {
                 val chooser = Intent.createChooser(Intent(Intent.ACTION_VIEW, Uri.parse(link)), "")
                 startActivity(chooser)

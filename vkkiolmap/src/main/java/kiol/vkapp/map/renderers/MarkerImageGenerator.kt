@@ -17,6 +17,8 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Marker
 import com.google.maps.android.clustering.Cluster
+import kiol.vkapp.commondata.domain.BoxType
+import kiol.vkapp.commondata.domain.BoxType.*
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commonui.px
@@ -449,7 +451,14 @@ class MarkerImageGenerator(private val context: Context) {
             PlaceType.Photos -> photoBitmapTransformation
             else -> {
                 if (place.customPlaceParams != null) {
-                    boxBitmapTransformationMap[place.customPlaceParams?.color] ?: placeBitmapTransformation
+                    val box = place.customPlaceParams?.box
+                    val color = when (box?.boxType) {
+                        Ok -> Color.GREEN
+                        Fraud -> Color.RED
+                        Unknown -> Color.GRAY
+                        else -> Color.GRAY
+                    }
+                    boxBitmapTransformationMap[color] ?: placeBitmapTransformation
                 } else {
                     placeBitmapTransformation
                 }

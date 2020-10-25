@@ -1,7 +1,9 @@
 package kiol.vkapp.commondata.domain
 
 import android.graphics.Color
+import android.os.Parcelable
 import kiol.vkapp.commondata.data.*
+import kotlinx.android.parcel.Parcelize
 
 data class DocItem(
     val id: Int,
@@ -41,7 +43,7 @@ enum class PlaceType {
     Groups, Events, Photos, Box
 }
 
-data class CustomPlaceParams(val color: Int, val vkGroups: List<VKGroup> = emptyList())
+data class CustomPlaceParams(val box: Box)
 
 data class Place(
     val id: Int,
@@ -66,6 +68,13 @@ data class Place(
     }
 }
 
+enum class BoxType {
+    Ok, Fraud, Unknown
+}
+
+@Parcelize
+data class Box(val photo: String, val boxType: BoxType, val vkGroups: List<VKGroup>) : Parcelable
+
 fun VKGroup.convert(placeType: PlaceType, vkGroups: List<VKGroup> = emptyList()): Place {
     return Place(
         id,
@@ -75,7 +84,7 @@ fun VKGroup.convert(placeType: PlaceType, vkGroups: List<VKGroup> = emptyList())
         place?.title.orEmpty(),
         place?.address.orEmpty(),
         description.orEmpty(),
-        place?.group_photo.orEmpty(), null, CustomPlaceParams(Color.GREEN, vkGroups)
+        place?.group_photo.orEmpty(), null, CustomPlaceParams(Box(photo_100, BoxType.Ok, vkGroups))
     )
 }
 
