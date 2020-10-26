@@ -1,17 +1,26 @@
 package kiol.vkapp.map
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.os.Bundle
+import android.os.Looper
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
+import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.tabs.TabLayout
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -24,6 +33,7 @@ import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.databinding.GmapFragmentLayoutBinding
 import kiol.vkapp.map.renderers.MarkerImageGenerator
 import timber.log.Timber
+import java.util.*
 
 class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback {
 
@@ -50,9 +60,52 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
 
     private lateinit var markerImageGenerator: MarkerImageGenerator
 
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+
+    private lateinit var permissionManager: PermissionManager
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        permissionManager = PermissionManager(
+            requireContext(), listOf(
+                Manifest.permission.ACCESS_COARSE_LOCATION, Manifest
+                    .permission.ACCESS_FINE_LOCATION
+            )
+        )
+    }
+
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         markerImageGenerator = MarkerImageGenerator(requireContext())
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+    }
+
+    @SuppressLint("MissingPermission")
+    override fun onStart() {
+        super.onStart()
+        permissionManager.checkPermissions(this) {
+            val locationTask = fusedLocationClient.lastLocation
+            locationTask.addOnFailureListener {
+                Timber.e("kiol location $it")
+            }
+            locationTask.addOnSuccessListener {
+                Timber.d("kiol location $it")
+                googleMap.isMyLocationEnabled = true
+
+                val latLng = LatLng(it.latitude, it.longitude)
+//                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14f))
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14f))
+                //                val a = Geocoder(requireContext()).getFromLocation(it.latitude, it.longitude, 1)
+                Timber.d("kiol location addrs")
+            }
+            locationTask.addOnCompleteListener {
+                Timber.d("kiol location $it")
+            }
+            locationTask.addOnCanceledListener {
+                Timber.d("kiol location $it")
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -126,10 +179,9 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         googleMap?.let {
             this.googleMap = googleMap
             googleMap.setMinZoomPreference(1.0f)
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(SPB_LAT_LONG, 7f))
             initClusterManager(googleMap)
 
-            updateMap(PlaceType.Groups)
+            updateMap(PlaceType.Box)
         }
     }
 
@@ -161,6 +213,14 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
                 R.id.contentViewer, ImageViewerFragment.create(place)
             ).addToBackStack(null)
             .commitAllowingStateLoss()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        permissionManager.invokePermissionRequest(requestCode, permissions, grantResults)
     }
 
 }

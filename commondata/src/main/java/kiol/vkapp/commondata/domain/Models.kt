@@ -59,10 +59,12 @@ data class Place(
 ) {
     fun createLink(): String {
         var link = "https://www.vk.com/"
-        link += if (placeType == PlaceType.Groups) {
-            "club$id"
-        } else {
-            "event$id"
+        if(placeType != PlaceType.Box) {
+            link += if (placeType == PlaceType.Groups) {
+                "club$id"
+            } else {
+                "event$id"
+            }
         }
         return link
     }
@@ -84,7 +86,7 @@ fun VKGroup.convert(placeType: PlaceType, vkGroups: List<VKGroup> = emptyList())
         place?.title.orEmpty(),
         place?.address.orEmpty(),
         description.orEmpty(),
-        place?.group_photo.orEmpty(), null, CustomPlaceParams(Box(photo_100, BoxType.Ok, vkGroups))
+        place?.group_photo.orEmpty(), null, CustomPlaceParams(Box(photo_100, BoxType.Fraud, vkGroups))
     )
 }
 

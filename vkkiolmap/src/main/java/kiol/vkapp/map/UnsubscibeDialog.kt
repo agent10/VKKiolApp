@@ -1,6 +1,8 @@
 package kiol.vkapp.map
 
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
@@ -24,11 +26,13 @@ import kiol.vkapp.commondata.domain.groups.GroupsUseCase
 import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.databinding.UnsubscribeDialogBinding
 
-class UnsubscribeGroupsAdapter(val groups: List<VKGroup>, private val click: (VKGroup) -> Unit) : RecyclerView
+class UnsubscribeGroupsAdapter(val groups: List<VKGroup>, private val click: (VKGroup, List<VKGroup>) -> Unit) : RecyclerView
 .Adapter<UnsubscribeGroupsAdapter.VH>
     () {
 
     class VH(item: View) : RecyclerView.ViewHolder(item)
+
+    private val selected = hashSetOf<VKGroup>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         return VH(LayoutInflater.from(parent.context).inflate(R.layout.vk_group_item_layout, parent, false))
@@ -37,8 +41,16 @@ class UnsubscribeGroupsAdapter(val groups: List<VKGroup>, private val click: (VK
     override fun getItemCount() = groups.size
 
     override fun onBindViewHolder(holder: VH, position: Int) {
+        val group = groups[position]
         holder.itemView.setOnClickListener {
-            click(groups[position])
+            if (selected.contains(group)) {
+                holder.itemView.background = ColorDrawable(Color.TRANSPARENT)
+                selected -= group
+            } else {
+                holder.itemView.background = ColorDrawable(Color.BLUE)
+                selected += group
+            }
+            click(groups[position], selected.toList())
         }
         val title = holder.itemView.findViewById<TextView>(R.id.title)
         title.text = groups[position].name
@@ -74,8 +86,19 @@ class UnsubscribeDialog : BottomSheetDialogFragment() {
 
         binding.groups.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
 
+        binding.unsubscribeBtn.isEnabled = false
+        binding.unsubscribeBtn.setOnClickListener {
+
+        }
         val d = groupsUseCase.getGroups().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
-            binding.groups.adapter = UnsubscribeGroupsAdapter(it) {}
+            binding.groups.adapter = UnsubscribeGroupsAdapter(it) { _, selected ->
+                binding.unsubscribeBtn.isEnabled = selected.isNotEmpty()
+                if (selected.isNotEmpty()) {
+                    binding.unsubscribeBtn.text = "Unsubscribe (${selected.size})"
+                } else {
+                    binding.unsubscribeBtn.text = "Unsubscribe"
+                }
+            }
         }, {
 
         })

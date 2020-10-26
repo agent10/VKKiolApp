@@ -43,7 +43,6 @@ class PlaceClusterRenderer(
             place?.let {
                 if (it.placeType == PlaceType.Photos) {
                     markerImageGenerator.loadPhotoClusterImageWithCount(context, it, marker, cluster.size)
-
                 }
             }
         }

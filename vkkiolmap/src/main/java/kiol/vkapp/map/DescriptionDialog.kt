@@ -20,6 +20,9 @@ import kiol.vkapp.commondata.domain.Box
 import kiol.vkapp.commondata.domain.BoxType
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
+import kiol.vkapp.commonui.viewLifecycleLazy
+import kiol.vkapp.map.databinding.CamLayoutBinding
+import kiol.vkapp.map.databinding.DescriptionDialogBinding
 
 class GroupsAdapter(val groups: List<VKGroup>, private val click: (VKGroup) -> Unit) : RecyclerView.Adapter<GroupsAdapter.VH>() {
 
@@ -68,6 +71,10 @@ class DescriptionDialog : BottomSheetDialogFragment() {
         }
     }
 
+    private val binding by viewLifecycleLazy {
+        DescriptionDialogBinding.bind(requireView())
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.description_dialog, container, false)
     }
@@ -93,32 +100,39 @@ class DescriptionDialog : BottomSheetDialogFragment() {
             dismissAllowingStateLoss()
         }
 
-        unsubscribeBtn.visibility = if (box.boxType == BoxType.Ok) View.GONE else View.VISIBLE
-        unsubscribeBtn.setOnClickListener {
-            dismiss()
-            parentFragment?.fragmentManager?.let {
-                UnsubscribeDialog.create().show(it, "")
-            }
-        }
-
-        if (address.isEmpty()) {
-            addressLine.visibility = View.GONE
-        }
-
-        titleTv.text = title
-        addressTv.text = address
-        descTv.text = desc
         image.load(box.photo) {
             crossfade(true)
             transformations(CircleCropTransformation())
         }
 
-        groupsList.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
-        groupsList.adapter = GroupsAdapter(box.vkGroups) {
-            val link = it.createLink()
-            if (link.isNotEmpty()) {
-                val chooser = Intent.createChooser(Intent(Intent.ACTION_VIEW, Uri.parse(link)), "")
-                startActivity(chooser)
+        if (box.boxType == BoxType.Unknown) {
+            titleTv.text = "Ожидает проверки"
+            binding.stateGroup.visibility = View.GONE
+            binding.waitStubImg.visibility = View.VISIBLE
+        } else {
+            unsubscribeBtn.visibility = if (box.boxType == BoxType.Ok) View.GONE else View.VISIBLE
+            unsubscribeBtn.setOnClickListener {
+                dismiss()
+                parentFragment?.fragmentManager?.let {
+                    UnsubscribeDialog.create().show(it, "")
+                }
+            }
+
+            if (address.isEmpty()) {
+                addressLine.visibility = View.GONE
+            }
+
+            titleTv.text = title
+            addressTv.text = address
+            descTv.text = desc
+
+            groupsList.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
+            groupsList.adapter = GroupsAdapter(box.vkGroups) {
+                val link = it.createLink()
+                if (link.isNotEmpty()) {
+                    val chooser = Intent.createChooser(Intent(Intent.ACTION_VIEW, Uri.parse(link)), "")
+                    startActivity(chooser)
+                }
             }
         }
     }
