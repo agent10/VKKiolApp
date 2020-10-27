@@ -7,15 +7,26 @@ import com.vk.api.sdk.VKDefaultValidationHandler
 import com.vk.api.sdk.auth.VKScope
 import kiol.vkapp.commonui.VKKiolActivity
 import kiol.vkapp.docs.MainFragment
+import kiol.vkapp.map.GMapFragment
+import kiol.vkapp.map.RouterProvider
+import kiol.vkapp.map.SimpleRouter
 
-class MainActivity : VKKiolActivity() {
+class MainActivity : VKKiolActivity(), RouterProvider {
+
+    private lateinit var simpleRouter: SimpleRouter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        simpleRouter = SimpleRouter(supportFragmentManager)
+    }
 
     override fun getTaskDescription() = getString(R.string.app_name)
 
     override fun getVKScopes() = arrayListOf(VKScope.DOCS, VKScope.PHOTOS, VKScope.GROUPS, VKScope.OFFLINE)
 
     override fun startMainFragment(containerId: Int) {
-        val mainFragment = EntryFragment()
+        val mainFragment = GMapFragment()
         supportFragmentManager.beginTransaction().setPrimaryNavigationFragment(mainFragment)
             .replace(containerId, mainFragment).commitAllowingStateLoss()
     }
@@ -28,4 +39,9 @@ class MainActivity : VKKiolActivity() {
         version = "5.61",
         validationHandler = VKDefaultValidationHandler(this)
     )
+
+    fun getRouter() = simpleRouter
+    override fun provideSimpleRouter(): SimpleRouter {
+        return simpleRouter
+    }
 }

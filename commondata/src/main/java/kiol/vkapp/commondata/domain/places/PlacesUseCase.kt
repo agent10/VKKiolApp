@@ -1,5 +1,6 @@
 package kiol.vkapp.commondata.domain.places
 
+import android.net.Uri
 import com.google.gson.Gson
 import com.vk.api.sdk.VK
 import com.vk.api.sdk.requests.VKRequest
@@ -23,6 +24,10 @@ class PlacesUseCase {
     fun getBoxes(): Flowable<List<Place>> {
         return boxPlacesCache.getValue(null)
     }
+
+    fun observeChanges() = boxPlacesCache.observeChanges()
+
+    fun addBoxForCheck(addr: String, uri: Uri) = boxPlacesCache.addBoxForCheck(addr, uri)
 
     fun setLatLong(lat: Float, lon: Float) {
         boxPlacesCache.setLatLong(lat, lon)

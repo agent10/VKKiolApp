@@ -38,7 +38,7 @@
         app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
     <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/contentViewer"
+        android:id="@+id/contentViewer2"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:elevation="5dp"

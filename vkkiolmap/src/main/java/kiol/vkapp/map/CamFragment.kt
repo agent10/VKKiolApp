@@ -3,6 +3,7 @@ package kiol.vkapp.map
 import android.Manifest
 import android.net.Uri
 import android.os.Bundle
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,7 +28,10 @@ import java.util.*
 class CamFragment : Fragment(R.layout.cam_layout) {
     companion object {
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
-        var lastSavedUri: Uri? = null
+    }
+
+    interface OnPictureListener {
+        fun onTaken(uri: Uri)
     }
 
     private var imageCapture: ImageCapture? = null
@@ -68,7 +72,7 @@ class CamFragment : Fragment(R.layout.cam_layout) {
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
             val preview = Preview.Builder().build()
             preview.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-            imageCapture = ImageCapture.Builder()
+            imageCapture = ImageCapture.Builder().setTargetResolution(Size(480, 640))
                 .build()
             try {
                 cameraProvider.unbindAll()
@@ -83,8 +87,6 @@ class CamFragment : Fragment(R.layout.cam_layout) {
     private fun takePhoto() {
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
-
-        ImageCapture.Builder().build()
 
         val photoFile = File(
             requireActivity().filesDir,
@@ -103,9 +105,12 @@ class CamFragment : Fragment(R.layout.cam_layout) {
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    lastSavedUri = Uri.fromFile(photoFile)
-                    val msg = "Photo capture succeeded: $lastSavedUri"
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+                    val uri = Uri.fromFile(photoFile)
+
+                    (parentFragment as OnPictureListener).onTaken(uri)
+                    val msg = "Photo capture succeeded: $uri"
+
+                    //                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
                 }
             })
     }

@@ -2,26 +2,20 @@ package kiol.vkapp.map
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.os.Bundle
-import android.os.Looper
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.material.tabs.TabLayout
+import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
@@ -33,12 +27,12 @@ import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.databinding.GmapFragmentLayoutBinding
 import kiol.vkapp.map.renderers.MarkerImageGenerator
 import timber.log.Timber
-import java.util.*
 
 class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback {
 
     companion object {
         private val SPB_LAT_LONG = LatLng(59.9343, 30.3351)
+        val placesUseCase = PlacesUseCase()
     }
 
     private val binding by viewLifecycleLazy {
@@ -54,7 +48,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     private lateinit var googleMap: GoogleMap
     private var clusterManager: PlaceClusterManager? = null
 
-    private val placesUseCase = PlacesUseCase()
+    private var isDataDirty = true
 
     private var disposable: Disposable? = null
 
@@ -63,6 +57,8 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private lateinit var permissionManager: PermissionManager
+
+    private var currentAddr = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,15 +87,16 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
             }
             locationTask.addOnSuccessListener {
                 Timber.d("kiol location $it")
-                googleMap.isMyLocationEnabled = true
+                if (isDataDirty) {
+                    googleMap.isMyLocationEnabled = true
 
-                if (it != null) {
-                    val latLng = LatLng(it.latitude, it.longitude)
-                    placesUseCase.setLatLong(latLng.latitude.toFloat(), latLng.longitude.toFloat())
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10f))
-                    updateMap()
-                    //                val a = Geocoder(requireContext()).getFromLocation(it.latitude, it.longitude, 1)
-                    // Timber.d("kiol location addrs")
+                    if (it != null) {
+                        val latLng = LatLng(it.latitude, it.longitude)
+                        findCurrentAddr(latLng)
+                        placesUseCase.setLatLong(latLng.latitude.toFloat(), latLng.longitude.toFloat())
+                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10f))
+                        updateMap()
+                    }
                 }
             }
             locationTask.addOnCompleteListener {
@@ -124,6 +121,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
 
         binding.toolbar.setOnMenuItemClickListener {
             if (it.itemId == R.id.add_box) {
+                getSimpleRouter().routeToCamera(currentAddr)
                 //                childFragmentManager.beginTransaction()
                 //                    .setCustomAnimations(
                 //                        R.anim.viewer_fragment_open_enter,
@@ -135,7 +133,9 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
                 //                    ).addToBackStack(null)
                 //                    .commitAllowingStateLoss()
 
-                updateMap()
+                //                val newPlace = placesUseCase.addBoxForCheck()
+                //                clusterManager?.addItem(PlaceClusterItem(newPlace))
+                //                clusterManager?.cluster()
             }
             true
         }
@@ -144,6 +144,13 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         //            view.updatePadding(top = insets.systemWindowInsetTop)
         //            insets
         //        }
+
+        val d = placesUseCase.observeChanges().subscribe({
+            clusterManager?.addItem(PlaceClusterItem(it))
+            clusterManager?.cluster()
+        }, {
+
+        })
     }
 
     override fun onDestroyView() {
@@ -162,6 +169,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
             .doOnEach {
                 progressBar.visibility = View.GONE
             }.subscribe({ places ->
+                //                isDataDirty = false
                 Timber.d("Groups: $places")
                 if (places.isEmpty()) {
                     Toast.makeText(requireContext(), R.string.nothing_found, Toast.LENGTH_SHORT).show()
@@ -206,16 +214,16 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     }
 
     private fun showImageViewer(place: Place) {
-        childFragmentManager.beginTransaction()
-            .setCustomAnimations(
-                R.anim.viewer_fragment_open_enter,
-                R.anim.viewer_fragment_open_enter,
-                R.anim.viewer_fragment_open_exit,
-                R.anim.viewer_fragment_open_exit
-            ).replace(
-                R.id.contentViewer, ImageViewerFragment.create(place)
-            ).addToBackStack(null)
-            .commitAllowingStateLoss()
+        //        childFragmentManager.beginTransaction()
+        //            .setCustomAnimations(
+        //                R.anim.viewer_fragment_open_enter,
+        //                R.anim.viewer_fragment_open_enter,
+        //                R.anim.viewer_fragment_open_exit,
+        //                R.anim.viewer_fragment_open_exit
+        //            ).replace(
+        //                R.id.contentViewer, ImageViewerFragment.create(place)
+        //            ).addToBackStack(null)
+        //            .commitAllowingStateLoss()
     }
 
     override fun onRequestPermissionsResult(
@@ -226,4 +234,12 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         permissionManager.invokePermissionRequest(requestCode, permissions, grantResults)
     }
 
+    private fun findCurrentAddr(latLng: LatLng) {
+        val d = Flowable.defer {
+            val geocoder = Geocoder(requireContext()).getFromLocation(latLng.latitude, latLng.longitude, 1)
+            Flowable.just(geocoder.firstOrNull()?.getAddressLine(0).orEmpty())
+        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
+            currentAddr = it
+        }, {})
+    }
 }

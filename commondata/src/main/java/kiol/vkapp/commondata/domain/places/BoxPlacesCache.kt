@@ -1,9 +1,11 @@
 package kiol.vkapp.commondata.domain.places
 
+import android.net.Uri
 import com.google.gson.Gson
 import com.vk.api.sdk.VK
 import com.vk.api.sdk.requests.VKRequest
 import io.reactivex.Flowable
+import io.reactivex.processors.PublishProcessor
 import kiol.vkapp.commondata.cache.RxResponseCache
 import kiol.vkapp.commondata.data.VKGroup
 import kiol.vkapp.commondata.data.VKResponse
@@ -21,21 +23,44 @@ class BoxPlacesCache : RxResponseCache<Nothing, List<Place>>() {
     private var lat = 0f
     private var lon = 0f
 
+    private val random = Random(1000)
+
+    private val boxForChecks = mutableListOf<Place>()
+
+    private val processor = PublishProcessor.create<Place>()
+
     override fun fetch(param: Nothing?): Flowable<List<Place>> {
         return Flowable.defer {
             val vkGroups = getGroupsByIds().blockingSingle(emptyList())
             val places = mutableListOf<Place>()
-            val r = Random(1000)
             repeat(1000) {
-                places += getRandomPlace(places.size, r.nextInt(-160, 160).toFloat(), r.nextInt(-90, 90).toFloat(), vkGroups)
+                places += getRandomPlace(
+                    places.size,
+                    random.nextInt(-160, 160).toFloat(),
+                    random.nextInt(-90, 90).toFloat(),
+                    vkGroups
+                )
             }
 
             places += getRandomPlaces(30.3709f, 59.9396f, 10000, vkGroups)
             places += getRandomPlaces(37.6139f, 55.7470f, 10000, vkGroups)
             places += getRandomPlaces(lon, lat, 500, vkGroups, 5)
 
+            places += boxForChecks
+
             Flowable.just(places)
         }
+    }
+
+    fun observeChanges(): Flowable<Place> = processor
+
+    fun addBoxForCheck(addr: String, uri: Uri): Place {
+        val place = getRandomPlaces(lon, lat, 10, emptyList(), 1).first()
+        val nb = place.customPlaceParams!!.box.copy(boxType = BoxType.Unknown, photo = uri.toString())
+        val np = place.copy(photo = uri.toString(), address = addr, customPlaceParams = CustomPlaceParams(nb))
+        boxForChecks += np
+        processor.offer(np)
+        return np
     }
 
     private fun getRandomPlace(id: Int, x: Float, y: Float, vkGroups: List<VKGroup>): Place {
@@ -69,7 +94,6 @@ class BoxPlacesCache : RxResponseCache<Nothing, List<Place>>() {
     private fun getRandomLocations(x0: Float, y0: Float, radius: Int, count: Int = 30): List<Pair<Float, Float>> {
         val res = mutableListOf<Pair<Float, Float>>()
 
-        val random = Random(1000)
         repeat(count) {
             val radiusInDegrees = radius / 111000f.toDouble()
             val u = random.nextDouble()
