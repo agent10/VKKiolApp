@@ -14,8 +14,15 @@ import kotlin.random.Random
 class PlacesUseCase {
 
     private val placesCache = PlacesCache()
+    private val boxPlacesCache = BoxPlacesCache()
 
     fun getPlaces(placeType: PlaceType): Flowable<List<Place>> {
         return placesCache.getValue(placeType)
+    }
+
+    fun getBoxes(latitude: Float, longtitude: Float): Flowable<List<Place>> {
+        return boxPlacesCache.getValue(null).map {
+            it.toMutableList() + boxPlacesCache.getRandomPlaces(longtitude, latitude, 500, 5)
+        }
     }
 }

@@ -93,11 +93,14 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
                 Timber.d("kiol location $it")
                 googleMap.isMyLocationEnabled = true
 
-                val latLng = LatLng(it.latitude, it.longitude)
-//                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14f))
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14f))
-                //                val a = Geocoder(requireContext()).getFromLocation(it.latitude, it.longitude, 1)
-                Timber.d("kiol location addrs")
+                if (it != null) {
+                    val latLng = LatLng(it.latitude, it.longitude)
+                    //                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14f))
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10f))
+                    updateMap(latLng)
+                    //                val a = Geocoder(requireContext()).getFromLocation(it.latitude, it.longitude, 1)
+                    // Timber.d("kiol location addrs")
+                }
             }
             locationTask.addOnCompleteListener {
                 Timber.d("kiol location $it")
@@ -147,12 +150,12 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         disposable = null
     }
 
-    private fun updateMap(placeType: PlaceType) {
+    private fun updateMap(latLng: LatLng) {
         clusterManager?.clearItems()
         disposable?.dispose()
 
         progressBar.visibility = View.VISIBLE
-        disposable = placesUseCase.getPlaces(placeType).subscribeOn(Schedulers.io())
+        disposable = placesUseCase.getBoxes(latLng.latitude.toFloat(), latLng.longitude.toFloat()).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnEach {
                 progressBar.visibility = View.GONE
@@ -180,8 +183,6 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
             this.googleMap = googleMap
             googleMap.setMinZoomPreference(1.0f)
             initClusterManager(googleMap)
-
-            updateMap(PlaceType.Box)
         }
     }
 
