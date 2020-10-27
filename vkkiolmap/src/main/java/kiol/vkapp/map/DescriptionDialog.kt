@@ -92,7 +92,6 @@ class DescriptionDialog : BottomSheetDialogFragment() {
         val titleTv = view.findViewById<TextView>(R.id.title)
         val addressTv = view.findViewById<TextView>(R.id.address)
         val descTv = view.findViewById<TextView>(R.id.description)
-        val unsubscribeBtn = view.findViewById<Button>(R.id.unsubscribeBtn)
         val image = view.findViewById<ImageView>(R.id.image)
         val groupsList = view.findViewById<RecyclerView>(R.id.groupsList)
 
@@ -109,14 +108,18 @@ class DescriptionDialog : BottomSheetDialogFragment() {
             titleTv.text = "Ожидает проверки"
             binding.stateGroup.visibility = View.GONE
             binding.waitStubImg.visibility = View.VISIBLE
+            binding.unsubscribeBtn.visibility = View.GONE
         } else {
-            unsubscribeBtn.visibility = if (box.boxType == BoxType.Ok) View.GONE else View.VISIBLE
-            unsubscribeBtn.setOnClickListener {
+            binding.stateGroup.visibility = View.VISIBLE
+            binding.waitStubImg.visibility = View.GONE
+
+            binding.unsubscribeBtn.setOnClickListener {
                 dismiss()
                 parentFragment?.fragmentManager?.let {
                     UnsubscribeDialog.create().show(it, "")
                 }
             }
+            binding.unsubscribeBtn.visibility = if (box.boxType == BoxType.Ok) View.GONE else View.VISIBLE
 
             if (address.isEmpty()) {
                 addressLine.visibility = View.GONE

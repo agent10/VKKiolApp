@@ -95,9 +95,9 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
 
                 if (it != null) {
                     val latLng = LatLng(it.latitude, it.longitude)
-                    //                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14f))
+                    placesUseCase.setLatLong(latLng.latitude.toFloat(), latLng.longitude.toFloat())
                     googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10f))
-                    updateMap(latLng)
+                    updateMap()
                     //                val a = Geocoder(requireContext()).getFromLocation(it.latitude, it.longitude, 1)
                     // Timber.d("kiol location addrs")
                 }
@@ -124,16 +124,18 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
 
         binding.toolbar.setOnMenuItemClickListener {
             if (it.itemId == R.id.add_box) {
-                childFragmentManager.beginTransaction()
-                    .setCustomAnimations(
-                        R.anim.viewer_fragment_open_enter,
-                        R.anim.viewer_fragment_open_enter,
-                        R.anim.viewer_fragment_open_exit,
-                        R.anim.viewer_fragment_open_exit
-                    ).replace(
-                        R.id.contentViewer, CamFragment()
-                    ).addToBackStack(null)
-                    .commitAllowingStateLoss()
+                //                childFragmentManager.beginTransaction()
+                //                    .setCustomAnimations(
+                //                        R.anim.viewer_fragment_open_enter,
+                //                        R.anim.viewer_fragment_open_enter,
+                //                        R.anim.viewer_fragment_open_exit,
+                //                        R.anim.viewer_fragment_open_exit
+                //                    ).replace(
+                //                        R.id.contentViewer, CamFragment()
+                //                    ).addToBackStack(null)
+                //                    .commitAllowingStateLoss()
+
+                updateMap()
             }
             true
         }
@@ -150,12 +152,12 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         disposable = null
     }
 
-    private fun updateMap(latLng: LatLng) {
+    private fun updateMap() {
         clusterManager?.clearItems()
         disposable?.dispose()
 
         progressBar.visibility = View.VISIBLE
-        disposable = placesUseCase.getBoxes(latLng.latitude.toFloat(), latLng.longitude.toFloat()).subscribeOn(Schedulers.io())
+        disposable = placesUseCase.getBoxes().subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnEach {
                 progressBar.visibility = View.GONE

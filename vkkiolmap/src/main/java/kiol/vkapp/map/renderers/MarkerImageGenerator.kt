@@ -3,6 +3,7 @@ package kiol.vkapp.map.renderers
 import android.content.Context
 import android.graphics.*
 import android.media.ThumbnailUtils
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.DisplayMetrics
@@ -135,7 +136,7 @@ class MarkerImageGenerator(private val context: Context) {
     }
 
     private inner class PlaceBitmapTransformation(private val color: Int? = null) : BitmapTransformation() {
-        private val ID = "KIOL.PlaceBitmapTransformation2"
+        private val ID = "KIOL.PlaceBitmapTransformation2$color"
 
         override fun updateDiskCacheKey(messageDigest: MessageDigest) {
             messageDigest.update(ID.toByteArray())
@@ -458,7 +459,7 @@ class MarkerImageGenerator(private val context: Context) {
                         Unknown -> Color.GRAY
                         else -> Color.GRAY
                     }
-                    boxBitmapTransformationMap[color] ?: placeBitmapTransformation
+                    boxBitmapTransformationMap[color]!!
                 } else {
                     placeBitmapTransformation
                 }
@@ -469,7 +470,8 @@ class MarkerImageGenerator(private val context: Context) {
     fun loadPhotoClusterImageWithCount(context: Context, place: Place, marker: Marker, count: Int) {
         val transform = getTransformation(place)
 
-        Glide.with(context).asBitmap().load(place.photo).transform(transform).into(object :
+        val photoPath = if (place.placeType == PlaceType.Box) Uri.parse(place.photo) else place.photo
+        Glide.with(context).asBitmap().load(photoPath).transform(transform).into(object :
             SimpleTarget<Bitmap>() {
             override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                 if (marker.tag != null) {

@@ -124,5 +124,5 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="visible"
-        app:constraint_referenced_ids="addressLine,infoLine,groupsList,unsubscribeBtn" />
+        app:constraint_referenced_ids="addressLine,infoLine,groupsList" />
 </androidx.constraintlayout.widget.ConstraintLayout>

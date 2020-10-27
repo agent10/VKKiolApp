@@ -1,8 +1,15 @@
 package kiol.vkapp.commondata.domain.places
 
+import com.google.gson.Gson
+import com.vk.api.sdk.VK
+import com.vk.api.sdk.requests.VKRequest
 import io.reactivex.Flowable
 import kiol.vkapp.commondata.cache.RxResponseCache
+import kiol.vkapp.commondata.data.VKGroup
+import kiol.vkapp.commondata.data.VKResponse
+import kiol.vkapp.commondata.data.fromJson
 import kiol.vkapp.commondata.domain.*
+import org.json.JSONObject
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -11,54 +18,55 @@ import kotlin.random.Random
 
 class BoxPlacesCache : RxResponseCache<Nothing, List<Place>>() {
 
+    private var lat = 0f
+    private var lon = 0f
+
     override fun fetch(param: Nothing?): Flowable<List<Place>> {
-        val places = mutableListOf<Place>()
-        val r = Random(1000)
-        repeat(1000) {
-            places += Place(
-                it, PlaceType.Box, r.nextInt(-160, 160).toFloat(), r.nextInt(-90, 90).toFloat(),
-                "Test $it",
-                "Addr $it",
-                "Desc $it", "", null, CustomPlaceParams(Box("", BoxType.Fraud, emptyList()))
-            )
-        }
+        return Flowable.defer {
+            val vkGroups = getGroupsByIds().blockingSingle(emptyList())
+            val places = mutableListOf<Place>()
+            val r = Random(1000)
+            repeat(1000) {
+                places += getRandomPlace(places.size, r.nextInt(-160, 160).toFloat(), r.nextInt(-90, 90).toFloat(), vkGroups)
+            }
 
-        getRandomLocations(30.3709f, 59.9396f, 10000).forEach {
-            places += Place(
-                places.size + 1, PlaceType.Box, it.first, it.second,
-                "Test $it",
-                "Addr $it",
-                "Desc $it", "", null, CustomPlaceParams(Box("", BoxType.Fraud, emptyList()))
-            )
-        }
+            places += getRandomPlaces(30.3709f, 59.9396f, 10000, vkGroups)
+            places += getRandomPlaces(37.6139f, 55.7470f, 10000, vkGroups)
+            places += getRandomPlaces(lon, lat, 500, vkGroups, 5)
 
-        getRandomLocations(37.6139f, 55.7470f, 20000).forEach {
-            places += Place(
-                places.size + 1, PlaceType.Box, it.first, it.second,
-                "Test $it",
-                "Addr $it",
-                "Desc $it", "", null, CustomPlaceParams(Box("", BoxType.Fraud, emptyList()))
-            )
+            Flowable.just(places)
         }
-
-        return Flowable.fromCallable { places }
     }
 
-    fun getRandomPlaces(x0: Float, y0: Float, radius: Int, count: Int = 30): List<Place> {
+    private fun getRandomPlace(id: Int, x: Float, y: Float, vkGroups: List<VKGroup>): Place {
+        val boxType = BoxType.values().random()
+        return Place(
+            id, PlaceType.Box, x, y,
+            "Test $id",
+            "Addr $id",
+            "Desc $id", "file:///android_asset/testasset.png", null,
+            CustomPlaceParams(Box("file:///android_asset/testasset.png", boxType, vkGroups))
+        )
+    }
+
+    private fun getGroupsByIds() = Flowable.fromCallable {
+        val request = VKRequest<JSONObject>("groups.getById")
+            .addParam("group_ids", "198155259,147415323,179600088,17796776")
+        VK.executeSync(request)
+    }.map {
+        val groups: VKResponse<List<VKGroup>> = Gson().fromJson(it.toString())
+        groups.response
+    }
+
+    private fun getRandomPlaces(x0: Float, y0: Float, radius: Int, vkGroups: List<VKGroup>, count: Int = 30): List<Place> {
         val places = mutableListOf<Place>()
         getRandomLocations(x0, y0, radius, count).forEach {
-            places += Place(
-                places.size + 1, PlaceType.Box, it.first, it.second,
-                "Test $it",
-                "Addr $it",
-                "Desc $it", "", null, CustomPlaceParams(Box("", BoxType.Fraud, emptyList()))
-            )
+            places += getRandomPlace(places.size + 1, it.first, it.second, vkGroups)
         }
         return places
     }
 
     private fun getRandomLocations(x0: Float, y0: Float, radius: Int, count: Int = 30): List<Pair<Float, Float>> {
-
         val res = mutableListOf<Pair<Float, Float>>()
 
         val random = Random(1000)
@@ -79,5 +87,10 @@ class BoxPlacesCache : RxResponseCache<Nothing, List<Place>>() {
         }
 
         return res
+    }
+
+    internal fun setLatLong(lat: Float, lon: Float) {
+        this.lat = lat
+        this.lon = lon
     }
 }

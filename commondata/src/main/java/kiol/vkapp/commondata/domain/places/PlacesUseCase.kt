@@ -20,9 +20,11 @@ class PlacesUseCase {
         return placesCache.getValue(placeType)
     }
 
-    fun getBoxes(latitude: Float, longtitude: Float): Flowable<List<Place>> {
-        return boxPlacesCache.getValue(null).map {
-            it.toMutableList() + boxPlacesCache.getRandomPlaces(longtitude, latitude, 500, 5)
-        }
+    fun getBoxes(): Flowable<List<Place>> {
+        return boxPlacesCache.getValue(null)
+    }
+
+    fun setLatLong(lat: Float, lon: Float) {
+        boxPlacesCache.setLatLong(lat, lon)
     }
 }
