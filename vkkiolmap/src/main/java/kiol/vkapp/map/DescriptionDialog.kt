@@ -1,6 +1,7 @@
 package kiol.vkapp.map
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
@@ -18,8 +19,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kiol.vkapp.commondata.data.VKGroup
 import kiol.vkapp.commondata.domain.Box
 import kiol.vkapp.commondata.domain.BoxType
+import kiol.vkapp.commondata.domain.BoxType.*
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
+import kiol.vkapp.commonui.SpaceItemDecoration
+import kiol.vkapp.commonui.dp
 import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.databinding.CamLayoutBinding
 import kiol.vkapp.map.databinding.DescriptionDialogBinding
@@ -82,6 +86,8 @@ class DescriptionDialog : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        activity?.window?.navigationBarColor = Color.RED
+
         val args = requireArguments()
         val title = args.getString(PLACE_TITLE, "").orEmpty()
         val address = args.getString(PLACE_ADDRESSS, "").orEmpty()
@@ -99,19 +105,27 @@ class DescriptionDialog : BottomSheetDialogFragment() {
             dismissAllowingStateLoss()
         }
 
+        binding.status.setText(
+            when (box.boxType) {
+                Ok -> R.string.status_ok
+                Fraud -> R.string.status_fraud
+                Unknown -> R.string.status_unknown
+            }
+        )
+
         image.load(box.photo) {
             crossfade(true)
             transformations(CircleCropTransformation())
         }
+        titleTv.text = title
 
-        if (box.boxType == BoxType.Unknown) {
-            titleTv.text = "Ожидает проверки"
+        if (box.boxType == Unknown) {
             binding.stateGroup.visibility = View.GONE
-            binding.waitStubImg.visibility = View.VISIBLE
+            binding.waitStubText.visibility = View.VISIBLE
             binding.unsubscribeBtn.visibility = View.GONE
         } else {
             binding.stateGroup.visibility = View.VISIBLE
-            binding.waitStubImg.visibility = View.GONE
+            binding.waitStubText.visibility = View.GONE
 
             binding.unsubscribeBtn.setOnClickListener {
                 dismiss()
@@ -119,17 +133,18 @@ class DescriptionDialog : BottomSheetDialogFragment() {
                     UnsubscribeDialog.create().show(it, "")
                 }
             }
-            binding.unsubscribeBtn.visibility = if (box.boxType == BoxType.Ok) View.GONE else View.VISIBLE
+            binding.unsubscribeBtn.visibility = if (box.boxType == Ok) View.GONE else View.VISIBLE
 
             if (address.isEmpty()) {
                 addressLine.visibility = View.GONE
             }
 
-            titleTv.text = title
             addressTv.text = address
             descTv.text = desc
 
             groupsList.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
+            groupsList.addItemDecoration(SpaceItemDecoration(64))
+
             groupsList.adapter = GroupsAdapter(box.vkGroups) {
                 val link = it.createLink()
                 if (link.isNotEmpty()) {

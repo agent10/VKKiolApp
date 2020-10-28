@@ -10,4 +10,12 @@
 
     <string name="nothing_found">Ничего не найдено</string>
 
+    <string name="wait_check">Мы проверяем этот ящичек...</string>
+    <string name="status_ok">Без подозрений</string>
+    <string name="status_fraud">Подозрительный</string>
+    <string name="status_unknown">В обработке...</string>
+
+    <string name="subscribed_groups">Подписанные сообщества</string>
+    <string name="unsubscribe_btn">Отписаться</string>
+
 </resources>

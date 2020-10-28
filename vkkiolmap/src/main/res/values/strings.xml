@@ -12,4 +12,11 @@
     <string name="photoTitle">Photo</string>
     <string name="nothing_found">Nothing found</string>
 
+    <string name="wait_check">Box is unknown. We are checking this box...</string>
+    <string name="status_ok">No suspicion</string>
+    <string name="status_fraud">Suspicious</string>
+    <string name="status_unknown">Processing...</string>
+    <string name="subscribed_groups">Subscribed groups</string>
+    <string name="unsubscribe_btn">Unsubscribe</string>
+
 </resources>

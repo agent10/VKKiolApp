@@ -1,15 +1,9 @@
 package kiol.vkapp.map
 
-import android.content.Intent
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.net.Uri
 import android.os.Bundle
-import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,12 +11,13 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.google.android.material.button.MaterialButton
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.commondata.data.VKGroup
-import kiol.vkapp.commondata.domain.Place
-import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.groups.GroupsUseCase
+import kiol.vkapp.commonui.SpaceItemDecoration
+import kiol.vkapp.commonui.px
 import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.databinding.UnsubscribeDialogBinding
 
@@ -30,7 +25,9 @@ class UnsubscribeGroupsAdapter(val groups: List<VKGroup>, private val click: (VK
 .Adapter<UnsubscribeGroupsAdapter.VH>
     () {
 
-    class VH(item: View) : RecyclerView.ViewHolder(item)
+    class VH(item: View) : RecyclerView.ViewHolder(item) {
+        val image = item.findViewById<ImageView>(R.id.image)
+    }
 
     private val selected = hashSetOf<VKGroup>()
 
@@ -42,12 +39,13 @@ class UnsubscribeGroupsAdapter(val groups: List<VKGroup>, private val click: (VK
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val group = groups[position]
+        holder.image.isSelected = selected.contains(group)
         holder.itemView.setOnClickListener {
             if (selected.contains(group)) {
-                holder.itemView.background = ColorDrawable(Color.TRANSPARENT)
+                holder.image.isSelected = false
                 selected -= group
             } else {
-                holder.itemView.background = ColorDrawable(Color.BLUE)
+                holder.image.isSelected = true
                 selected += group
             }
             click(groups[position], selected.toList())
@@ -90,13 +88,20 @@ class UnsubscribeDialog : BottomSheetDialogFragment() {
         binding.unsubscribeBtn.setOnClickListener {
 
         }
+
+        binding.close.setOnClickListener {
+            dismissAllowingStateLoss()
+        }
+        binding.groups.addItemDecoration(SpaceItemDecoration(64))
         val d = groupsUseCase.getGroups().subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
             binding.groups.adapter = UnsubscribeGroupsAdapter(it) { _, selected ->
                 binding.unsubscribeBtn.isEnabled = selected.isNotEmpty()
                 if (selected.isNotEmpty()) {
-                    binding.unsubscribeBtn.text = "Unsubscribe (${selected.size})"
+                    binding.unsubscribeBtn.icon = BadgeDrawable(requireContext()).apply {
+                        setCount(selected.size)
+                    }
                 } else {
-                    binding.unsubscribeBtn.text = "Unsubscribe"
+                    binding.unsubscribeBtn.icon = null
                 }
             }
         }, {
