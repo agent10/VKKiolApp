@@ -8,6 +8,8 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -119,6 +121,13 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         childFragmentManager.beginTransaction().replace(R.id.mapview, mapFragment).commitAllowingStateLoss()
 
         mapFragment.getMapAsync(this)
+
+        binding.toolbar.apply {
+            setOnApplyWindowInsetsListener { v, insets ->
+                view.updatePadding(top = insets.systemWindowInsetTop)
+                insets
+            }
+        }
 
         binding.toolbar.setOnMenuItemClickListener {
             if (it.itemId == R.id.add_box) {

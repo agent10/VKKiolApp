@@ -5,13 +5,11 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Size
 import android.view.LayoutInflater
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.Preview
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
@@ -35,6 +33,9 @@ class CamFragment : Fragment(R.layout.cam_layout) {
     }
 
     private var imageCapture: ImageCapture? = null
+
+    private var cameraControl: CameraControl? = null
+    private var cameraInfo: CameraInfo? = null
 
     private lateinit var permissionManager: PermissionManager
 
@@ -63,6 +64,24 @@ class CamFragment : Fragment(R.layout.cam_layout) {
         binding.cameraCaptureButton.setOnClickListener {
             takePhoto()
         }
+
+        binding.torchSwitcher.setOnClickListener {
+            cameraControl?.enableTorch(binding.torchSwitcher.isChecked)
+        }
+
+        val scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector?): Boolean {
+
+                val v1 = detector?.scaleFactor ?: 0.0f
+                val v2 = cameraInfo?.zoomState?.value?.linearZoom ?: 0f
+
+                cameraControl?.setLinearZoom(v2 - (1.0f - v1))
+                return true
+            }
+        })
+        binding.viewFinder.setOnTouchListener { v, event ->
+            scaleGestureDetector.onTouchEvent(event)
+        }
     }
 
     private fun startCamera() {
@@ -70,13 +89,17 @@ class CamFragment : Fragment(R.layout.cam_layout) {
 
         cameraProviderFuture.addListener(Runnable {
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-            val preview = Preview.Builder().build()
+            val preview = Preview.Builder().apply {
+
+            }.build()
             preview.setSurfaceProvider(binding.viewFinder.surfaceProvider)
             imageCapture = ImageCapture.Builder().setTargetResolution(Size(480, 640))
                 .build()
             try {
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageCapture)
+                val camera = cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageCapture)
+                cameraControl = camera.cameraControl
+                cameraInfo = camera.cameraInfo
             } catch (e: Exception) {
                 Timber.e("Use case bind failed: $e")
             }

@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -48,6 +49,13 @@ class AddBoxFragment : Fragment(R.layout.add_box_layout), CamFragment.OnPictureL
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         childFragmentManager.beginTransaction().replace(R.id.camFrame, CamFragment()).commitAllowingStateLoss()
+
+        binding.sendBtn.apply {
+            setOnApplyWindowInsetsListener { v, insets ->
+                view.updatePadding(bottom = insets.systemWindowInsetBottom)
+                insets
+            }
+        }
 
         binding.sendBtn.setOnClickListener {
             photoUri?.let {

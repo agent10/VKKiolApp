@@ -19,7 +19,7 @@
         <item name="buttonStyle">@style/Button</item>
         <item name="imageViewerBackgroundColor">#FF000000</item>
 
-        <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialog</item>
+        <item name="bottomSheetDialogTheme">@style/TransparentNavBarBottomSheetDialog</item>
 
     </style>
 
@@ -91,8 +91,9 @@
 
     <style name="TransparentNavBarBottomSheetDialog" parent="CustomBottomSheetDialog">
         <item name="android:windowIsFloating">false</item>
-        <item name="android:navigationBarColor">@color/navBarColor</item>
-        <item name="android:windowLightNavigationBar" tools:ignore="NewApi">true</item>
+        <item name="android:navigationBarColor">@color/colorBackground</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        <item name="android:windowLightNavigationBar" tools:ignore="NewApi">false</item>
     </style>
 
 </resources>

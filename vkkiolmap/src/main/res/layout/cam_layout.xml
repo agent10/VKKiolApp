@@ -13,15 +13,25 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
+    <kiol.vkapp.map.RecordButton
         android:id="@+id/camera_capture_button"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:elevation="2dp"
         android:scaleType="fitCenter"
-        android:text="Take Photo"
         app:layout_constraintBottom_toBottomOf="@id/viewFinder"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
+
+    <kiol.vkapp.map.CheckableImageButton
+        android:id="@+id/torchSwitcher"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="@dimen/spacing_large"
+        android:background="@drawable/camera_btn_background"
+        android:src="@drawable/ic_torch"
+        app:layout_constraintBottom_toBottomOf="@id/camera_capture_button"
+        app:layout_constraintRight_toLeftOf="@id/camera_capture_button"
+        app:layout_constraintTop_toTopOf="@id/camera_capture_button" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
