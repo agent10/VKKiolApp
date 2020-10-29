@@ -17,12 +17,8 @@ import kiol.vkapp.map.databinding.AddBoxLayoutBinding
 class AddBoxFragment : Fragment(R.layout.add_box_layout),
     CamFragment.OnPictureListener {
     companion object {
-        private const val ADDR = "addr"
-
-        fun create(addr: String): AddBoxFragment {
-            return AddBoxFragment().apply {
-                arguments = bundleOf(ADDR to addr)
-            }
+        fun create(): AddBoxFragment {
+            return AddBoxFragment()
         }
     }
 
@@ -37,7 +33,7 @@ class AddBoxFragment : Fragment(R.layout.add_box_layout),
             CamFragment()
         ).commitAllowingStateLoss()
 
-        binding.address.text = requireArguments().getString(ADDR)
+        binding.address.text = placesUseCase.currentPrettyAddress
 
         binding.sendBtn.apply {
             setOnApplyWindowInsetsListener { v, insets ->
@@ -52,7 +48,7 @@ class AddBoxFragment : Fragment(R.layout.add_box_layout),
             }
 
             photoUri?.let {
-                placesUseCase.addBoxForCheck(requireArguments().getString(ADDR).orEmpty(), it)
+                placesUseCase.addBoxForCheck(it)
                 parentFragmentManager.popBackStack()
             }
         }

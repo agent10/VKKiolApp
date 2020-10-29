@@ -17,6 +17,8 @@ class PlacesUseCase {
     private val placesCache = PlacesCache()
     private val boxPlacesCache = BoxPlacesCache()
 
+    var currentPrettyAddress = ""
+
     fun getPlaces(placeType: PlaceType): Flowable<List<Place>> {
         return placesCache.getValue(placeType)
     }
@@ -27,7 +29,7 @@ class PlacesUseCase {
 
     fun observeChanges() = boxPlacesCache.observeChanges()
 
-    fun addBoxForCheck(addr: String, uri: Uri) = boxPlacesCache.addBoxForCheck(addr, uri)
+    fun addBoxForCheck(uri: Uri) = boxPlacesCache.addBoxForCheck(currentPrettyAddress, uri)
 
     fun setLatLong(lat: Float, lon: Float) {
         boxPlacesCache.setLatLong(lat, lon)

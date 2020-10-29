@@ -14,9 +14,8 @@ interface RouterProvider {
 
 class SimpleRouter(private val fragmentManager: FragmentManager) {
 
-    fun routeToCamera(addr: String) {
-        beginDefTransaction().add(R.id.contentViewer, AddBoxFragment.create(addr)).addToBackStack(null).commit()
-        //        beginDefTransaction().replace(R.id.contentViewer, CamFragment()).addToBackStack("").commit()
+    fun routeToCamera() {
+        beginDefTransaction().add(R.id.contentViewer, AddBoxFragment.create()).addToBackStack(null).commit()
     }
 
     private fun beginDefTransaction(): FragmentTransaction {

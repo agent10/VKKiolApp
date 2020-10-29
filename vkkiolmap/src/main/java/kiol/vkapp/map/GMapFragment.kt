@@ -21,6 +21,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kiol.vkapp.commondata.domain.Place
@@ -33,6 +34,8 @@ import kiol.vkapp.map.clusters.PlaceClusterManager
 import kiol.vkapp.map.databinding.GmapFragmentLayoutBinding
 import kiol.vkapp.map.description.DescriptionDialog
 import kiol.vkapp.map.description.ImageViewerFragment
+import kiol.vkapp.map.map.SimpleLocationProvider
+import kiol.vkapp.map.map.getPrettyAddress
 import kiol.vkapp.map.renderers.MarkerImageGenerator
 import timber.log.Timber
 
@@ -47,26 +50,21 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         GmapFragmentLayoutBinding.bind(requireView())
     }
 
-    private lateinit var mapview: FrameLayout
-
     private lateinit var mapFragment: SupportMapFragment
-
-    private lateinit var progressBar: ProgressBar
 
     private lateinit var googleMap: GoogleMap
     private var clusterManager: PlaceClusterManager? = null
 
-    private var isDataDirty = true
-
-    private var disposable: Disposable? = null
+    private val compositeDisposable = CompositeDisposable()
+    //    private var disposable: Disposable? = null
 
     private lateinit var markerImageGenerator: MarkerImageGenerator
 
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationProvider: SimpleLocationProvider
 
     private lateinit var permissionManager: PermissionManager
 
-    private var currentAddr = ""
+    private var lastLocation: LatLng? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,48 +77,30 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         )
     }
 
+    @SuppressLint("MissingPermission")
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         markerImageGenerator = MarkerImageGenerator(requireContext())
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+        locationProvider = SimpleLocationProvider(requireActivity()) {
+            googleMap.isMyLocationEnabled = true
+            handleNewLocation(it)
+        }
     }
 
     @SuppressLint("MissingPermission")
     override fun onStart() {
         super.onStart()
         permissionManager.checkPermissions(this) {
-            val locationTask = fusedLocationClient.lastLocation
-            locationTask.addOnFailureListener {
-                Timber.e("kiol location $it")
-            }
-            locationTask.addOnSuccessListener {
-                Timber.d("kiol location $it")
-                if (isDataDirty) {
-                    googleMap.isMyLocationEnabled = true
-
-                    if (it != null) {
-                        val latLng = LatLng(it.latitude, it.longitude)
-                        findCurrentAddr(latLng)
-                        placesUseCase.setLatLong(latLng.latitude.toFloat(), latLng.longitude.toFloat())
-                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10f))
-                        updateMap()
-                    }
-                }
-            }
-            locationTask.addOnCompleteListener {
-                Timber.d("kiol location $it")
-            }
-            locationTask.addOnCanceledListener {
-                Timber.d("kiol location $it")
+            if (it) {
+                locationProvider.provide()
+            } else {
+                handleNewLocation(SimpleLocationProvider.SPB_LAT_LONG)
             }
         }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        mapview = view.findViewById(R.id.mapview)
-        progressBar = view.findViewById(R.id.progressbar)
 
         mapFragment = SupportMapFragment()
         childFragmentManager.beginTransaction().replace(R.id.mapview, mapFragment).commitAllowingStateLoss()
@@ -132,35 +112,16 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
                 view.updatePadding(top = insets.systemWindowInsetTop)
                 insets
             }
-        }
 
-        binding.toolbar.setOnMenuItemClickListener {
-            if (it.itemId == R.id.add_box) {
-                getSimpleRouter().routeToCamera(currentAddr)
-                //                childFragmentManager.beginTransaction()
-                //                    .setCustomAnimations(
-                //                        R.anim.viewer_fragment_open_enter,
-                //                        R.anim.viewer_fragment_open_enter,
-                //                        R.anim.viewer_fragment_open_exit,
-                //                        R.anim.viewer_fragment_open_exit
-                //                    ).replace(
-                //                        R.id.contentViewer, CamFragment()
-                //                    ).addToBackStack(null)
-                //                    .commitAllowingStateLoss()
-
-                //                val newPlace = placesUseCase.addBoxForCheck()
-                //                clusterManager?.addItem(PlaceClusterItem(newPlace))
-                //                clusterManager?.cluster()
+            setOnMenuItemClickListener {
+                if (it.itemId == R.id.add_box) {
+                    getSimpleRouter().routeToCamera()
+                }
+                true
             }
-            true
         }
 
-        //        tabs.setOnApplyWindowInsetsListener { v, insets ->
-        //            view.updatePadding(top = insets.systemWindowInsetTop)
-        //            insets
-        //        }
-
-        val d = placesUseCase.observeChanges().subscribe({
+        compositeDisposable += placesUseCase.observeChanges().subscribe({
             clusterManager?.addItem(PlaceClusterItem(it))
             clusterManager?.cluster()
         }, {
@@ -170,21 +131,18 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
 
     override fun onDestroyView() {
         super.onDestroyView()
-        disposable?.dispose()
-        disposable = null
+        compositeDisposable.clear()
     }
 
     private fun updateMap() {
         clusterManager?.clearItems()
-        disposable?.dispose()
 
-        progressBar.visibility = View.VISIBLE
-        disposable = placesUseCase.getBoxes().subscribeOn(Schedulers.io())
+        binding.progressbar.visibility = View.VISIBLE
+        compositeDisposable += placesUseCase.getBoxes().subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnEach {
-                progressBar.visibility = View.GONE
+                binding.progressbar.visibility = View.GONE
             }.subscribe({ places ->
-                //                isDataDirty = false
                 Timber.d("Groups: $places")
                 if (places.isEmpty()) {
                     Toast.makeText(requireContext(), R.string.nothing_found, Toast.LENGTH_SHORT).show()
@@ -197,6 +155,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
                     cluster()
                 }
             }, {
+                binding.progressbar.visibility = View.GONE
                 Toast.makeText(requireContext(), "${getString(R.string.error)} $it", Toast.LENGTH_SHORT).show()
                 Timber.e("Groups error: $it")
             })
@@ -248,12 +207,15 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         permissionManager.invokePermissionRequest(requestCode, permissions, grantResults)
     }
 
-    private fun findCurrentAddr(latLng: LatLng) {
-        val d = Flowable.defer {
-            val geocoder = Geocoder(requireContext()).getFromLocation(latLng.latitude, latLng.longitude, 1)
-            Flowable.just(geocoder.firstOrNull()?.getAddressLine(0).orEmpty())
-        }.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe({
-            currentAddr = it
-        }, {})
+    private fun handleNewLocation(latLng: LatLng) {
+        if (lastLocation == null) {
+            requireActivity().getPrettyAddress(latLng) {
+                placesUseCase.currentPrettyAddress = it
+            }
+            placesUseCase.setLatLong(latLng.latitude.toFloat(), latLng.longitude.toFloat())
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 10f))
+            updateMap()
+        }
+        lastLocation = latLng
     }
 }
