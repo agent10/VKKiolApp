@@ -27,7 +27,10 @@ import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.places.PlacesUseCase
 import kiol.vkapp.commonui.permissions.PermissionManager
 import kiol.vkapp.commonui.viewLifecycleLazy
+import kiol.vkapp.map.clusters.PlaceClusterItem
+import kiol.vkapp.map.clusters.PlaceClusterManager
 import kiol.vkapp.map.databinding.GmapFragmentLayoutBinding
+import kiol.vkapp.map.description.DescriptionDialog
 import kiol.vkapp.map.renderers.MarkerImageGenerator
 import timber.log.Timber
 

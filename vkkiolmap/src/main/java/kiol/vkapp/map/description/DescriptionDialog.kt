@@ -1,4 +1,4 @@
-package kiol.vkapp.map
+package kiol.vkapp.map.description
 
 import android.content.Intent
 import android.graphics.Color
@@ -20,6 +20,7 @@ import kiol.vkapp.commondata.domain.BoxType.*
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commonui.SpaceItemDecoration
 import kiol.vkapp.commonui.viewLifecycleLazy
+import kiol.vkapp.map.R
 import kiol.vkapp.map.databinding.DescriptionDialogBinding
 import kiol.vkapp.map.unsubscribe.UnsubscribeDialog
 
@@ -28,7 +29,10 @@ class GroupsAdapter(val groups: List<VKGroup>, private val click: (VKGroup) -> U
     class VH(item: View) : RecyclerView.ViewHolder(item)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        return VH(LayoutInflater.from(parent.context).inflate(R.layout.vk_group_item_layout, parent, false))
+        return VH(
+            LayoutInflater.from(parent.context)
+                .inflate(R.layout.vk_group_item_layout, parent, false)
+        )
     }
 
     override fun getItemCount() = groups.size

@@ -1,4 +1,4 @@
-package kiol.vkapp.map
+package kiol.vkapp.map.description
 
 import android.app.Activity
 import android.graphics.Color
@@ -13,6 +13,7 @@ import com.github.chrisbanes.photoview.PhotoView
 import kiol.vkapp.commondata.data.getXSize
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commonui.DragToDismissFrameLayout
+import kiol.vkapp.map.R
 
 class ImageViewerFragment : Fragment(R.layout.image_viewer_fragment_layout) {
     companion object {

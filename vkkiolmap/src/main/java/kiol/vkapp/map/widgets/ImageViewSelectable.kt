@@ -1,4 +1,4 @@
-package kiol.vkapp.map
+package kiol.vkapp.map.widgets
 
 import android.content.Context
 import android.graphics.Canvas

@@ -1,4 +1,4 @@
-package kiol.vkapp.map
+package kiol.vkapp.map.addbox
 
 import android.animation.ValueAnimator
 import android.content.Context

@@ -1,4 +1,4 @@
-package kiol.vkapp.map
+package kiol.vkapp.map.addbox
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import kiol.vkapp.commonui.permissions.PermissionManager
 import kiol.vkapp.commonui.viewLifecycleLazy
+import kiol.vkapp.map.R
 import kiol.vkapp.map.databinding.CamLayoutBinding
 import timber.log.Timber
 import java.io.File

@@ -22,7 +22,7 @@ import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commonui.px
 import kiol.vkapp.commonui.pxF
-import kiol.vkapp.map.PlaceClusterItem
+import kiol.vkapp.map.clusters.PlaceClusterItem
 import timber.log.Timber
 import java.security.MessageDigest
 import java.util.concurrent.Executors

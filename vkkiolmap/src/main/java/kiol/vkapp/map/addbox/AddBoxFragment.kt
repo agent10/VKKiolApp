@@ -1,4 +1,4 @@
-package kiol.vkapp.map
+package kiol.vkapp.map.addbox
 
 import android.net.Uri
 import android.os.Bundle
@@ -11,9 +11,11 @@ import coil.load
 import coil.transform.CircleCropTransformation
 import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.GMapFragment.Companion.placesUseCase
+import kiol.vkapp.map.R
 import kiol.vkapp.map.databinding.AddBoxLayoutBinding
 
-class AddBoxFragment : Fragment(R.layout.add_box_layout), CamFragment.OnPictureListener {
+class AddBoxFragment : Fragment(R.layout.add_box_layout),
+    CamFragment.OnPictureListener {
     companion object {
         private const val ADDR = "addr"
 
@@ -30,7 +32,10 @@ class AddBoxFragment : Fragment(R.layout.add_box_layout), CamFragment.OnPictureL
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        childFragmentManager.beginTransaction().replace(R.id.camFrame, CamFragment()).commitAllowingStateLoss()
+        childFragmentManager.beginTransaction().replace(
+            R.id.camFrame,
+            CamFragment()
+        ).commitAllowingStateLoss()
 
         binding.address.text = requireArguments().getString(ADDR)
 

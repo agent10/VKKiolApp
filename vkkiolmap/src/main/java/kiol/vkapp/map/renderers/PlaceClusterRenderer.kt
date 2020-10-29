@@ -9,7 +9,7 @@ import com.google.maps.android.SphericalUtil
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterManager
 import kiol.vkapp.commondata.domain.PlaceType
-import kiol.vkapp.map.PlaceClusterItem
+import kiol.vkapp.map.clusters.PlaceClusterItem
 import timber.log.Timber
 
 class PlaceClusterRenderer(

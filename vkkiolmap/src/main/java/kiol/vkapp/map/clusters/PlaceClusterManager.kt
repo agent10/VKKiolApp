@@ -1,4 +1,4 @@
-package kiol.vkapp.map
+package kiol.vkapp.map.clusters
 
 import android.content.Context
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -29,7 +29,8 @@ class PlaceClusterManager(
         )
 
         val algo = NonHierarchicalDistanceBasedAlgorithm<PlaceClusterItem>()
-        algo.maxDistanceBetweenClusteredItems = MAX_DISTANCE
+        algo.maxDistanceBetweenClusteredItems =
+            MAX_DISTANCE
         algorithm = ScreenBasedAlgorithmAdapter(PreCachingAlgorithmDecorator(algo))
         setOnClusterClickListener {
             googleMap.animateCamera(
