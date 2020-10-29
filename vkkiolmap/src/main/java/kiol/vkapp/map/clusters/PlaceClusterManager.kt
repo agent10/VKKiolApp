@@ -7,6 +7,7 @@ import com.google.maps.android.clustering.ClusterManager
 import com.google.maps.android.clustering.algo.NonHierarchicalDistanceBasedAlgorithm
 import com.google.maps.android.clustering.algo.PreCachingAlgorithmDecorator
 import com.google.maps.android.clustering.algo.ScreenBasedAlgorithmAdapter
+import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.map.renderers.MarkerImageGenerator
 import kiol.vkapp.map.renderers.PlaceClusterRenderer
 
@@ -42,4 +43,15 @@ class PlaceClusterManager(
 
         googleMap.setOnCameraIdleListener(this)
     }
+}
+
+fun PlaceClusterManager.addPlace(place: Place) {
+    addPlaces(listOf(place))
+}
+
+fun PlaceClusterManager.addPlaces(places: List<Place>) {
+    places.forEach {
+        addItem(PlaceClusterItem(it))
+    }
+    cluster()
 }

@@ -1,6 +1,9 @@
 package kiol.vkapp.commonui
 
+import android.content.Context
 import android.content.res.Resources
+import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -22,6 +25,14 @@ val Int.pxF: Float
 
 operator fun CompositeDisposable.plusAssign(d: Disposable) {
     this.add(d)
+}
+
+fun Context.toast(text: String) {
+    Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+}
+
+fun Context.toast(@StringRes resId: Int) {
+    Toast.makeText(this, resId, Toast.LENGTH_SHORT).show()
 }
 
 //https://gist.github.com/jamiesanson/478997780eb6ca93361df311058dc5c2

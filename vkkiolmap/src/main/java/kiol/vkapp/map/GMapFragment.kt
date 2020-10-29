@@ -2,35 +2,30 @@ package kiol.vkapp.map
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.location.Geocoder
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.FrameLayout
-import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
-import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commondata.domain.places.PlacesUseCase
 import kiol.vkapp.commonui.permissions.PermissionManager
+import kiol.vkapp.commonui.toast
 import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.clusters.PlaceClusterItem
 import kiol.vkapp.map.clusters.PlaceClusterManager
+import kiol.vkapp.map.clusters.addPlace
+import kiol.vkapp.map.clusters.addPlaces
 import kiol.vkapp.map.databinding.GmapFragmentLayoutBinding
 import kiol.vkapp.map.description.DescriptionDialog
 import kiol.vkapp.map.description.ImageViewerFragment
@@ -42,7 +37,6 @@ import timber.log.Timber
 class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback, DescriptionDialog.ImageClickListener {
 
     companion object {
-        private val SPB_LAT_LONG = LatLng(59.9343, 30.3351)
         val placesUseCase = PlacesUseCase()
     }
 
@@ -56,7 +50,6 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
     private var clusterManager: PlaceClusterManager? = null
 
     private val compositeDisposable = CompositeDisposable()
-    //    private var disposable: Disposable? = null
 
     private lateinit var markerImageGenerator: MarkerImageGenerator
 
@@ -94,7 +87,8 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
             if (it) {
                 locationProvider.provide()
             } else {
-                handleNewLocation(SimpleLocationProvider.SPB_LAT_LONG)
+                updateMap()
+                //handleNewLocation(SimpleLocationProvider.SPB_LAT_LONG)
             }
         }
     }
@@ -115,17 +109,20 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
 
             setOnMenuItemClickListener {
                 if (it.itemId == R.id.add_box) {
-                    getSimpleRouter().routeToCamera()
+                    if (lastLocation == null) {
+                        requireContext().toast(R.string.add_no_location_error)
+                    } else {
+                        getSimpleRouter().routeToCamera()
+                    }
                 }
                 true
             }
         }
 
         compositeDisposable += placesUseCase.observeChanges().subscribe({
-            clusterManager?.addItem(PlaceClusterItem(it))
-            clusterManager?.cluster()
+            clusterManager?.addPlace(it)
         }, {
-
+            Timber.e("Error during places observing = $it")
         })
     }
 
@@ -148,12 +145,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
                     Toast.makeText(requireContext(), R.string.nothing_found, Toast.LENGTH_SHORT).show()
                 }
 
-                clusterManager?.apply {
-                    places.forEach {
-                        addItem(PlaceClusterItem(it))
-                    }
-                    cluster()
-                }
+                clusterManager?.addPlaces(places)
             }, {
                 binding.progressbar.visibility = View.GONE
                 Toast.makeText(requireContext(), "${getString(R.string.error)} $it", Toast.LENGTH_SHORT).show()

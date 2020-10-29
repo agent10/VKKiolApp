@@ -26,4 +26,6 @@
     <string name="no_subscribed_groups">No groups found</string>
     <string name="subscribed_groups_error">Groups loading failed</string>
 
+    <string name="add_no_location_error">Current location is not available</string>
+
 </resources>

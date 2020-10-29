@@ -26,4 +26,6 @@
     <string name="no_subscribed_groups">Вы не подписаны на сообщества ящичка</string>
     <string name="subscribed_groups_error">Не удалось загрузить сообщества</string>
 
+    <string name="add_no_location_error">Не определено текущее местоположение</string>
+
 </resources>

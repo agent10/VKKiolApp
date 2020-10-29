@@ -37,16 +37,7 @@ class CamFragment : Fragment(R.layout.cam_layout) {
 
     private lateinit var permissionManager: PermissionManager
 
-    val scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-        override fun onScale(detector: ScaleGestureDetector?): Boolean {
-
-            val v1 = detector?.scaleFactor ?: 0.0f
-            val v2 = cameraInfo?.zoomState?.value?.linearZoom ?: 0f
-
-            cameraControl?.setLinearZoom(v2 - (1.0f - v1))
-            return true
-        }
-    })
+    private lateinit var scaleGestureDetector: ScaleGestureDetector
 
     private val binding by viewLifecycleLazy {
         CamLayoutBinding.bind(requireView())
@@ -55,6 +46,17 @@ class CamFragment : Fragment(R.layout.cam_layout) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         permissionManager = PermissionManager(requireContext(), listOf(Manifest.permission.CAMERA))
+        scaleGestureDetector = ScaleGestureDetector(context, object : ScaleGestureDetector
+        .SimpleOnScaleGestureListener() {
+            override fun onScale(detector: ScaleGestureDetector?): Boolean {
+
+                val v1 = detector?.scaleFactor ?: 0.0f
+                val v2 = cameraInfo?.zoomState?.value?.linearZoom ?: 0f
+
+                cameraControl?.setLinearZoom(v2 - (1.0f - v1))
+                return true
+            }
+        })
     }
 
     override fun onStart() {
