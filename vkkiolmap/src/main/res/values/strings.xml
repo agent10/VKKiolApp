@@ -19,4 +19,8 @@
     <string name="subscribed_groups">Subscribed groups</string>
     <string name="unsubscribe_btn">Unsubscribe</string>
 
+    <string name="short_info">Brief info</string>
+    <string name="cam_error">Camera error</string>
+    <string name="no_photo_error">You should take a photo</string>
+
 </resources>

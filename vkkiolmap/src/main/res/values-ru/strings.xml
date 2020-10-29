@@ -18,4 +18,8 @@
     <string name="subscribed_groups">Подписанные сообщества</string>
     <string name="unsubscribe_btn">Отписаться</string>
 
+    <string name="short_info">Краткая информация</string>
+
+    <string name="cam_error">Ошибка камеры</string>
+    <string name="no_photo_error">Сначала сделайте фото</string>
 </resources>

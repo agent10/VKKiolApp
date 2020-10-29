@@ -19,7 +19,7 @@ class RecordButton @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     companion object {
-        private const val ScaleDuration = 100L
+        const val ScaleDuration = 100L
         private const val MaxRecordDuration = 15000L
     }
 
@@ -88,46 +88,17 @@ class RecordButton @JvmOverloads constructor(
         setWillNotDraw(false)
     }
 
-    //    override fun onAttachedToWindow() {
-    //        super.onAttachedToWindow()
-    //        sound = MediaActionSound()
-    //        sound.load(MediaActionSound.START_VIDEO_RECORDING)
-    //        sound.load(MediaActionSound.STOP_VIDEO_RECORDING)
-    //    }
-
-    //    override fun onDetachedFromWindow() {
-    //        super.onDetachedFromWindow()
-    //        sound.release()
-    //    }
-
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
-        //        progressRect.set(0f, 0f, measuredWidth.toFloat(), measuredHeight.toFloat())
-        //        progressRect.inset(measuredWidth * 0.15f, measuredHeight * 0.15f)
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
-                //                progressAnimator.cancel()
-                //                progressAnimator.start()
-                //                playBeepSound(true)
-                //                callback.onRecord(true)
                 setScale(true)
                 return true
             }
-            //            MotionEvent.ACTION_MOVE -> {
-            //                if (event.y < 0) {
-            //                    val zl = 3 * (abs(event.y) / zoomHeight)
-            //                    Timber.d("Record button: $zl")
-            //                    callback.onZoomLevel(zl)
-            //                }
-            //                return true
-            //            }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                //                playBeepSound(false)
-                //                progressAnimator.cancel()
-                //                progressValue = 0.0f
                 performClick()
                 setScale(false)
                 return true
@@ -162,8 +133,6 @@ class RecordButton @JvmOverloads constructor(
 
         canvas?.apply {
             withScale(scaleValue, scaleValue, measuredWidth / 2f, measuredHeight / 2f) {
-                //                drawArc(progressRect, 0f, 360f, true, progressButtonBackgroundPaint)
-                //                drawArc(progressRect, -90f, progressValue, false, progressButtonPaint)
                 drawCircle(measuredWidth / 2f, measuredHeight / 2f, measuredWidth * 0.30f, recButtonPaint)
             }
         }

@@ -11,6 +11,8 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -35,9 +37,7 @@ class AddBoxFragment : Fragment(R.layout.add_box_layout), CamFragment.OnPictureL
 
         fun create(addr: String): AddBoxFragment {
             return AddBoxFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ADDR, addr)
-                }
+                arguments = bundleOf(ADDR to addr)
             }
         }
     }
@@ -50,6 +50,8 @@ class AddBoxFragment : Fragment(R.layout.add_box_layout), CamFragment.OnPictureL
         super.onViewCreated(view, savedInstanceState)
         childFragmentManager.beginTransaction().replace(R.id.camFrame, CamFragment()).commitAllowingStateLoss()
 
+        binding.address.text = requireArguments().getString(ADDR)
+
         binding.sendBtn.apply {
             setOnApplyWindowInsetsListener { v, insets ->
                 view.updatePadding(bottom = insets.systemWindowInsetBottom)
@@ -58,6 +60,10 @@ class AddBoxFragment : Fragment(R.layout.add_box_layout), CamFragment.OnPictureL
         }
 
         binding.sendBtn.setOnClickListener {
+            if (photoUri == null) {
+                Toast.makeText(requireContext(), R.string.no_photo_error, Toast.LENGTH_SHORT).show()
+            }
+
             photoUri?.let {
                 placesUseCase.addBoxForCheck(requireArguments().getString(ADDR).orEmpty(), it)
                 parentFragmentManager.popBackStack()
@@ -69,7 +75,6 @@ class AddBoxFragment : Fragment(R.layout.add_box_layout), CamFragment.OnPictureL
 
     override fun onTaken(uri: Uri) {
         photoUri = uri
-        binding.address.text = requireArguments().getString(ADDR)
         binding.previewIcon.load(uri) {
             crossfade(true)
             transformations(CircleCropTransformation())

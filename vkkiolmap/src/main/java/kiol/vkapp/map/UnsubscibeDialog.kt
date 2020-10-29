@@ -97,7 +97,7 @@ class UnsubscribeDialog : BottomSheetDialogFragment() {
             binding.groups.adapter = UnsubscribeGroupsAdapter(it) { _, selected ->
                 binding.unsubscribeBtn.isEnabled = selected.isNotEmpty()
                 if (selected.isNotEmpty()) {
-                    binding.unsubscribeBtn.icon = BadgeDrawable(requireContext()).apply {
+                    binding.unsubscribeBtn.icon = BadgeDrawable().apply {
                         setCount(selected.size)
                     }
                 } else {

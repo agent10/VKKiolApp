@@ -13,6 +13,18 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ProgressBar
+        android:id="@+id/camSwitchProgress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:indeterminateDrawable="@drawable/cam_switch_rotate"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <kiol.vkapp.map.RecordButton
         android:id="@+id/camera_capture_button"
         android:layout_width="100dp"
@@ -33,5 +45,10 @@
         app:layout_constraintBottom_toBottomOf="@id/camera_capture_button"
         app:layout_constraintRight_toLeftOf="@id/camera_capture_button"
         app:layout_constraintTop_toTopOf="@id/camera_capture_button" />
+
+    <include
+        android:id="@+id/no_permissions_layout"
+        layout="@layout/no_permissions_layout"
+        android:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

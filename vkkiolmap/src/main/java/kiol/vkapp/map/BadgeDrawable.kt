@@ -1,50 +1,49 @@
 package kiol.vkapp.map
 
-import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.Drawable
 import kiol.vkapp.commonui.pxF
 
-class BadgeDrawable(context: Context?) : Drawable() {
-    private val mTextSize = 13.pxF
-    private val mBadgePaint: Paint = Paint().apply {
+class BadgeDrawable() : Drawable() {
+    private val textSize = 13.pxF
+    private val badgePaint: Paint = Paint().apply {
         color = 0xFF232324.toInt()
         isAntiAlias = true
         style = Paint.Style.FILL
     }
-    private val mTextPaint: Paint
-    private val mTxtRect = Rect()
-    private var mCount = ""
-    private var mWillDraw = false
+    private val textPaint = Paint().apply {
+        color = 0xFFE1E3E6.toInt()
+        typeface = Typeface.DEFAULT_BOLD
+        textSize = textSize
+        isAntiAlias = true
+        textAlign = Paint.Align.CENTER
+    }
+    private val txtRect = Rect()
+    private var count = ""
+    private var willDraw = false
 
     override fun draw(canvas: Canvas) {
-        if (!mWillDraw) {
+        if (!willDraw) {
             return
         }
         val bounds = bounds
-        val width = bounds.right - bounds.left.toFloat()
-        val height = bounds.bottom - bounds.top.toFloat()
 
         val radius = 13.pxF
         val centerX = bounds.left.toFloat() + radius / 2f
         val centerY = 0f
 
-        canvas.drawCircle(centerX, centerY, radius, mBadgePaint)
+        canvas.drawCircle(centerX, centerY, radius, badgePaint)
 
-        mTextPaint.getTextBounds(mCount, 0, mCount.length, mTxtRect)
-        val textHeight = mTxtRect.bottom - mTxtRect.top.toFloat()
+        textPaint.getTextBounds(count, 0, count.length, txtRect)
+        val textHeight = txtRect.bottom - txtRect.top.toFloat()
         val textY = centerY + textHeight / 2f
-        canvas.drawText(mCount, centerX, textY, mTextPaint)
+        canvas.drawText(count, centerX, textY, textPaint)
     }
 
-    /*
-    Sets the count (i.e notifications) to display.
-     */
     fun setCount(count: Int) {
-        mCount = Integer.toString(count)
+        this.count = Integer.toString(count)
 
-        // Only draw a badge if there are notifications.
-        mWillDraw = count > 0
+        willDraw = count > 0
         invalidateSelf()
     }
 
@@ -58,14 +57,5 @@ class BadgeDrawable(context: Context?) : Drawable() {
 
     override fun getOpacity(): Int {
         return PixelFormat.UNKNOWN
-    }
-
-    init {
-        mTextPaint = Paint()
-        mTextPaint.color = 0xFFE1E3E6.toInt()
-        mTextPaint.typeface = Typeface.DEFAULT_BOLD
-        mTextPaint.textSize = mTextSize
-        mTextPaint.isAntiAlias = true
-        mTextPaint.textAlign = Paint.Align.CENTER
     }
 }

@@ -20,7 +20,7 @@ class PlaceClusterRenderer(
     CustomClusterRenderer<PlaceClusterItem>(context, googleMap, clusterManager) {
 
     companion object {
-        private const val MinDistanceCluster = 4
+        private const val MinDistanceCluster = 3
     }
 
     init {
