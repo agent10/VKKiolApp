@@ -23,4 +23,7 @@
     <string name="cam_error">Camera error</string>
     <string name="no_photo_error">You should take a photo</string>
 
+    <string name="no_subscribed_groups">No groups found</string>
+    <string name="subscribed_groups_error">Groups loading failed</string>
+
 </resources>

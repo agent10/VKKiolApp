@@ -1,4 +1,4 @@
-package kiol.vkapp.map
+package kiol.vkapp.map.unsubscribe
 
 import android.graphics.*
 import android.graphics.drawable.Drawable
@@ -14,7 +14,7 @@ class BadgeDrawable() : Drawable() {
     private val textPaint = Paint().apply {
         color = 0xFFE1E3E6.toInt()
         typeface = Typeface.DEFAULT_BOLD
-        textSize = textSize
+        textSize = this@BadgeDrawable.textSize
         isAntiAlias = true
         textAlign = Paint.Align.CENTER
     }

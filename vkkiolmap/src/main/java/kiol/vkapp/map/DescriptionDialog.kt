@@ -4,11 +4,9 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,15 +16,12 @@ import coil.transform.CircleCropTransformation
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kiol.vkapp.commondata.data.VKGroup
 import kiol.vkapp.commondata.domain.Box
-import kiol.vkapp.commondata.domain.BoxType
 import kiol.vkapp.commondata.domain.BoxType.*
 import kiol.vkapp.commondata.domain.Place
-import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commonui.SpaceItemDecoration
-import kiol.vkapp.commonui.dp
 import kiol.vkapp.commonui.viewLifecycleLazy
-import kiol.vkapp.map.databinding.CamLayoutBinding
 import kiol.vkapp.map.databinding.DescriptionDialogBinding
+import kiol.vkapp.map.unsubscribe.UnsubscribeDialog
 
 class GroupsAdapter(val groups: List<VKGroup>, private val click: (VKGroup) -> Unit) : RecyclerView.Adapter<GroupsAdapter.VH>() {
 
@@ -130,7 +125,7 @@ class DescriptionDialog : BottomSheetDialogFragment() {
             binding.unsubscribeBtn.setOnClickListener {
                 dismiss()
                 parentFragment?.fragmentManager?.let {
-                    UnsubscribeDialog.create().show(it, "")
+                    UnsubscribeDialog.create(box.vkGroups).show(it, "")
                 }
             }
             binding.unsubscribeBtn.visibility = if (box.boxType == Ok) View.GONE else View.VISIBLE

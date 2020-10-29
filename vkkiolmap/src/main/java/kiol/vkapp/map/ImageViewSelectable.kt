@@ -3,13 +3,8 @@ package kiol.vkapp.map
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.graphics.drawable.Drawable
 import android.util.AttributeSet
-import android.widget.ImageView
-import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
-import kiol.vkapp.commonui.dp
 import kiol.vkapp.commonui.pxF
-import java.lang.Math.sin
 import kotlin.math.cos
 import kotlin.math.min
 

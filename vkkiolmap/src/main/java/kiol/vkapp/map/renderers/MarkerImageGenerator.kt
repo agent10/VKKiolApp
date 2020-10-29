@@ -5,7 +5,6 @@ import android.graphics.*
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.Handler
-import android.os.Looper
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import androidx.core.graphics.toRectF
@@ -18,7 +17,6 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Marker
 import com.google.maps.android.clustering.Cluster
-import kiol.vkapp.commondata.domain.BoxType
 import kiol.vkapp.commondata.domain.BoxType.*
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType

@@ -22,4 +22,8 @@
 
     <string name="cam_error">Ошибка камеры</string>
     <string name="no_photo_error">Сначала сделайте фото</string>
+
+    <string name="no_subscribed_groups">Вы не подписаны на сообщества ящичка</string>
+    <string name="subscribed_groups_error">Не удалось загрузить сообщества</string>
+
 </resources>

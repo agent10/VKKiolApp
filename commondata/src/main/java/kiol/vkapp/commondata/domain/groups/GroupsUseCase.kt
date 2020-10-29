@@ -12,7 +12,7 @@ import org.json.JSONObject
 
 class GroupsUseCase {
 
-    fun getGroups() = Flowable.fromCallable {
+    fun getGroups(checkOnlyGroups: List<VKGroup>) = Flowable.fromCallable {
         val request = VKRequest<JSONObject>("groups.get")
             .addParam("filter", "groups, publics")
             .addParam("extended", 1)
@@ -23,5 +23,7 @@ class GroupsUseCase {
     }.map {
         val groups: VKResponse<VKListContainerResponse<VKGroup>> = Gson().fromJson(it.toString())
         groups.response.items
+    }.map {
+        checkOnlyGroups - it
     }
 }

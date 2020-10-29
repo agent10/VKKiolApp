@@ -8,10 +8,10 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.Toast
-import androidx.appcompat.widget.Toolbar
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
-import com.google.android.gms.location.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback

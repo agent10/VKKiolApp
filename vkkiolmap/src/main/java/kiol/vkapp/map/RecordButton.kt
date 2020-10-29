@@ -2,7 +2,9 @@ package kiol.vkapp.map
 
 import android.animation.ValueAnimator
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
 import android.media.MediaActionSound
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -10,8 +12,6 @@ import android.view.View
 import androidx.core.animation.doOnEnd
 import androidx.core.graphics.withScale
 import kiol.vkapp.commonui.pxF
-import timber.log.Timber
-import kotlin.math.abs
 import kotlin.math.max
 
 class RecordButton @JvmOverloads constructor(

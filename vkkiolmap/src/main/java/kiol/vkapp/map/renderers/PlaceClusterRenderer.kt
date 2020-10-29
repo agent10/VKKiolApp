@@ -1,7 +1,6 @@
 package kiol.vkapp.map.renderers
 
 import android.content.Context
-import android.location.Location
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker

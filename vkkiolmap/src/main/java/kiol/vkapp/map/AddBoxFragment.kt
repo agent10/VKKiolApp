@@ -1,35 +1,17 @@
 package kiol.vkapp.map
 
-import android.content.Intent
-import android.location.Geocoder
 import android.net.Uri
 import android.os.Bundle
-import android.os.Parcelable
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import kiol.vkapp.commondata.data.VKGroup
-import kiol.vkapp.commondata.domain.Box
-import kiol.vkapp.commondata.domain.BoxType
-import kiol.vkapp.commondata.domain.Place
-import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.GMapFragment.Companion.placesUseCase
 import kiol.vkapp.map.databinding.AddBoxLayoutBinding
-import kiol.vkapp.map.databinding.CamLayoutBinding
-import kiol.vkapp.map.databinding.DescriptionDialogBinding
 
 class AddBoxFragment : Fragment(R.layout.add_box_layout), CamFragment.OnPictureListener {
     companion object {
