@@ -2,6 +2,7 @@ package kiol.vkapp.map.description
 
 import android.app.Activity
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -22,6 +23,14 @@ class ImageViewerFragment : Fragment(R.layout.image_viewer_fragment_layout) {
             return ImageViewerFragment().apply {
                 arguments = Bundle().apply {
                     putString(URL, place.sizes.getXSize())
+                }
+            }
+        }
+
+        fun create(uri: Uri): ImageViewerFragment {
+            return ImageViewerFragment().apply {
+                arguments = Bundle().apply {
+                    putString(URL, uri.toString())
                 }
             }
         }
@@ -55,7 +64,7 @@ class ImageViewerFragment : Fragment(R.layout.image_viewer_fragment_layout) {
                 start()
             }
 
-            Glide.with(this).load(it).placeholder(circularProgressDrawable)
+            Glide.with(this).load(Uri.parse(it)).placeholder(circularProgressDrawable)
                 .into(view.findViewById(R.id.photo_view))
         }
     }

@@ -3,6 +3,7 @@ package kiol.vkapp.map
 import android.Manifest
 import android.annotation.SuppressLint
 import android.location.Geocoder
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
@@ -31,10 +32,11 @@ import kiol.vkapp.map.clusters.PlaceClusterItem
 import kiol.vkapp.map.clusters.PlaceClusterManager
 import kiol.vkapp.map.databinding.GmapFragmentLayoutBinding
 import kiol.vkapp.map.description.DescriptionDialog
+import kiol.vkapp.map.description.ImageViewerFragment
 import kiol.vkapp.map.renderers.MarkerImageGenerator
 import timber.log.Timber
 
-class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback {
+class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback, DescriptionDialog.ImageClickListener {
 
     companion object {
         private val SPB_LAT_LONG = LatLng(59.9343, 30.3351)
@@ -217,9 +219,7 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         ).apply {
             setOnClusterItemClickListener {
                 val p = it.place
-                if (p.placeType == PlaceType.Photos) {
-                    showImageViewer(p)
-                } else {
+                if (p.placeType == PlaceType.Box) {
                     DescriptionDialog.create(p).show(childFragmentManager, null)
                 }
                 true
@@ -227,17 +227,17 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         }
     }
 
-    private fun showImageViewer(place: Place) {
-        //        childFragmentManager.beginTransaction()
-        //            .setCustomAnimations(
-        //                R.anim.viewer_fragment_open_enter,
-        //                R.anim.viewer_fragment_open_enter,
-        //                R.anim.viewer_fragment_open_exit,
-        //                R.anim.viewer_fragment_open_exit
-        //            ).replace(
-        //                R.id.contentViewer, ImageViewerFragment.create(place)
-        //            ).addToBackStack(null)
-        //            .commitAllowingStateLoss()
+    override fun onDescriptionImageClicked(uri: Uri) {
+        childFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.viewer_fragment_open_enter,
+                R.anim.viewer_fragment_open_enter,
+                R.anim.viewer_fragment_open_exit,
+                R.anim.viewer_fragment_open_exit
+            ).replace(
+                R.id.imageViewer, ImageViewerFragment.create(uri)
+            ).addToBackStack(null)
+            .commitAllowingStateLoss()
     }
 
     override fun onRequestPermissionsResult(
