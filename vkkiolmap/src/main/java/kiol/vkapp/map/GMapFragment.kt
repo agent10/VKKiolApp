@@ -75,8 +75,10 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
         super.onActivityCreated(savedInstanceState)
         markerImageGenerator = MarkerImageGenerator(requireContext())
         locationProvider = SimpleLocationProvider(requireActivity()) {
-            googleMap.isMyLocationEnabled = true
-            handleNewLocation(it)
+            if (lastLocation == null) {
+                googleMap.isMyLocationEnabled = true
+                handleNewLocation(it)
+            }
         }
     }
 
@@ -88,7 +90,6 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
                 locationProvider.provide()
             } else {
                 updateMap()
-                //handleNewLocation(SimpleLocationProvider.SPB_LAT_LONG)
             }
         }
     }
