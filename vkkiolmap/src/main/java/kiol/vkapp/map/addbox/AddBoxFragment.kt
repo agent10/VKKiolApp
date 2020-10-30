@@ -9,6 +9,7 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import coil.load
 import coil.transform.CircleCropTransformation
+import kiol.vkapp.commonui.toast
 import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.GMapFragment.Companion.placesUseCase
 import kiol.vkapp.map.R
@@ -17,9 +18,7 @@ import kiol.vkapp.map.databinding.AddBoxLayoutBinding
 class AddBoxFragment : Fragment(R.layout.add_box_layout),
     CamFragment.OnPictureListener {
     companion object {
-        fun create(): AddBoxFragment {
-            return AddBoxFragment()
-        }
+        fun create() = AddBoxFragment()
     }
 
     private val binding by viewLifecycleLazy {
@@ -44,12 +43,13 @@ class AddBoxFragment : Fragment(R.layout.add_box_layout),
 
         binding.sendBtn.setOnClickListener {
             if (photoUri == null) {
-                Toast.makeText(requireContext(), R.string.no_photo_error, Toast.LENGTH_SHORT).show()
+                requireContext().toast(R.string.no_photo_error)
             }
 
             photoUri?.let {
                 placesUseCase.addBoxForCheck(it)
                 parentFragmentManager.popBackStack()
+                requireContext().toast(R.string.box_sent_msg)
             }
         }
     }

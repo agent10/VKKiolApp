@@ -28,4 +28,5 @@
 
     <string name="add_no_location_error">Не определено текущее местоположение</string>
 
+    <string name="box_sent_msg">Ящик отправлен</string>
 </resources>

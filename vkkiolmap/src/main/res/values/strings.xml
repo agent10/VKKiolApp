@@ -28,4 +28,6 @@
 
     <string name="add_no_location_error">Current location is not available</string>
 
+    <string name="box_sent_msg">Box sent</string>
+
 </resources>
