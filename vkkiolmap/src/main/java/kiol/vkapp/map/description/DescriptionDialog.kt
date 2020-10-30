@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kiol.vkapp.commondata.domain.Box
 import kiol.vkapp.commondata.domain.BoxType.*
@@ -18,6 +19,7 @@ import kiol.vkapp.commonui.SpaceItemDecoration
 import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.R
 import kiol.vkapp.map.databinding.DescriptionDialogBinding
+import kiol.vkapp.map.renderers.BoxCircleCropTransformation
 import kiol.vkapp.map.unsubscribe.UnsubscribeDialog
 
 class DescriptionDialog : BottomSheetDialogFragment() {
@@ -76,13 +78,7 @@ class DescriptionDialog : BottomSheetDialogFragment() {
             }
         )
 
-        binding.image.load(box.photo) {
-            crossfade(true)
-            transformations(CircleCropTransformation())
-        }
-        binding.image.setOnClickListener {
-            handleImageClicked(box)
-        }
+        setupImage(box)
 
         binding.title.text = title
         if (address.isEmpty()) {
@@ -106,15 +102,35 @@ class DescriptionDialog : BottomSheetDialogFragment() {
 
             binding.description.text = desc
 
-            binding.groupsList.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
-            binding.groupsList.addItemDecoration(SpaceItemDecoration(resources.getDimensionPixelOffset(R.dimen.groups_margin)))
+            setupGroups(box)
+        }
+    }
 
-            binding.groupsList.adapter = GroupsAdapter(box.vkGroups) {
-                val link = it.createLink()
-                if (link.isNotEmpty()) {
-                    val chooser = Intent.createChooser(Intent(Intent.ACTION_VIEW, Uri.parse(link)), "")
-                    startActivity(chooser)
-                }
+    private fun setupImage(box: Box) {
+        val circleColor = when (box.boxType) {
+            Ok -> 0xFF4BB34B.toInt()
+            Fraud -> 0xFFFF5C5C.toInt()
+            Unknown -> 0xFF76787A.toInt()
+            else -> 0xFF76787A.toInt()
+        }
+        binding.image.load(box.photo) {
+            crossfade(true)
+            transformations(BoxCircleCropTransformation(circleColor))
+        }
+        binding.image.setOnClickListener {
+            handleImageClicked(box)
+        }
+    }
+
+    private fun setupGroups(box: Box) {
+        binding.groupsList.layoutManager = LinearLayoutManager(requireContext(), RecyclerView.HORIZONTAL, false)
+        binding.groupsList.addItemDecoration(SpaceItemDecoration(resources.getDimensionPixelOffset(R.dimen.groups_margin)))
+
+        binding.groupsList.adapter = GroupsAdapter(box.vkGroups) {
+            val link = it.createLink()
+            if (link.isNotEmpty()) {
+                val chooser = Intent.createChooser(Intent(Intent.ACTION_VIEW, Uri.parse(link)), "")
+                startActivity(chooser)
             }
         }
     }
@@ -129,5 +145,11 @@ class DescriptionDialog : BottomSheetDialogFragment() {
         parentFragment?.fragmentManager?.let {
             UnsubscribeDialog.create(box.vkGroups).show(it, "")
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val behavior = BottomSheetBehavior.from(requireView().parent as View)
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
     }
 }

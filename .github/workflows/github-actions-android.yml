@@ -20,4 +20,4 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Run checks and build
-        run: ./gradlew check assembleDebug
+        run: ./gradlew assembleDebug

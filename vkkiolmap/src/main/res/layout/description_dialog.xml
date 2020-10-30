@@ -39,7 +39,7 @@
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/spacing_micro"
+        android:layout_marginLeft="@dimen/spacing_normal"
         android:layout_marginRight="@dimen/spacing_micro"
         android:ellipsize="end"
         android:maxLines="2"
