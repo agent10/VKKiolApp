@@ -67,8 +67,8 @@ data class VKPhoto(
 @Parcelize
 data class VKGroup(
     val id: Int,
-    val name: String, val type: String,
-    val place: VKGroupPlace?, val description: String?, val site: String, val photo_100: String
+    val name: String,
+    val place: VKGroupPlace?, val description: String?, val photo_100: String
 ) : Parcelable {
 
     fun createLink(): String {
