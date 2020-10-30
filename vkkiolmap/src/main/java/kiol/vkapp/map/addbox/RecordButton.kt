@@ -88,10 +88,6 @@ class RecordButton @JvmOverloads constructor(
         setWillNotDraw(false)
     }
 
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(changed, left, top, right, bottom)
-    }
-
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
@@ -99,7 +95,9 @@ class RecordButton @JvmOverloads constructor(
                 return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                performClick()
+                if(isEnabled) {
+                    performClick()
+                }
                 setScale(false)
                 return true
             }
