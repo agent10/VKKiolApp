@@ -6,7 +6,6 @@ import com.vk.api.sdk.VKApiConfig
 import com.vk.api.sdk.VKDefaultValidationHandler
 import com.vk.api.sdk.auth.VKScope
 import kiol.vkapp.commonui.VKKiolActivity
-import kiol.vkapp.docs.MainFragment
 import kiol.vkapp.map.GMapFragment
 import kiol.vkapp.map.RouterProvider
 import kiol.vkapp.map.SimpleRouter

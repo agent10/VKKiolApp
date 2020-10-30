@@ -42,7 +42,6 @@ android {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation project(":commonui")
-    implementation project(":vkkioldocs")
     implementation project(":vkkiolmap")
 
     implementation "com.vk:androidsdk:$vkSdkVersion"
