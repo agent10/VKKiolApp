@@ -1,16 +1,13 @@
-package kiol.vkapp.map.renderers
+package kiol.vkapp.map.renderers.transformations
 
 import android.graphics.Bitmap
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import androidx.core.graphics.applyCanvas
-import androidx.core.graphics.toRectF
 import coil.bitmap.BitmapPool
 import coil.size.Size
 import coil.transform.Transformation
-import kiol.vkapp.commondata.domain.Box
-import kiol.vkapp.commonui.px
 import kiol.vkapp.commonui.pxF
 import kotlin.math.min
 
@@ -33,7 +30,8 @@ class BoxCircleCropTransformation(private val color: Int) : Transformation {
         val output = pool.get(minSize, minSize, input.config)
         output.applyCanvas {
             drawCircle(radius, radius, radius, paint)
-            paint.xfermode = XFERMODE
+            paint.xfermode =
+                XFERMODE
             drawBitmap(input, radius - input.width / 2f, radius - input.height / 2f, paint)
             drawCircle(radius, radius, radius - boxRoundBoundPaint.strokeWidth / 2f, boxRoundBoundPaint)
         }

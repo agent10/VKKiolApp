@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
-import coil.transform.CircleCropTransformation
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kiol.vkapp.commondata.domain.Box
@@ -19,7 +18,7 @@ import kiol.vkapp.commonui.SpaceItemDecoration
 import kiol.vkapp.commonui.viewLifecycleLazy
 import kiol.vkapp.map.R
 import kiol.vkapp.map.databinding.DescriptionDialogBinding
-import kiol.vkapp.map.renderers.BoxCircleCropTransformation
+import kiol.vkapp.map.renderers.transformations.BoxCircleCropTransformation
 import kiol.vkapp.map.unsubscribe.UnsubscribeDialog
 
 class DescriptionDialog : BottomSheetDialogFragment() {
