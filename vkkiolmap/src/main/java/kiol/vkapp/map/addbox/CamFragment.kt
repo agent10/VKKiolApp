@@ -93,7 +93,8 @@ class CamFragment : Fragment(R.layout.cam_layout) {
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
             val preview = Preview.Builder().build()
             preview.setSurfaceProvider(binding.viewFinder.surfaceProvider)
-            imageCapture = ImageCapture.Builder().setTargetResolution(Size(480, 640)).build()
+            imageCapture = ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .setTargetResolution(Size(480, 640)).build()
             try {
                 cameraProvider.unbindAll()
                 val camera = cameraProvider.bindToLifecycle(

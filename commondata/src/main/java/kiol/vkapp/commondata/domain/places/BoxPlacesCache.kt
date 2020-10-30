@@ -20,6 +20,34 @@ import kotlin.random.Random
 
 class BoxPlacesCache : RxResponseCache<Nothing, List<Place>>() {
 
+    companion object {
+        private val PhotosFakes = listOf(
+            "box_fake_1.jpg",
+            "box_fake_2.jpg", "box_fake_3.jpg", "box_fake_4.jpg", "box_fake_5.jpg"
+        )
+
+        private val BigPhotosFakes = listOf(
+            "box_big_fake_1.jpg",
+            "box_big_fake_2.jpg", "box_big_fake_3.jpg", "box_big_fake_4.jpg", "box_big_fake_5.jpg"
+        )
+
+        private val AddrsFakes = listOf(
+            "Выдуманный адрес 2к1",
+            "Ещё какой-то адрес 15", "ул. Фейковая 112", "ул. Вконтакте 999", "пр-кт. Приложения 11"
+        )
+
+        private val DescrFakes = listOf(
+            "Это придуманный ящик с описанием благотворительной организации. Помощь кому-то\nТел. 999-99-00\nWhatsapp: 9998877",
+            "Другой фейковый ящик с описанием благотворительной организации. Помощь кому-то\nwww.site.com\nТел. " +
+                    "999-99-00\nWhatsapp: " +
+                    "9998877"
+        )
+
+        private val GroupsFakes = listOf(
+            "198155259", "147415323", "179600088", "17796776", "15274000", "133169189", "6803013", "35966541"
+        )
+    }
+
     private var lat = 0f
     private var lon = 0f
 
@@ -44,7 +72,7 @@ class BoxPlacesCache : RxResponseCache<Nothing, List<Place>>() {
 
             places += getRandomPlaces(30.3709f, 59.9396f, 10000, vkGroups)
             places += getRandomPlaces(37.6139f, 55.7470f, 10000, vkGroups)
-            places += getRandomPlaces(lon, lat, 500, vkGroups, 5)
+            places += getRandomPlaces(lon, lat, 500, vkGroups, 8)
 
             places += boxForChecks
 
@@ -65,18 +93,26 @@ class BoxPlacesCache : RxResponseCache<Nothing, List<Place>>() {
 
     private fun getRandomPlace(id: Int, x: Float, y: Float, vkGroups: List<VKGroup>): Place {
         val boxType = BoxType.values().random()
+        val fakePhotoIndex = PhotosFakes.indexOf(PhotosFakes.random())
+        val fid = random.nextInt() + 10000
         return Place(
-            id, PlaceType.Box, x, y,
-            "Test $id",
-            "Addr $id",
-            "Desc $id", "file:///android_asset/testasset.png", null,
-            CustomPlaceParams(Box("file:///android_asset/testasset.png", boxType, vkGroups))
+            fid, PlaceType.Box, x, y,
+            "Ящичек  №${fid}",
+            AddrsFakes.random(),
+            DescrFakes.random(), "file:///android_asset/${PhotosFakes[fakePhotoIndex]}", null,
+            CustomPlaceParams(
+                Box(
+                    "file:///android_asset/${BigPhotosFakes[fakePhotoIndex]}",
+                    boxType,
+                    vkGroups.shuffled(random).take(4)
+                )
+            )
         )
     }
 
     private fun getGroupsByIds() = Flowable.fromCallable {
         val request = VKRequest<JSONObject>("groups.getById")
-            .addParam("group_ids", "198155259,147415323,179600088,17796776")
+            .addParam("group_ids", GroupsFakes)
         VK.executeSync(request)
     }.map {
         val groups: VKResponse<List<VKGroup>> = Gson().fromJson(it.toString())
