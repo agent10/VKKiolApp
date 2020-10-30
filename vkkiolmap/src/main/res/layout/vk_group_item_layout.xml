@@ -20,6 +20,7 @@
         android:layout_marginTop="4dp"
         android:ellipsize="end"
         android:gravity="center_horizontal"
+        android:lines="2"
         android:maxLines="2"
         android:textColor="@color/vkSecondaryLight"
         android:textSize="13sp"

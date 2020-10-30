@@ -78,6 +78,8 @@ class GMapFragment : Fragment(R.layout.gmap_fragment_layout), OnMapReadyCallback
             if (lastLocation == null) {
                 googleMap.isMyLocationEnabled = true
                 handleNewLocation(it)
+            } else {
+                placesUseCase.setLatLong(it.latitude.toFloat(), it.longitude.toFloat())
             }
         }
     }

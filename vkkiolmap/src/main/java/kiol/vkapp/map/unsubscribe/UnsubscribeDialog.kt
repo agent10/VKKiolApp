@@ -60,7 +60,15 @@ class UnsubscribeDialog : BottomSheetDialogFragment() {
 
         binding.progress.visibility = View.VISIBLE
         binding.unsubscribeBtn.visibility = View.INVISIBLE
+        loadGroups()
+    }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        compositeDisposable.clear()
+    }
+
+    private fun loadGroups() {
         val groups = requireArguments().getParcelableArrayList<VKGroup>(BoxGroups)!!.toList()
         compositeDisposable += groupsUseCase.getGroups(groups).subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -78,11 +86,6 @@ class UnsubscribeDialog : BottomSheetDialogFragment() {
             })
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        compositeDisposable.clear()
-    }
-
     private fun showGroups(groups: List<VKGroup>) {
         binding.groups.adapter = UnsubscribeGroupsAdapter(groups) { _, selected ->
             binding.unsubscribeBtn.isEnabled = selected.isNotEmpty()
@@ -97,6 +100,7 @@ class UnsubscribeDialog : BottomSheetDialogFragment() {
     }
 
     private fun handleNoItems() {
+        binding.progress.visibility = View.GONE
         binding.unsubscribeBtn.visibility = View.GONE
         binding.noGroups.visibility = View.VISIBLE
     }

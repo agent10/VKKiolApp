@@ -16,7 +16,6 @@ class GroupsUseCase {
         val request = VKRequest<JSONObject>("groups.get")
             .addParam("filter", "groups, publics")
             .addParam("extended", 1)
-            .addParam("fields", "description")
             .addParam("count", 1000)
             .addParam("offset", 0)
         VK.executeSync(request)
@@ -24,6 +23,6 @@ class GroupsUseCase {
         val groups: VKResponse<VKListContainerResponse<VKGroup>> = Gson().fromJson(it.toString())
         groups.response.items
     }.map {
-        checkOnlyGroups - it
+        checkOnlyGroups.intersect(it).toList()
     }
 }
