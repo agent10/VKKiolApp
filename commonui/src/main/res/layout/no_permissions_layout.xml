@@ -4,7 +4,7 @@
     android:id="@+id/rootNoPermissionsLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="@color/colorBackground"
     android:clickable="true">
 
     <kiol.vkapp.commonui.permissions.PermissionsSettingsBtn
@@ -29,6 +29,7 @@
         android:layout_marginBottom="@dimen/spacing_large"
         android:gravity="center_horizontal"
         android:text="@string/no_permissions_description"
+        android:textColor="@color/vkSecondaryTextColor"
         app:layout_constraintBottom_toTopOf="@id/noPermsSetttingBtn"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />

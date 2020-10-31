@@ -10,4 +10,23 @@
 
     <string name="nothing_found">Ничего не найдено</string>
 
+    <string name="wait_check">Мы проверяем этот ящичек...</string>
+    <string name="status_ok">Без подозрений</string>
+    <string name="status_fraud">Подозрительный</string>
+    <string name="status_unknown">В обработке...</string>
+
+    <string name="subscribed_groups">Подписанные сообщества</string>
+    <string name="unsubscribe_btn">Отписаться</string>
+
+    <string name="short_info">Краткая информация</string>
+
+    <string name="cam_error">Ошибка камеры</string>
+    <string name="no_photo_error">Сначала сделайте фото</string>
+
+    <string name="no_subscribed_groups">Вы не подписаны на сообщества ящичка</string>
+    <string name="subscribed_groups_error">Не удалось загрузить сообщества</string>
+
+    <string name="add_no_location_error">Не определено текущее местоположение</string>
+
+    <string name="box_sent_msg">Ящик отправлен</string>
 </resources>

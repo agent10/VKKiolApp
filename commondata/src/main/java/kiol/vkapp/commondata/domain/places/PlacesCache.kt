@@ -18,20 +18,25 @@ class PlacesCache : RxResponseCache<PlaceType, List<Place>>() {
     override fun fetch(param: PlaceType?): Flowable<List<Place>> {
         param?.let {
             return when (param) {
-                Groups -> getGroupsOrEvents(false)
-                Events -> getGroupsOrEvents(true)
+                Box -> getBoxes()
+                Groups -> getGroupsOrEvents(false).map {
+                    it.mapGroups(Groups)
+                }
+                Events -> getGroupsOrEvents(true).map {
+                    it.mapGroups(Events)
+                }
                 Photos -> getPhotos()
             }
         } ?: throw Exception("PlacesCache param must be set")
     }
 
-    private fun List<VKGroup>.mapGroups(placeType: PlaceType): List<Place> {
+    private fun List<VKGroup>.mapGroups(placeType: PlaceType, vkGroups: List<VKGroup> = emptyList()): List<Place> {
         return filter {
             it.place != null &&
                     it.place.latitude > Float.MIN_VALUE &&
                     it.place.longitude > Float.MIN_VALUE
         }.map {
-            it.convert(placeType)
+            it.convert(placeType, vkGroups)
         }
     }
 
@@ -43,9 +48,15 @@ class PlacesCache : RxResponseCache<PlaceType, List<Place>>() {
         }
     }
 
+    private fun getBoxes() = getGroupsByIds().flatMap { stubGroups ->
+        getGroupsOrEvents(false).map {
+            it.mapGroups(Groups, stubGroups)
+        }
+    }
+
     private fun getGroupsOrEvents(events: Boolean) = Flowable.fromCallable {
         val request = VKRequest<JSONObject>("groups.get")
-            .addParam("filter", if (events) "events" else "groups")
+            .addParam("filter", if (events) "events" else "groups, publics")
             .addParam("extended", 1)
             .addParam("fields", "place,description")
             .addParam("count", 1000)
@@ -53,7 +64,16 @@ class PlacesCache : RxResponseCache<PlaceType, List<Place>>() {
         VK.executeSync(request)
     }.map {
         val groups: VKResponse<VKListContainerResponse<VKGroup>> = Gson().fromJson(it.toString())
-        groups.response.items.mapGroups(if (events) Events else Groups)
+        groups.response.items
+    }
+
+    private fun getGroupsByIds() = Flowable.fromCallable {
+        val request = VKRequest<JSONObject>("groups.getById")
+            .addParam("group_ids", "198155259,147415323,179600088,17796776")
+        VK.executeSync(request)
+    }.map {
+        val groups: VKResponse<List<VKGroup>> = Gson().fromJson(it.toString())
+        groups.response
     }
 
     private fun getPhotos() = Flowable.fromCallable {

@@ -7,16 +7,47 @@
     android:padding="?attr/dialogPreferredPadding">
 
     <TextView
+        android:id="@+id/status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textAppearance="@style/BottomSheetTitleTextAppearence"
+        app:layout_constraintBottom_toBottomOf="@id/close"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="@id/close" />
+
+    <View
+        android:id="@+id/statusDivider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/spacing_normal"
+        android:background="@color/vkSecondaryDark"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/status" />
+
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginTop="@dimen/spacing_normal"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/statusDivider" />
+
+    <TextView
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/spacing_normal"
         android:layout_marginRight="@dimen/spacing_micro"
         android:ellipsize="end"
         android:maxLines="2"
         android:textAppearance="@style/BottomSheetTitleTextAppearence"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/image"
+        app:layout_constraintLeft_toRightOf="@id/image"
         app:layout_constraintRight_toLeftOf="@id/close"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="@id/image" />
 
     <ImageButton
         android:id="@+id/close"
@@ -27,6 +58,21 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView
+        android:id="@+id/waitStubText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:gravity="center_horizontal"
+        android:text="@string/wait_check"
+        android:textColor="@color/vkSecondaryLight"
+        android:textSize="16sp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/addressLine" />
+
     <LinearLayout
         android:id="@+id/addressLine"
         android:layout_width="0dp"
@@ -35,7 +81,7 @@
         android:orientation="horizontal"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title">
+        app:layout_constraintTop_toBottomOf="@id/image">
 
         <ImageView
             android:layout_width="wrap_content"
@@ -76,19 +122,54 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="@dimen/spacing_normal"
             android:ellipsize="end"
-            android:maxLines="4"
+            android:maxLines="8"
             android:textAppearance="@style/BottomSheetInfoTextAppearence" />
     </LinearLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/httpOpenBtn"
-        style="@style/VKKiolButton"
+    <View
+        android:id="@+id/groupsDivider"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="1dp"
         android:layout_marginTop="@dimen/spacing_normal"
-        android:text="@string/open"
-        android:theme="@style/ThemeMaterial"
+        android:background="@color/vkSecondaryDark"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/infoLine" />
+
+    <TextView
+        android:id="@+id/groupsTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_normal"
+        android:text="Communities"
+        android:textAppearance="@style/BottomSheetTitleTextAppearence"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/groupsDivider" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/groupsList"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_normal"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/groupsTitle" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/unsubscribeBtn"
+        style="@style/VKKiolButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_normal"
+        android:text="@string/unsubscribe_btn"
+        android:theme="@style/ThemeMaterial"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/groupsList" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/stateGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:constraint_referenced_ids="infoLine,groupsList,groupsTitle,groupsDivider" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,32 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabs"
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:elevation="4dp"
-        android:paddingBottom="@dimen/spacing_micro"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tabTextAppearance="@style/TabLayoutTextAppearance">
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/tab_item_height"
-            android:text="@string/events_tab_title" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/tab_item_height"
-            android:text="@string/photos_tab_title" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/tab_item_height"
-            android:text="@string/groups_tab_title" />
-    </com.google.android.material.tabs.TabLayout>
+        app:menu="@menu/menu_toolbar"
+        app:title="VKBoxes" />
 
     <ProgressBar
         android:id="@+id/progressbar"
@@ -43,7 +26,7 @@
         android:visibility="gone"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabs" />
+        app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
     <FrameLayout
         android:id="@+id/mapview"
@@ -52,10 +35,10 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tabs" />
+        app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
     <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/contentViewer"
+        android:id="@+id/imageViewer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:elevation="5dp"
@@ -63,5 +46,4 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -27,6 +27,7 @@
         android:ellipsize="end"
         android:gravity="center_horizontal"
         android:maxLines="1"
+        android:textColor="@color/vkSecondaryLight"
         android:textSize="@dimen/vk_task_description_size"
         app:layout_constraintBottom_toTopOf="@id/vklogin"
         app:layout_constraintLeft_toLeftOf="parent"

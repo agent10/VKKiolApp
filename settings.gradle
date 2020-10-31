@@ -1,2 +1,3 @@
-include ':vkkioldocs', ':commondata', ':commonui', ':vkkiolcam', 'vkkiolmap'
+include ':vkkiolapp'
+include ':commondata', ':commonui', 'vkkiolmap'
 rootProject.name='VKKiolApp'

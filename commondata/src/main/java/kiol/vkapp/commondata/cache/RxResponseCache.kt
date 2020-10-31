@@ -39,7 +39,6 @@ abstract class RxResponseCache<P, T> : RxRequestDependency<P, T> {
         return Flowable.fromIterable(dependencies)
             .map { Pair(it, getParamForDependency<Any>(it, externalParam)) }
             .flatMapCompletable { pairRxDependencyAndParam ->
-                //todo mkirilov : How to get params for dependencies? Maybe, can we find better way?
                 try {
                     return@flatMapCompletable Completable.fromPublisher(
                         pairRxDependencyAndParam.first.getValue(

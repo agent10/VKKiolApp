@@ -2,11 +2,14 @@
 <resources>
     <color name="colorPrimary">#FFFFFF</color>
     <color name="colorPrimaryDark">#FFFFFF</color>
-    <color name="colorBackground">#FFFFFF</color>
+    <color name="colorBackground">#232324</color>
     <color name="colorAccent">#4986CC</color>
-    <color name="statusBarColor">#000000</color>
+    <color name="statusBarColor">#232324</color>
     <color name="bottomSheetBackground">#FFFFFF</color>
-    <color name="navBarColor">#000000</color>
+    <color name="navBarColor">#AA000000</color>
+    <color name="vkSecondaryLight">#E1E3E6</color>
+    <color name="vkSecondaryDark">#FF363738</color>
+    <color name="vkSecondaryTextColor">#FFAAAEB3</color>
 
 
 

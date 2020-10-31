@@ -6,8 +6,8 @@ ext {
 
     appCompatVersion = "1.1.0"
     constraintlayoutVersion = "1.1.3"
-    coreCtxVersion = "1.2.0"
-    fragnentKtxVersion = "1.2.2"
+    coreCtxVersion = "1.3.0"
+    fragnentKtxVersion = "1.2.5"
     materialVersion = "1.1.0"
     chromeBrowserVersion = "1.1.0"
     recyclerViewVersion = "1.1.0"

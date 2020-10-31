@@ -1,7 +1,6 @@
 package kiol.vkapp.map.renderers
 
 import android.content.Context
-import android.location.Location
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
@@ -10,7 +9,7 @@ import com.google.maps.android.SphericalUtil
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterManager
 import kiol.vkapp.commondata.domain.PlaceType
-import kiol.vkapp.map.PlaceClusterItem
+import kiol.vkapp.map.clusters.PlaceClusterItem
 import timber.log.Timber
 
 class PlaceClusterRenderer(
@@ -20,7 +19,7 @@ class PlaceClusterRenderer(
     CustomClusterRenderer<PlaceClusterItem>(context, googleMap, clusterManager) {
 
     companion object {
-        private const val MinDistanceCluster = 4
+        private const val MinDistanceCluster = 3
     }
 
     init {
@@ -43,7 +42,6 @@ class PlaceClusterRenderer(
             place?.let {
                 if (it.placeType == PlaceType.Photos) {
                     markerImageGenerator.loadPhotoClusterImageWithCount(context, it, marker, cluster.size)
-
                 }
             }
         }

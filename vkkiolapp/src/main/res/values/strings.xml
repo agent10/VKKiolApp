@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">VKBoxes</string>
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">AIzaSyAhAW5kflXj32Y2PvhC2RD7BmuxHs70sHA</string>
+    <integer name="com_vk_sdk_AppId">7320681</integer>
+</resources>

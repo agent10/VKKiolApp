@@ -1,5 +1,9 @@
 package kiol.vkapp.commondata.data
 
+import android.os.Parcelable
+import kiol.vkapp.commondata.domain.PlaceType
+import kotlinx.android.parcel.Parcelize
+
 
 data class VKDocItem(
     val id: Int,
@@ -60,14 +64,23 @@ data class VKPhoto(
     List<VKImagePreview>? = null
 )
 
+@Parcelize
 data class VKGroup(
     val id: Int,
-    val name: String, val type: String,
-    val place: VKGroupPlace?, val description: String?, val site: String
-)
+    val name: String,
+    val place: VKGroupPlace?, val description: String?, val photo_100: String
+) : Parcelable {
 
+    fun createLink(): String {
+        var link = "https://www.vk.com/"
+        link += "club$id"
+        return link
+    }
+}
+
+@Parcelize
 data class VKGroupPlace(
     val title: String, val latitude: Float = Float.MIN_VALUE, val longitude: Float = Float.MIN_VALUE,
     val group_photo: String?, val address: String?
-)
+) : Parcelable
 

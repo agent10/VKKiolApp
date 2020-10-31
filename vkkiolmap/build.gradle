@@ -1,6 +1,7 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
 apply from: '../libVersions.gradle'
 
 android {
@@ -13,7 +14,6 @@ android {
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
-        applicationId "kiol.vkapp.map"
 
         consumerProguardFiles 'consumer-rules.pro'
         vectorDrawables.useSupportLibrary = true
@@ -29,6 +29,14 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    viewBinding {
+        enabled = true
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 }
 
@@ -53,12 +61,19 @@ dependencies {
 
     implementation "com.github.bumptech.glide:glide:$glideVersion"
     implementation "com.github.chrisbanes:PhotoView:$photoViewVersion"
+    implementation("io.coil-kt:coil:1.0.0")
 
     implementation "com.google.android.gms:play-services-maps:$playServicesMapsVersion"
     implementation "com.google.maps.android:android-maps-utils:$googleMapUtilsVersion"
 
     implementation "io.reactivex.rxjava2:rxjava:$rxVersion"
     implementation "io.reactivex.rxjava2:rxandroid:$rxAndroidVersion"
+
+    implementation "androidx.camera:camera-camera2:1.0.0-beta11"
+    implementation "androidx.camera:camera-lifecycle:1.0.0-beta11"
+    implementation "androidx.camera:camera-view:1.0.0-alpha18"
+
+    implementation "com.google.android.gms:play-services-location:17.1.0"
 
     implementation project(":commondata")
     implementation project(":commonui")

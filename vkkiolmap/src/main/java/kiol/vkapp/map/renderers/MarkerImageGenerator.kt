@@ -3,11 +3,14 @@ package kiol.vkapp.map.renderers
 import android.content.Context
 import android.graphics.*
 import android.media.ThumbnailUtils
+import android.net.Uri
 import android.os.Handler
-import android.os.Looper
 import android.util.DisplayMetrics
 import android.view.WindowManager
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toRectF
+import coil.ImageLoader
+import coil.request.ImageRequest
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
@@ -17,11 +20,13 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Marker
 import com.google.maps.android.clustering.Cluster
+import kiol.vkapp.commondata.domain.BoxType.*
 import kiol.vkapp.commondata.domain.Place
 import kiol.vkapp.commondata.domain.PlaceType
 import kiol.vkapp.commonui.px
 import kiol.vkapp.commonui.pxF
-import kiol.vkapp.map.PlaceClusterItem
+import kiol.vkapp.map.clusters.PlaceClusterItem
+import kiol.vkapp.map.renderers.transformations.BoxCircleCropTransformation
 import timber.log.Timber
 import java.security.MessageDigest
 import java.util.concurrent.Executors
@@ -38,6 +43,8 @@ fun Cluster<PlaceClusterItem>.getPlace(): Place? {
 
 class MarkerImageGenerator(private val context: Context) {
 
+    internal data class BdKey(val path: String, val color: Int)
+
     companion object {
 
         private val PLACE_SIZE = 40.px
@@ -47,6 +54,9 @@ class MarkerImageGenerator(private val context: Context) {
         private val BOUND_STOKER_WIDTH = 3.px
         private val BOUND_SHADOW_RADIUS = 1.px
     }
+
+    private val imageLoader = ImageLoader(context)
+    private val markerCache = hashMapOf<BdKey, BitmapDescriptor>()
 
     private val uiHandler = Handler()
     private val executorService = Executors.newFixedThreadPool(3)
@@ -67,7 +77,7 @@ class MarkerImageGenerator(private val context: Context) {
     private val placeBitmapTransformation = PlaceBitmapTransformation()
     private val photoBitmapTransformation = PlacePhotoBitmapTransformation()
 
-    private val rndColors = listOf(Color.BLUE, Color.RED, Color.GRAY, Color.MAGENTA, Color.BLACK)
+    private val rndColors = listOf(0xFF71AAEB.toInt())
 
     private inner class PlacePhotoBitmapTransformation : BitmapTransformation() {
         private val ID = "KIOL.PlacePhotoBitmapTransformation2"
@@ -127,8 +137,8 @@ class MarkerImageGenerator(private val context: Context) {
         }
     }
 
-    private inner class PlaceBitmapTransformation : BitmapTransformation() {
-        private val ID = "KIOL.PlaceBitmapTransformation2"
+    private inner class PlaceBitmapTransformation(private val color: Int? = null) : BitmapTransformation() {
+        private val ID = "KIOL.PlaceBitmapTransformation2$color"
 
         override fun updateDiskCacheKey(messageDigest: MessageDigest) {
             messageDigest.update(ID.toByteArray())
@@ -167,7 +177,13 @@ class MarkerImageGenerator(private val context: Context) {
                 PLACE_SIZE / 2f - (BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS), placeRoundPaint
             )
             canvas.drawBitmap(bitmap, rect, outRect, placeCropPaint)
-            canvas.drawArc(outRect.toRectF(), 0f, 360f, false, placeRoundBoundPaint)
+
+            if (color != null) {
+                boxRoundBoundPaint.color = color
+                canvas.drawArc(outRect.toRectF(), 0f, 360f, false, boxRoundBoundPaint)
+            } else {
+                canvas.drawArc(outRect.toRectF(), 0f, 360f, false, placeRoundBoundPaint)
+            }
             return output
         }
     }
@@ -182,6 +198,14 @@ class MarkerImageGenerator(private val context: Context) {
     }
 
     private val placeRoundBoundPaint = Paint().apply {
+        isAntiAlias = true
+        style = Paint.Style.STROKE
+        strokeWidth = BOUND_STOKER_WIDTH.toFloat()
+        setShadowLayer(BOUND_SHADOW_RADIUS.toFloat(), 0f, 0f, 0xAA000000.toInt())
+        color = 0xFFFFFFFF.toInt()
+    }
+
+    private val boxRoundBoundPaint = Paint().apply {
         isAntiAlias = true
         style = Paint.Style.STROKE
         strokeWidth = BOUND_STOKER_WIDTH.toFloat()
@@ -218,27 +242,19 @@ class MarkerImageGenerator(private val context: Context) {
     }
 
     private fun precache() {
-
         executorService.execute {
-            val t = System.currentTimeMillis()
-            createPhotoStubBitmap()
             createPlaceStubBitmap()
 
             repeat(25) {
-                getPhotoBadge(it)
-                createPhotoStubBitmapWithBadge(it)
                 createPlaceWithCountBitmap(it)
             }
-
-            val time = System.currentTimeMillis() - t
-
-            Timber.d("Precache time: $time")
         }
     }
 
     private fun getPhotoStubBimapDescriptor(): BitmapDescriptor {
         val b = photoStubBitmap
         if (photoStubBitmapDescriptor == null) {
+            Timber.w("kiol BitmapDescriptorFactory called")
             photoStubBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(b)
         }
         return photoStubBitmapDescriptor!!
@@ -247,6 +263,7 @@ class MarkerImageGenerator(private val context: Context) {
     private fun getPlaceStubBimapDescriptor(): BitmapDescriptor {
         val b = placeStubBitmap
         if (placeStubBitmapDescriptor == null) {
+            Timber.w("kiol BitmapDescriptorFactory called")
             placeStubBitmapDescriptor = BitmapDescriptorFactory.fromBitmap(b)
         }
         return placeStubBitmapDescriptor!!
@@ -268,6 +285,7 @@ class MarkerImageGenerator(private val context: Context) {
 
             var d = photoStubDescriptorWithBadgeCache[text]
             if (d == null) {
+                Timber.w("kiol BitmapDescriptorFactory called")
                 d = BitmapDescriptorFactory.fromBitmap(b)
                 photoStubDescriptorWithBadgeCache[text] = d
             }
@@ -277,36 +295,12 @@ class MarkerImageGenerator(private val context: Context) {
             val b = placeStubWithBadgeCache[text]
             var d = placeStubDescriptorWithBadgeCache[text]
             if (d == null) {
+                Timber.w("kiol BitmapDescriptorFactory called")
                 d = BitmapDescriptorFactory.fromBitmap(b)
                 placeStubDescriptorWithBadgeCache[text] = d
             }
             d!!
         }
-    }
-
-    private fun createPhotoStubBitmap() {
-        val outRect = Rect(
-            0, 0,
-            PHOTO_SIZE,
-            PHOTO_SIZE
-        )
-
-        val output = Bitmap.createBitmap(
-            PHOTO_SIZE,
-            PHOTO_SIZE, Bitmap.Config.ARGB_8888
-        )
-        val canvas = Canvas(output)
-
-        outRect.inset(BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS, BOUND_STOKER_WIDTH + BOUND_SHADOW_RADIUS)
-
-        canvas.drawARGB(0, 0, 0, 0)
-        canvas.drawRoundRect(
-            outRect.toRectF(),
-            PHOTO_RADIUS,
-            PHOTO_RADIUS, placeRoundBoundPaint
-        )
-
-        photoStubBitmap = output
     }
 
     private fun createPlaceStubBitmap() {
@@ -373,13 +367,6 @@ class MarkerImageGenerator(private val context: Context) {
         placeStubWithBadgeCache[text] = bitmap
     }
 
-    private fun createPhotoStubBitmapWithBadge(count: Int) {
-        val text = getCountText(count)
-
-        val nb = getPhotoBitmapWithBadge(photoStubBitmap, count)
-        photoStubWithBadgeCache[text] = nb
-    }
-
     private fun getPhotoBitmapWithBadge(bitmap: Bitmap, count: Int): Bitmap {
         val badgeBitmap = getPhotoBadge(count)
 
@@ -435,7 +422,8 @@ class MarkerImageGenerator(private val context: Context) {
     fun loadPhotoClusterImageWithCount(context: Context, place: Place, marker: Marker, count: Int) {
         val transform = getTransformation(place)
 
-        Glide.with(context).asBitmap().load(place.photo).transform(transform).into(object :
+        val photoPath = if (place.placeType == PlaceType.Box) Uri.parse(place.photo) else place.photo
+        Glide.with(context).asBitmap().load(photoPath).transform(transform).into(object :
             SimpleTarget<Bitmap>() {
             override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                 if (marker.tag != null) {
@@ -443,6 +431,7 @@ class MarkerImageGenerator(private val context: Context) {
                         val withBadge = getPhotoBitmapWithBadge(resource, count)
                         uiHandler.post {
                             if (marker.tag != null) {
+                                Timber.w("kiol BitmapDescriptorFactory called")
                                 marker.setIcon(BitmapDescriptorFactory.fromBitmap(withBadge))
                             }
                         }
@@ -453,15 +442,36 @@ class MarkerImageGenerator(private val context: Context) {
     }
 
     fun loadPlacemarkImage(context: Context, place: Place, marker: Marker) {
-        val transform = getTransformation(place)
+        Timber.w("kiol loadPlacemarkImage called")
+        val color = when (place.customPlaceParams?.box?.boxType) {
+            Ok -> 0xFF4BB34B.toInt()
+            Fraud -> 0xFFFF5C5C.toInt()
+            Unknown -> 0xFF76787A.toInt()
+            else -> 0xFF76787A.toInt()
+        }
+        val key = BdKey(place.photo, color)
 
-        Glide.with(context).asBitmap().load(place.photo).transform(transform).into(object :
-            SimpleTarget<Bitmap>() {
-            override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                if (marker.tag != null) {
-                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(resource))
+        var descriptor = markerCache[key]
+        if (descriptor == null) {
+            val request = ImageRequest.Builder(context)
+                .data(place.photo)
+                .size(40.px, 40.px)
+                .allowRgb565(true)
+                .transformations(BoxCircleCropTransformation(color))
+                .target { drawable ->
+                    if (marker.tag != null) {
+                        Timber.w("kiol BitmapDescriptorFactory called")
+                        descriptor = BitmapDescriptorFactory.fromBitmap(drawable.toBitmap())
+                        markerCache[key] = descriptor!!
+                        marker.setIcon(descriptor)
+                    }
                 }
+                .build()
+            val disposable = imageLoader.enqueue(request)
+        } else {
+            if (marker.tag != null) {
+                marker.setIcon(descriptor)
             }
-        })
+        }
     }
 }
